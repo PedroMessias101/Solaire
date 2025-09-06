@@ -28,7 +28,7 @@ export default function LoginScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require("@/assets/welcome.jpeg")}
+        source={require("@/assets/fundo-sol.jpeg")}
         style={styles.imageBackground}
         resizeMode="cover"
       >
@@ -157,10 +157,10 @@ const styles = StyleSheet.create({
   },
   forgotText: {
     fontSize: 14,
-    color: "#0a3a5a",
+    color: "#fcbb30",
   },
   loginButton: {
-    backgroundColor: "#0a3a5a",
+    backgroundColor: "#fcbb30",
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
@@ -179,7 +179,7 @@ const styles = StyleSheet.create({
     color: "#888",
   },
   signupLink: {
-    color: "#0a3a5a",
+    color: "#fcbb30",
     fontWeight: "bold",
   },
 });

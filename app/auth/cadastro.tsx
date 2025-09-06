@@ -15,7 +15,7 @@ export default function RegisterScreen() {
     <View style={styles.container}>
       {/* Imagem de fundo no topo */}
       <ImageBackground
-        source={require("@/assets/welcome.jpeg")}
+        source={require("@/assets/fundo-sol.jpeg")}
         style={styles.imageBackground}
         resizeMode="cover"
       >
@@ -161,7 +161,7 @@ const styles = StyleSheet.create({
     marginLeft: 10,
   },
   registerButton: {
-    backgroundColor: "#0a3a5a",
+    backgroundColor: "#fcbb30",
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
@@ -180,7 +180,7 @@ const styles = StyleSheet.create({
     color: "#888",
   },
   signupLink: {
-    color: "#0a3a5a",
+    color: "#fcbb30",
     fontWeight: "bold",
   },
 });

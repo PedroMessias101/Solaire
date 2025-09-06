@@ -8,7 +8,7 @@ export default function WelcomeScreen() {
   return (
     <View style={styles.container}>
       <ImageBackground
-        source={require("@/assets/welcome.jpeg")}
+        source={require("@/assets/fundo-sol.jpeg")}
         style={styles.background}
         resizeMode="cover"
       />
