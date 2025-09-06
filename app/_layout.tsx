@@ -22,7 +22,7 @@ export default function RootLayout() {
     // Enquanto carrega, força a splash
     return (
       <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="(auth)/splash" />
+        <Stack.Screen name="tabs/splash" />
       </Stack>
     );
   }
@@ -30,9 +30,9 @@ export default function RootLayout() {
   return (
     <Stack screenOptions={{ headerShown: false }}>
       {isLoggedIn ? (
-        <Stack.Screen name="(tabs)" />
+        <Stack.Screen name="tabs" />
       ) : (
-        <Stack.Screen name="(auth)" />
+        <Stack.Screen name="auth" />
       )}
     </Stack>
   );

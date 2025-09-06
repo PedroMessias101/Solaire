@@ -141,7 +141,7 @@ function GraficoCircular({ size = 120, strokeWidth = 10, progresso = 70, cor = "
         position: "absolute",
         fontSize: 22,
         fontWeight: "bold",
-        color: "#333"
+        color: "#000000ff"
       }}>
         {progresso}%
       </Text>
@@ -168,8 +168,8 @@ const estilos = StyleSheet.create({
     left: 0,
     right: 0,
     height: 310,
-    borderBottomLeftRadius: 30,
-    borderBottomRightRadius: 30,
+    borderBottomLeftRadius: 50,
+    borderBottomRightRadius: 50,
     zIndex: 0,
   },
   linhaPerfil: {
@@ -183,6 +183,9 @@ const estilos = StyleSheet.create({
     width: 60,
     height: 60,
     marginRight: 12,
+    borderColor: "#0a3a5aff",
+    borderWidth: 3,
+    borderRadius: 30
   },
   saudacao: {
     fontSize: 20,
@@ -230,13 +233,12 @@ const estilos = StyleSheet.create({
     fontWeight: "bold",
   },
   caixaEnergia: {
-    backgroundColor: "#fff",
     borderRadius: 15,
     padding: 20,
     marginHorizontal: 20,
     marginTop: 30,
     alignItems: "center",
-    shadowColor: "#000",
+    shadowColor: "#0a3a5aff",
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.1,
     shadowRadius: 5,
