@@ -1,6 +1,7 @@
 import { View, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
+import { LinearGradient } from "expo-linear-gradient";
 
 export default function Splash() {
   const router = useRouter();
@@ -14,20 +15,24 @@ export default function Splash() {
   }, []);
 
   return (
-    <View style={styles.container}>
+    <LinearGradient
+      colors={["#fcbb30","#866112ff", "#000", "#000"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={styles.container}
+    >
       <Image 
-        source={require("@/assets/logo-principal.png")}
+        source={require("@/assets/solaire-branco.png")}
         style={styles.logo}
         resizeMode="contain"
       />
-    </View>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#dee6ec",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -36,4 +41,3 @@ const styles = StyleSheet.create({
     height: 230,
   },
 });
-
