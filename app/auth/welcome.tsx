@@ -1,67 +1,96 @@
 import React from "react";
-import { View, Text, ImageBackground, StyleSheet, TouchableOpacity, StatusBar } from "react-native";
+import {
+  View,
+  Text,
+  ImageBackground,
+  StyleSheet,
+  TouchableOpacity,
+  StatusBar,
+  Dimensions,
+  SafeAreaView,
+} from "react-native";
 import { useRouter } from "expo-router";
+
+const { width, height } = Dimensions.get("window");
 
 export default function WelcomeScreen() {
   const router = useRouter();
 
   return (
-    <View style={styles.container}>
+    <SafeAreaView style={styles.container}>
+      <StatusBar barStyle="light-content" />
+
       <ImageBackground
         source={require("@/assets/fundo-sol.jpeg")}
         style={styles.background}
         resizeMode="cover"
-      />
+      >
+        <View style={styles.contentContainer}>
+          <Text style={styles.title}>mais controle,{"\n"}mais economia.</Text>
 
-      <StatusBar barStyle="light-content" />
-      <View style={styles.contentContainer}>
-        <Text style={styles.title}>mais controle,{"\n"}mais economia.</Text>
-        
-        <View style={styles.buttonContainer}>
-          <TouchableOpacity 
-            style={styles.button}
-            onPress={() => router.push("/auth/login")}
-          >
-            <Text style={styles.buttonText}>Login</Text>
-          </TouchableOpacity>
+          <View style={styles.buttonContainer}>
+            <TouchableOpacity
+              style={styles.button}
+              onPress={() => router.push("/auth/login")}
+            >
+              <Text style={styles.buttonText}>Login</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity onPress={() => router.push("/auth/cadastro")}>
-            <Text style={styles.linkText}>Novo por aqui? crie uma conta</Text>
-          </TouchableOpacity>
+            <TouchableOpacity onPress={() => router.push("/auth/cadastro")}>
+              <Text style={styles.linkText}>Novo por aqui? crie uma conta</Text>
+            </TouchableOpacity>
+          </View>
         </View>
-      </View>
-    </View>
+      </ImageBackground>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  background: { ...StyleSheet.absoluteFillObject },
+  container: {
+    flex: 1,
+    overflow: "hidden",
+  },
+  background: {
+    flex: 1,
+    width: "100%",
+    height: "100%",
+  },
   contentContainer: {
     flex: 1,
     justifyContent: "space-between",
-    alignItems: "center",
-    paddingHorizontal: 20,
-    paddingTop: 80,
-    paddingBottom: 40,
+    alignItems: "flex-start",
+    paddingHorizontal: width * 0.05,
+    paddingTop: height * 0.1,
+    paddingBottom: height * 0.05,
   },
   title: {
-    fontSize: 45,
+    fontSize: width * 0.1,
     color: "#fff",
     fontWeight: "600",
-    textAlign: "start",
-    lineHeight: 52,
+    lineHeight: width * 0.12,
   },
-  buttonContainer: { width: "100%", alignItems: "center" },
+  buttonContainer: {
+    width: "100%",
+    alignItems: "center",
+  },
   button: {
     backgroundColor: "rgba(255, 255, 255, 0.2)",
     borderColor: "rgba(255, 255, 255, 0.5)",
     borderWidth: 1.5,
-    paddingVertical: 14,
-    paddingHorizontal: 80,
+    paddingVertical: height * 0.02,
+    paddingHorizontal: width * 0.25,
     borderRadius: 50,
-    marginBottom: 20,
+    marginBottom: height * 0.02,
   },
-  buttonText: { color: "#fff", fontSize: 20, fontWeight: "600" },
-  linkText: { color: "#fff", fontSize: 16, fontWeight: "600" },
+  buttonText: {
+    color: "#fff",
+    fontSize: width * 0.05,
+    fontWeight: "600",
+  },
+  linkText: {
+    color: "#fff",
+    fontSize: width * 0.04,
+    fontWeight: "600",
+  },
 });
