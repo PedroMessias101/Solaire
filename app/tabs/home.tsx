@@ -4,11 +4,11 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  ScrollView,
   Image,
+  ScrollView,
 } from "react-native";
-import Svg, { Circle } from "react-native-svg";
 import { LinearGradient } from 'expo-linear-gradient';
+import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 
 export default function TelaInicial() {
   const hoje = new Date();
@@ -18,18 +18,17 @@ export default function TelaInicial() {
   const saudacao =
     hora < 12 ? "Bom dia, Vannessa" : hora < 18 ? "Boa tarde, Vannessa" : "Boa noite, Vannessa";
 
-  // Gradiente que muda de acordo com o mmnt do dia
   let coresGradiente;
   let corTextoCabecalho;
 
   if (hora < 12) {
-    coresGradiente = ["#4aacd9ff", "#daf1fcff"]; // manhã
+    coresGradiente = ["#4aacd9ff", "#daf1fcff"];
     corTextoCabecalho = "#333";
   } else if (hora < 18) {
-    coresGradiente = ["#9f8fccff", "#f2f8ccff"]; // tarde
+    coresGradiente = ["#9f8fccff", "#f2f8ccff"];
     corTextoCabecalho = "#333";
   } else {
-    coresGradiente = ["#1e2c39ff", "#4560b1ff"]; // noite
+    coresGradiente = ["#1e2c39ff", "#4560b1ff"];
     corTextoCabecalho = "#fff";
   }
 
@@ -46,6 +45,7 @@ export default function TelaInicial() {
 
   return (
     <ScrollView style={estilos.tela}>
+      {/* Cabeçalho azul */}
       <View style={estilos.cabecalho}>
         <LinearGradient
           colors={coresGradiente}
@@ -73,7 +73,7 @@ export default function TelaInicial() {
             })}
           </Text>
           <Text style={[estilos.tituloAtividades, { color: corTextoCabecalho }]}>
-            Suas Atividades
+            Monitoramento das Placas Solares
           </Text>
         </View>
 
@@ -97,55 +97,41 @@ export default function TelaInicial() {
         </View>
       </View>
 
-      {/* Energia com gráfico circular */}
-      <View style={estilos.caixaEnergia}>
-        <GraficoCircular progresso={70} />
-        <Text style={estilos.rotuloEnergia}>Energia Total</Text>
+      {/* Caixinhas de monitoramento das placas solares */}
+      <View style={estilos.gridMonitoramento}>
+        <View style={[estilos.cardMonitoramento, estilos.cardVerde]}>
+          <FontAwesome5 name="solar-panel" size={24} color="#2e7d32" />
+          <Text style={estilos.tituloCard}>Geração Atual</Text>
+          <Text style={estilos.valorCard}>3200W</Text>
+          <Text style={estilos.statusCard}>Normal</Text>
+        </View>
+        <View style={estilos.cardMonitoramento}>
+          <Feather name="thermometer" size={24} color="#1976d2" />
+          <Text style={estilos.tituloCard}>Temperatura</Text>
+          <Text style={estilos.valorCard}>42°C</Text>
+        </View>
+        <View style={estilos.cardMonitoramento}>
+          <MaterialCommunityIcons name="percent" size={24} color="#0288d1" />
+          <Text style={estilos.tituloCard}>Eficiência</Text>
+          <Text style={estilos.valorCard}>87%</Text>
+        </View>
+        <View style={estilos.cardMonitoramento}>
+          <MaterialCommunityIcons name="flash" size={24} color="#fbc02d" />
+          <Text style={estilos.tituloCard}>Tensão</Text>
+          <Text style={estilos.valorCard}>220V</Text>
+        </View>
+        <View style={estilos.cardMonitoramento}>
+          <MaterialCommunityIcons name="current-ac" size={24} color="#7b1fa2" />
+          <Text style={estilos.tituloCard}>Corrente</Text>
+          <Text style={estilos.valorCard}>14A</Text>
+        </View>
+        <View style={estilos.cardMonitoramento}>
+          <MaterialCommunityIcons name="alert-circle" size={24} color="#e53935" />
+          <Text style={estilos.tituloCard}>Status</Text>
+          <Text style={estilos.valorCard}>Sem alertas</Text>
+        </View>
       </View>
     </ScrollView>
-  );
-}
-
-// Gráfico circular
-function GraficoCircular({ size = 120, strokeWidth = 10, progresso = 70, cor = "#0a3a5a" }) {
-  const raio = (size - strokeWidth) / 2;
-  const circunferencia = 2 * Math.PI * raio;
-  const deslocamento = circunferencia - (progresso / 100) * circunferencia;
-
-  return (
-    <View style={{ alignItems: "center", justifyContent: "center" }}>
-      <Svg width={size} height={size}>
-        <Circle
-          stroke="#e6f2f9"
-          fill="none"
-          cx={size / 2}
-          cy={size / 2}
-          r={raio}
-          strokeWidth={strokeWidth}
-        />
-        <Circle
-          stroke={cor}
-          fill="none"
-          cx={size / 2}
-          cy={size / 2}
-          r={raio}
-          strokeWidth={strokeWidth}
-          strokeDasharray={`${circunferencia} ${circunferencia}`}
-          strokeDashoffset={deslocamento}
-          strokeLinecap="round"
-          rotation="-90"
-          origin={`${size / 2}, ${size / 2}`}
-        />
-      </Svg>
-      <Text style={{
-        position: "absolute",
-        fontSize: 22,
-        fontWeight: "bold",
-        color: "#000000ff"
-      }}>
-        {progresso}%
-      </Text>
-    </View>
   );
 }
 
@@ -232,21 +218,49 @@ const estilos = StyleSheet.create({
     color: "#fff",
     fontWeight: "bold",
   },
-  caixaEnergia: {
-    borderRadius: 15,
-    padding: 20,
-    marginHorizontal: 20,
-    marginTop: 30,
-    alignItems: "center",
-    shadowColor: "#0a3a5aff",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.1,
-    shadowRadius: 5,
-    elevation: 3,
+  gridMonitoramento: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+    padding: 18,
+    marginTop: 10,
   },
-  rotuloEnergia: {
-    fontSize: 16,
-    color: "#777",
+  cardMonitoramento: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    width: "47%",
+    padding: 16,
+    marginBottom: 16,
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.04,
+    shadowRadius: 2,
+    elevation: 1,
+  },
+  cardVerde: {
+    backgroundColor: "#e6f9ed",
+    borderColor: "#4aacd9",
+    borderWidth: 1,
+  },
+  tituloCard: {
+    fontSize: 13,
+    color: "#333",
     marginTop: 8,
+    marginBottom: 6,
+    fontWeight: "bold",
+  },
+  valorCard: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#333",
+  },
+  statusCard: {
+    fontSize: 12,
+    color: "#2e7d32",
+    backgroundColor: "#d2f7e6",
+    borderRadius: 8,
+    paddingHorizontal: 8,
+    paddingVertical: 2,
+    marginTop: 4,
   },
 });
