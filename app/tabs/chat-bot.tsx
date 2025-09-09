@@ -4,103 +4,96 @@ import {
   Text,
   StyleSheet,
   TouchableOpacity,
-  Modal,
   ScrollView,
+  Modal,
   Animated,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 
-type Mensagem = {
-  origem: "usuario" | "bot";
+interface Mensagem {
+  remetente: "user" | "bot";
   texto: string;
-};
+}
 
-export default function AssistenteVirtual() {
-  const [visivel, setVisivel] = useState(false);
+export default function ChatAssistenteModal() {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
-  const [digitando, setDigitando] = useState(false);
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
+  const [visivel, setVisivel] = useState(false);
+  const [digitando, setDigitando] = useState(false); // controla bolinhas
+  const scrollViewRef = useRef<ScrollView>(null);
 
-  const scrollRef = useRef<ScrollView>(null);
+  const categorias =
+    [{
+      nome: "Sobre o Sistema",
+      perguntas: [{ pergunta: "Como o meu sistema de energia solar funciona?", resposta: "Os painéis solares captam a luz do sol e a transformam em energia elétrica. Essa energia é enviada para um equipamento chamado inversor, que a converte para o formato que você usa em sua casa. A energia excedente é enviada para a rede da distribuidora, gerando créditos para você." },
+      { pergunta: "O que acontece em dias nublados ou chuvosos?", resposta: "Em dias nublados, a produção de energia é menor, mas o sistema continua funcionando, pois os painéis captam a luz difusa. Se a produção for insuficiente, o aplicativo irá buscar a energia que falta da rede elétrica da distribuidora, garantindo o funcionamento normal da sua casa." },
+      { pergunta: "Preciso limpar os painéis solares? Com que frequência?", resposta: "Recomendamos uma limpeza anual para garantir o melhor desempenho. A chuva costuma fazer uma limpeza natural, mas o acúmulo de poeira ou folhas pode reduzir a eficiência. Se notar sujeira, é bom limpar." },],
+    },
+    {
+      nome: "Problemas e Suporte Técnico", perguntas: [{ pergunta: "O sistema parou de funcionar. O que devo fazer?", resposta: "Primeiro, verifique se há alguma mensagem de erro no seu inversor e se a chave de energia está ligada. Se o problema persistir, abra um chamado no aplicativo, e nosso suporte técnico entrará em contato com você o mais rápido possível." },
+      { pergunta: "O meu inversor está com uma luz vermelha. O que isso quer dizer?", resposta: "Uma luz vermelha geralmente indica um problema no inversor. Pode ser um erro de conexão ou outro problema técnico. Por favor, tire uma foto e abra um chamado em nosso suporte técnico no aplicativo para que possamos analisar e te ajudar." },
+      { pergunta: "Meu sistema não aparece no aplicativo. O que devo fazer?", resposta: "Isso pode acontecer por alguns motivos. Primeiro, verifique sua conexão com a internet. Se estiver tudo certo, pode ser um problema de comunicação com o inversor. Reinicie o aplicativo. Se o problema persistir por mais de 30 minutos, por favor, entre em contato com nosso suporte técnico pelo próprio aplicativo" },
+      { pergunta: "O aplicativo não está atualizando os dados. Existe um problema?", resposta: "A maioria dos dados é atualizada a cada 5 ou 10 minutos. Se você notar que os dados estão parados por um tempo prolongado, verifique a conexão Wi-Fi do seu inversor. Se o problema persistir, entre em contato com o suporte" },
+      { pergunta: "Posso baixar um relatório de produção de energia em PDF ou Excel?", resposta: "Sim! Vá em Configurações > Exportar Dados para baixar um relatório detalhado." },],
+    },
+    {
+      nome: "Sobre Alertas e Notificações", perguntas: [{ pergunta: "Recebi uma notificação sobre 'baixa produção'. O que isso quer dizer?", resposta: "Isso significa que o seu sistema está gerando menos energia do que o esperado para o horário. Pode ser devido a condições climáticas (nuvens ou chuva), sujeira nos painéis ou um problema técnico. O aplicativo geralmente sugere a causa provável." },
+      { pergunta: "O que devo fazer quando recebo um alerta de erro?", resposta: "Não se preocupe! A maioria dos erros pode ser resolvida facilmente. O alerta fornecerá um código de erro ou uma descrição do problema. Siga as instruções do aplicativo. Se for necessário, ele irá direcioná-lo para a opção de solicitar suporte técnico." },],
+    },];
 
-  const abrirChat = () => {
-    setVisivel(true);
-    setMensagens([]);
+  // Primeira mensagem com delay
+  useEffect(() => {
     setDigitando(true);
-
-    setTimeout(() => {
-      setDigitando(false);
+    const timer = setTimeout(() => {
       setMensagens([
         {
-          origem: "bot",
-          texto:
-            "Olá, eu sou o seu assistente virtual do app Solaire. Como posso te ajudar?",
+          remetente: "bot",
+          texto: "Olá, eu sou o assistente virtual da Solaire, como posso te ajudar?",
         },
       ]);
+      setDigitando(false);
     }, 1500);
-  };
 
-  const perguntasFrequentes = [
-    {
-      pergunta: "Como funciona a mini placa solar?",
-      resposta: "Ela converte a energia do sol em eletricidade em tempo real.",
-    },
-    {
-      pergunta: "Posso carregar uma bateria Li-ion?",
-      resposta:
-        "Sim, desde que use um regulador de carga apropriado para proteger a bateria.",
-    },
-    {
-      pergunta: "O app mostra os dados em tempo real?",
-      resposta:
-        "Sim! O Arduino envia as informações para o app via Bluetooth/Wi-Fi.",
-    },
-    {
-      pergunta: "Qual a potência máxima da placa?",
-      resposta:
-        "A potência depende do modelo, mas geralmente varia de 5W a 20W.",
-    },
-    {
-      pergunta: "Funciona em dias nublados?",
-      resposta:
-        "Sim, mas a eficiência é reduzida pois a radiação solar é menor.",
-    },
-  ];
+    return () => clearTimeout(timer);
+  }, []);
 
+  // Responder pergunta com atraso e bolinhas
   const responderPergunta = (pergunta: string, resposta: string) => {
-    setMensagens((prev) => [...prev, { origem: "usuario", texto: pergunta }]);
+    setMensagens((prev) => [...prev, { remetente: "user", texto: pergunta }]);
     setDigitando(true);
 
     setTimeout(() => {
+      setMensagens((prev) => [...prev, { remetente: "bot", texto: resposta }]);
       setDigitando(false);
-      setMensagens((prev) => [...prev, { origem: "bot", texto: resposta }]);
-    }, 1500);
+    }, 2000);
   };
 
   useEffect(() => {
-    if (scrollRef.current) {
-      scrollRef.current.scrollToEnd({ animated: true });
-    }
+    scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [mensagens, digitando]);
 
   return (
-    <View style={estilos.tela}>
-      <TouchableOpacity style={estilos.botaoChat} onPress={abrirChat}>
-        <Ionicons name="chatbubble-ellipses" size={28} color="#fff" />
+    <View style={{ flex: 1 }}>
+      {/* Botão flutuante */}
+      <TouchableOpacity style={estilos.botaoChat} onPress={() => setVisivel(true)}>
+        <Ionicons name="chatbubble-ellipses" size={26} color="#fff" />
       </TouchableOpacity>
 
+      {/* Modal */}
       <Modal visible={visivel} animationType="slide" transparent={true}>
-        <View style={estilos.fundoModal}>
-          <View style={estilos.conteudoModal}>
-            <View style={estilos.cabecalho}>
-              <Text style={estilos.textoCabecalho}>Assistente Virtual</Text>
+        <View style={estilos.modalFundo}>
+          <View style={estilos.modalContainer}>
+            <View style={estilos.topoModal}>
+              <Text style={estilos.tituloModal}>Assistente Virtual</Text>
               <TouchableOpacity onPress={() => setVisivel(false)}>
-                <Ionicons name="close" size={28} color="#333" />
+                <Ionicons name="close" size={26} color="#333" />
               </TouchableOpacity>
             </View>
 
+            {/* Mensagens */}
             <ScrollView
-              ref={scrollRef}
-              style={estilos.areaChat}
+              ref={scrollViewRef}
+              style={estilos.mensagensContainer}
               contentContainerStyle={{ paddingBottom: 20 }}
             >
               {mensagens.map((msg, index) => (
@@ -108,8 +101,8 @@ export default function AssistenteVirtual() {
                   key={index}
                   style={[
                     estilos.mensagem,
-                    msg.origem === "usuario"
-                      ? estilos.mensagemUsuario
+                    msg.remetente === "user"
+                      ? estilos.mensagemUser
                       : estilos.mensagemBot,
                   ]}
                 >
@@ -117,6 +110,7 @@ export default function AssistenteVirtual() {
                 </View>
               ))}
 
+              {/* digitando (bolinhas)*/}
               {digitando && (
                 <View style={[estilos.mensagem, estilos.mensagemBot]}>
                   <IndicadorDigitando />
@@ -124,25 +118,52 @@ export default function AssistenteVirtual() {
               )}
             </ScrollView>
 
-            <View style={estilos.areaPerguntas}>
-              <Text style={estilos.tituloOpcoes}>Qual a sua dúvida?</Text>
-              <ScrollView
-                style={estilos.listaPerguntas}
-                showsVerticalScrollIndicator={false}
-              >
-                {perguntasFrequentes.map((item, index) => (
+            {/* Perguntas */}
+            {!categoriaSelecionada ? (
+              <View style={estilos.areaPerguntas}>
+                <Text style={estilos.tituloOpcoes}>Escolha um tema:</Text>
+                {categorias.map((cat, index) => (
                   <TouchableOpacity
                     key={index}
                     style={estilos.botaoOpcao}
-                    onPress={() =>
-                      responderPergunta(item.pergunta, item.resposta)
-                    }
+                    onPress={() => setCategoriaSelecionada(cat.nome)}
                   >
-                    <Text style={estilos.textoOpcao}>{item.pergunta}</Text>
+                    <Text style={estilos.textoOpcao}>{cat.nome}</Text>
                   </TouchableOpacity>
                 ))}
-              </ScrollView>
-            </View>
+              </View>
+            ) : (
+              <View style={estilos.areaPerguntas}>
+                <View style={estilos.topoPerguntas}>
+                  <TouchableOpacity
+                    style={estilos.botaoVoltar}
+                    onPress={() => setCategoriaSelecionada(null)}
+                  >
+                    <Ionicons name="arrow-back" size={24} color="#333" />
+                  </TouchableOpacity>
+                  <Text style={estilos.tituloCategoria}>
+                    Perguntas de {categoriaSelecionada}
+                  </Text>
+                  <View style={{ width: 24 }} />
+                </View>
+
+                <ScrollView style={estilos.listaPerguntas}>
+                  {categorias
+                    .find((c) => c.nome === categoriaSelecionada)
+                    ?.perguntas.map((item, index) => (
+                      <TouchableOpacity
+                        key={index}
+                        style={estilos.botaoOpcao}
+                        onPress={() =>
+                          responderPergunta(item.pergunta, item.resposta)
+                        }
+                      >
+                        <Text style={estilos.textoOpcao}>{item.pergunta}</Text>
+                      </TouchableOpacity>
+                    ))}
+                </ScrollView>
+              </View>
+            )}
           </View>
         </View>
       </Modal>
@@ -150,6 +171,7 @@ export default function AssistenteVirtual() {
   );
 }
 
+/* digitando */
 function IndicadorDigitando() {
   const ponto1 = useRef(new Animated.Value(0)).current;
   const ponto2 = useRef(new Animated.Value(0)).current;
@@ -180,26 +202,16 @@ function IndicadorDigitando() {
   }, []);
 
   return (
-    <View style={{ flexDirection: "row", alignItems: "center" }}>
-      {[ponto1, ponto2, ponto3].map((ponto, i) => (
-        <Animated.View
-          key={i}
-          style={{
-            width: 8,
-            height: 8,
-            borderRadius: 4,
-            backgroundColor: "#555",
-            marginHorizontal: 3,
-            transform: [{ translateY: ponto }],
-          }}
-        />
-      ))}
+    <View style={{ flexDirection: "row", padding: 6 }}>
+      <Animated.View style={[estilos.ponto, { transform: [{ translateY: ponto1 }] }]} />
+      <Animated.View style={[estilos.ponto, { transform: [{ translateY: ponto2 }] }]} />
+      <Animated.View style={[estilos.ponto, { transform: [{ translateY: ponto3 }] }]} />
     </View>
   );
 }
 
+/* Estilos */
 const estilos = StyleSheet.create({
-  tela: { flex: 1 },
   botaoChat: {
     position: "absolute",
     bottom: 30,
@@ -209,76 +221,95 @@ const estilos = StyleSheet.create({
     borderRadius: 50,
     elevation: 5,
   },
-  fundoModal: {
+  modalFundo: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.4)",
+    backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "flex-end",
   },
-  conteudoModal: {
+  modalContainer: {
     backgroundColor: "#fff",
-    padding: 15,
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
-    maxHeight: "85%",
-    flex: 1,
+    height: "80%",
+    padding: 12,
   },
-  cabecalho: {
+  topoModal: {
     flexDirection: "row",
     justifyContent: "space-between",
-    marginBottom: 10,
+    alignItems: "center",
+    marginBottom: 8,
   },
-  textoCabecalho: {
-    fontSize: 18,
-    fontWeight: "bold",
+  tituloModal: {
+    fontSize: 16,
+    fontWeight: "600",
   },
-  areaChat: {
+  mensagensContainer: {
     flex: 1,
-    marginBottom: 10,
+    padding: 8,
   },
   mensagem: {
+    maxWidth: "80%",
     padding: 10,
-    marginVertical: 5,
-    maxWidth: "75%",
-    borderRadius: 12,
+    borderRadius: 10,
+    marginBottom: 8,
   },
-  mensagemUsuario: {
-    backgroundColor: "#ffdd95ff",
+  mensagemUser: {
+    backgroundColor: "#fee5b0ff",
     alignSelf: "flex-end",
-    borderBottomRightRadius: 0,
   },
   mensagemBot: {
-    backgroundColor: "#e5e5ea",
+    backgroundColor: "#eee",
     alignSelf: "flex-start",
-    borderBottomLeftRadius: 0,
   },
   textoMensagem: {
     fontSize: 14,
-    color: "#000",
+    color: "#333",
   },
   areaPerguntas: {
     borderTopWidth: 1,
     borderColor: "#ddd",
-    paddingTop: 8,
-    maxHeight: 130,
-  },
-  listaPerguntas: {
-    flexGrow: 0,
+    padding: 12,
+    backgroundColor: "#fff",
   },
   tituloOpcoes: {
     fontSize: 14,
     fontWeight: "600",
-    marginBottom: 5,
+    marginBottom: 8,
+    textAlign: "center",
   },
-  botaoOpcao: {
-    backgroundColor: "#fcbb30",
-    paddingVertical: 10,
-    paddingHorizontal: 12,
-    borderRadius: 12,
+  topoPerguntas: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 8,
   },
-  textoOpcao: {
-    color: "#fff",
-    fontSize: 13,
+  botaoVoltar: {
+    padding: 4,
+  },
+  tituloCategoria: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 14,
     fontWeight: "600",
+  },
+  listaPerguntas: {
+    maxHeight: 200,
+  },
+  botaoOpcao: {
+    backgroundColor: "#f0f0f0",
+    padding: 10,
+    borderRadius: 8,
+    marginVertical: 4,
+  },
+  textoOpcao: {
+    fontSize: 14,
+    color: "#333",
+  },
+  ponto: {
+    width: 8,
+    height: 8,
+    borderRadius: 4,
+    backgroundColor: "#666",
+    marginHorizontal: 2,
   },
 });

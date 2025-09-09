@@ -1,118 +1,123 @@
 import React, { useState } from "react";
 import { 
   View, Text, StyleSheet, ImageBackground, 
-  TouchableOpacity, TextInput 
+  TouchableOpacity, TextInput, ScrollView 
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-export default function RegisterScreen() {
-  const router = useRouter();
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+export default function TelaCadastro() {
+  const navegador = useRouter();
+  const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarConfirmaSenha, setMostrarConfirmaSenha] = useState(false);
 
   return (
-    <View style={styles.container}>
+    <View style={estilos.container}>
       {/* Imagem de fundo no topo */}
       <ImageBackground
         source={require("@/assets/fundo-sol.jpeg")}
-        style={styles.imageBackground}
+        style={estilos.imagemFundo}
         resizeMode="cover"
       >
         {/* Botão de voltar */}
         <TouchableOpacity 
-          style={styles.backButton}
-          onPress={() => router.back()} // volta para a tela anterior
+          style={estilos.botaoVoltar}
+          onPress={() => navegador.back()}
         >
           <Ionicons name="chevron-back" size={24} color="white" />
         </TouchableOpacity>
       </ImageBackground>
 
       {/* Card de cadastro */}
-      <View style={styles.card}>
-        <Text style={styles.cardTitle}>Crie sua conta</Text>
-        <Text style={styles.cardSubtitle}>Preencha os campos abaixo</Text>
+      <View style={estilos.card}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={{ paddingBottom: 20 }}
+        >
+          <Text style={estilos.tituloCard}>Crie sua conta</Text>
+          <Text style={estilos.subtituloCard}>Preencha os campos abaixo</Text>
 
-        {/* Nome completo */}
-        <View style={styles.inputContainer}>
-          <FontAwesome5 name="user" size={16} color="#888" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Nome completo"
-          />
-        </View>
+          {/* Nome completo */}
+          <View style={estilos.containerInput}>
+            <FontAwesome5 name="user" size={16} color="#888" style={estilos.icone} />
+            <TextInput
+              style={estilos.input}
+              placeholder="Nome completo"
+            />
+          </View>
 
-        {/* Email */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail" size={18} color="#888" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="E-mail"
-            keyboardType="email-address"
-          />
-        </View>
+          {/* Email */}
+          <View style={estilos.containerInput}>
+            <Ionicons name="mail" size={18} color="#888" style={estilos.icone} />
+            <TextInput
+              style={estilos.input}
+              placeholder="E-mail"
+              keyboardType="email-address"
+            />
+          </View>
 
-        {/* Senha */}
-        <View style={styles.inputContainer}>
-          <FontAwesome5 name="lock" size={16} color="#888" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            secureTextEntry={!showPassword}
-          />
-          <Ionicons
-            name={showPassword ? "eye-off" : "eye"}
-            size={20}
-            color="#888"
-            style={styles.iconRight}
-            onPress={() => setShowPassword(!showPassword)}
-          />
-        </View>
+          {/* Senha */}
+          <View style={estilos.containerInput}>
+            <FontAwesome5 name="lock" size={16} color="#888" style={estilos.icone} />
+            <TextInput
+              style={estilos.input}
+              placeholder="Senha"
+              secureTextEntry={!mostrarSenha}
+            />
+            <Ionicons
+              name={mostrarSenha ? "eye-off" : "eye"}
+              size={20}
+              color="#888"
+              style={estilos.iconeDireita}
+              onPress={() => setMostrarSenha(!mostrarSenha)}
+            />
+          </View>
 
-        {/* Confirmar senha */}
-        <View style={styles.inputContainer}>
-          <FontAwesome5 name="lock" size={16} color="#888" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar senha"
-            secureTextEntry={!showConfirmPassword}
-          />
-          <Ionicons
-            name={showConfirmPassword ? "eye-off" : "eye"}
-            size={20}
-            color="#888"
-            style={styles.iconRight}
-            onPress={() => setShowConfirmPassword(!showConfirmPassword)}
-          />
-        </View>
+          {/* Confirmar senha */}
+          <View style={estilos.containerInput}>
+            <FontAwesome5 name="lock" size={16} color="#888" style={estilos.icone} />
+            <TextInput
+              style={estilos.input}
+              placeholder="Confirmar senha"
+              secureTextEntry={!mostrarConfirmaSenha}
+            />
+            <Ionicons
+              name={mostrarConfirmaSenha ? "eye-off" : "eye"}
+              size={20}
+              color="#888"
+              style={estilos.iconeDireita}
+              onPress={() => setMostrarConfirmaSenha(!mostrarConfirmaSenha)}
+            />
+          </View>
 
-        {/* Botão de cadastro */}
-        <TouchableOpacity style={styles.registerButton}>
-          <Text style={styles.registerButtonText}>Cadastrar</Text>
-        </TouchableOpacity>
-
-        {/* Link para login */}
-        <View style={styles.signupContainer}>
-          <Text style={styles.signupText}>Já tem conta? </Text>
-          <TouchableOpacity onPress={() => router.push("/auth/login")}>
-            <Text style={styles.signupLink}>Entrar</Text>
+          {/* Botão de cadastro */}
+          <TouchableOpacity style={estilos.botaoCadastrar}>
+            <Text style={estilos.textoBotaoCadastrar}>Cadastrar</Text>
           </TouchableOpacity>
-        </View>
+
+          {/* Link para login */}
+          <View style={estilos.containerLogin}>
+            <Text style={estilos.textoLogin}>Já tem conta? </Text>
+            <TouchableOpacity onPress={() => navegador.push("/auth/login")}>
+              <Text style={estilos.linkLogin}>Entrar</Text>
+            </TouchableOpacity>
+          </View>
+        </ScrollView>
       </View>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+const estilos = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: "#e6f3f0",
   },
-  imageBackground: {
+  imagemFundo: {
     height: 250,
     width: "100%",
   },
-  backButton: {
+  botaoVoltar: {
     position: "absolute",
     top: 60,
     left: 20,
@@ -128,20 +133,20 @@ const styles = StyleSheet.create({
     marginTop: -40,
     padding: 30,
   },
-  cardTitle: {
+  tituloCard: {
     fontSize: 28,
     fontWeight: "bold",
     textAlign: "center",
     marginBottom: 5,
     color: "#333",
   },
-  cardSubtitle: {
+  subtituloCard: {
     fontSize: 16,
     color: "#888",
     textAlign: "center",
     marginBottom: 40,
   },
-  inputContainer: {
+  containerInput: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#f5f5f5",
@@ -154,32 +159,32 @@ const styles = StyleSheet.create({
     height: 50,
     paddingLeft: 10,
   },
-  icon: {
+  icone: {
     marginRight: 10,
   },
-  iconRight: {
+  iconeDireita: {
     marginLeft: 10,
   },
-  registerButton: {
+  botaoCadastrar: {
     backgroundColor: "#fcbb30",
     paddingVertical: 15,
     borderRadius: 10,
     alignItems: "center",
     marginBottom: 20,
   },
-  registerButtonText: {
+  textoBotaoCadastrar: {
     color: "white",
     fontSize: 18,
     fontWeight: "bold",
   },
-  signupContainer: {
+  containerLogin: {
     flexDirection: "row",
     justifyContent: "center",
   },
-  signupText: {
+  textoLogin: {
     color: "#888",
   },
-  signupLink: {
+  linkLogin: {
     color: "#fcbb30",
     fontWeight: "bold",
   },
