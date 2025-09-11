@@ -7,18 +7,18 @@ import {
   Image,
   ScrollView,
 } from "react-native";
+import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-
+ 
 export default function TelaInicial() {
   const hoje = new Date();
   const [dataSelecionada, setDataSelecionada] = useState(hoje);
   const [nomeUsuario, setNomeUsuario] = useState<string | null>(null);
-
+ 
   const hora = hoje.getHours();
-
-  // Carregar nome do usuário logado do AsyncStorage
+ 
   useEffect(() => {
     const carregarNome = async () => {
       const nome = await AsyncStorage.getItem("userName");
@@ -26,7 +26,7 @@ export default function TelaInicial() {
     };
     carregarNome();
   }, []);
-
+ 
   const saudacao = nomeUsuario
     ? hora < 12
       ? `Bom dia, ${nomeUsuario}`
@@ -34,10 +34,10 @@ export default function TelaInicial() {
         ? `Boa tarde, ${nomeUsuario}`
         : `Boa noite, ${nomeUsuario}`
     : "";
-
+ 
   let coresGradiente;
   let corTextoCabecalho;
-
+ 
   if (hora < 12) {
     coresGradiente = ["#f8ec81ff", "#ed7914ff", "#fd7a2eff"];
     corTextoCabecalho = "#333";
@@ -48,73 +48,72 @@ export default function TelaInicial() {
     coresGradiente = ["#f9d86fff", "#f58d38ff", "#000000"];
     corTextoCabecalho = "#fff";
   }
-
+ 
   const formatarData = (data: Date) => {
     return data.toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
   };
-
+ 
   const dias: Date[] = [];
   for (let i = -1; i <= 1; i++) {
     const d = new Date(hoje);
     d.setDate(hoje.getDate() + i);
     dias.push(d);
   }
-
+ 
   return (
     <ScrollView style={estilos.tela}>
-      {/* Cabeçalho azul */}
-      <View style={estilos.cabecalho}>
-        <LinearGradient
-          colors={coresGradiente}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 3 }}
-          style={estilos.fundoGradiente}
+      {/* Informações do topo */}
+      <View style={estilos.infoTopo}>
+        <Image
+          source={require("../../assets/perfil-avatar.png")}
+          style={estilos.imagemPerfil}
         />
-
-        <View style={estilos.linhaPerfil}>
-          <Image
-            source={require("../../assets/perfil-avatar.png")}
-            style={estilos.imagemPerfil}
-          />
-          <Text style={[estilos.saudacao, { color: corTextoCabecalho }]}>
-            {saudacao}
-          </Text>
-        </View>
-
-        <View style={estilos.infoCabecalho}>
-          <Text style={[estilos.dataHoje, { color: corTextoCabecalho }]}>
-            Hoje,{" "}
-            {hoje.toLocaleDateString("pt-BR", {
-              day: "numeric",
-              month: "short",
-            })}
-          </Text>
-          <Text style={[estilos.tituloAtividades, { color: corTextoCabecalho }]}>
-            Monitoramento
-          </Text>
-        </View>
-
-        <View style={estilos.linhaDias}>
-          {dias.map((dia, index) => {
-            const selecionado = formatarData(dia) === formatarData(dataSelecionada);
-            return (
-              <TouchableOpacity
-                key={index}
-                onPress={() => setDataSelecionada(dia)}
-                style={[estilos.botaoDia, selecionado && estilos.botaoDiaAtivo]}
-              >
-                <Text
-                  style={[estilos.textoDia, selecionado && estilos.textoDiaAtivo]}
-                >
-                  {formatarData(dia)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
+        <View>
+          <Text style={estilos.saudacao}>{saudacao}</Text>
+         
         </View>
       </View>
-
-      {/* Caixinhas de monitoramento das placas solares */}
+      
+ 
+      {/* Gráfico circular de eficiência */}
+      <View style={estilos.circuloContainer}>
+        <AnimatedCircularProgress
+          size={160}
+          width={16}
+          fill={8}
+          tintColor="#FFC125"
+          backgroundColor="#BDBDBD"
+          rotation={0}
+        >
+          {fill => (
+            <Text style={estilos.percentualTexto}>{`${Math.round(fill)}%`}</Text>
+          )}
+        </AnimatedCircularProgress>
+      </View>
+      
+      <View style={estilos.linhaDias}>
+        {dias.map((dia, index) => {
+          const selecionado = formatarData(dia) === formatarData(dataSelecionada);
+          return (
+            <TouchableOpacity
+              key={index}
+              onPress={() => setDataSelecionada(dia)}
+              style={[estilos.botaoDia, selecionado && estilos.botaoDiaAtivo]}
+            >
+              <Text
+                style={[estilos.textoDia, selecionado && estilos.textoDiaAtivo]}
+              >
+                {formatarData(dia)}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+ 
+     
+     
+ 
+      {/* Cards de monitoramento */}
       <View style={estilos.gridMonitoramento}>
         <View style={[estilos.cardMonitoramento, estilos.cardVerde]}>
           <FontAwesome5 name="solar-panel" size={24} color="#2e7d32" />
@@ -151,112 +150,84 @@ export default function TelaInicial() {
     </ScrollView>
   );
 }
-
+ 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: "#fafafaff" },
-  cabecalho: {
-    paddingBottom: 2,
-    alignItems: "center",
-    position: "relative",
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    overflow: "hidden",
-  },
-  fundoGradiente: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 310,
-    borderBottomLeftRadius: 50,
-    borderBottomRightRadius: 50,
-    zIndex: 0,
-  },
-  linhaPerfil:
-  {
+  tela: { flex: 1, backgroundColor: "#ededed" },
+  infoTopo: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 80,
-    zIndex: 1,
-    paddingHorizontal: 20
+    marginTop: 32,
+    marginBottom: 10,
+    paddingHorizontal: 20,
   },
-  imagemPerfil:
-  {
+  imagemPerfil: {
     width: 60,
     height: 60,
-    marginRight: 12,
-    borderColor: "#0a3a5aff",
+    marginRight: 14,
+    borderColor: "#rgba(0,0,0,0.00)",
     borderWidth: 3,
-    borderRadius: 30
+    borderRadius: 30,
   },
-  saudacao:
-  {
+  saudacao: {
     fontSize: 20,
-    fontWeight: "600"
+    fontWeight: "600",
+    color: "#333",
   },
-  infoCabecalho:
-  {
-    alignItems: "center",
-    marginTop: 15,
-    marginBottom: 20
-  },
-  dataHoje:
-  {
+  dataHoje: {
     fontSize: 14,
-    marginBottom: 5
+    color: "#666",
+    marginTop: 2,
   },
-  tituloAtividades:
-  {
-    fontSize: 22,
-    fontWeight: "bold"
+  circuloContainer: {
+    alignItems: "center",
+    marginBottom: 18,
   },
-  linhaDias:
-  {
+  percentualTexto: {
+    fontSize: 28,
+    fontWeight: "bold",
+    color: "#FFC125",
+    marginTop: 8,
+  },
+  linhaDias: {
     flexDirection: "row",
     justifyContent: "space-around",
-    marginVertical: 15,
+    marginVertical: 18,
     width: "100%",
-    paddingHorizontal: 10
+    paddingHorizontal: 10,
+    height: 33,
   },
-  botaoDia:
-  {
+  botaoDia: {
     paddingVertical: 8,
     paddingHorizontal: 15,
-    borderRadius: 20
+    borderRadius: 20,
+    backgroundColor: "#fff",
+    borderWidth: 1,
+    borderColor: "#eee",
   },
-  textoDia:
-  {
+  textoDia: {
     fontSize: 14,
-    color: "#707070ff"
+    color: "#707070ff",
   },
-  botaoDiaAtivo:
-  {
-    backgroundColor: "#0a3a5a",
-    shadowColor: "#000",
-    shadowOffset:
-    {
-      width: 0,
-      height: 1
-    },
+  botaoDiaAtivo: {
+    backgroundColor: "#000",
+    borderColor: "#FFC125",
+    shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.08,
     shadowRadius: 2,
-    elevation: 2
+    elevation: 2,
   },
-  textoDiaAtivo:
-  {
-    color: "#fff",
-    fontWeight: "bold"
+  textoDiaAtivo: {
+    color: "#FFC125",
+    fontWeight: "bold",
   },
-  gridMonitoramento:
-  {
+  gridMonitoramento: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
     padding: 18,
-    marginTop: 10
+    marginTop: 10,
   },
-  cardMonitoramento:
-  {
+  cardMonitoramento: {
     backgroundColor: "#fff",
     borderRadius: 16,
     width: "47%",
@@ -266,36 +237,33 @@ const estilos = StyleSheet.create({
     shadowColor: "#000",
     shadowOpacity: 0.04,
     shadowRadius: 2,
-    elevation: 1
+    elevation: 1,
   },
-  cardVerde:
-  {
+  cardVerde: {
     backgroundColor: "#e6f9ed",
     borderColor: "#4aacd9",
-    borderWidth: 1
+    borderWidth: 1,
   },
-  tituloCard:
-  {
+  tituloCard: {
     fontSize: 13,
     color: "#333",
     marginTop: 8,
     marginBottom: 6,
-    fontWeight: "bold"
+    fontWeight: "bold",
   },
-  valorCard:
-  {
+  valorCard: {
     fontSize: 18,
     fontWeight: "bold",
-    color: "#333"
+    color: "#333",
   },
-  statusCard:
-  {
+  statusCard: {
     fontSize: 12,
     color: "#2e7d32",
     backgroundColor: "#d2f7e6",
     borderRadius: 8,
     paddingHorizontal: 8,
     paddingVertical: 2,
-    marginTop: 4
+    marginTop: 4,
   },
 });
+ 
