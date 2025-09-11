@@ -11,6 +11,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// URL da sua API
+const API_URL = "https://solaireapp.onrender.com"; 
 export default function TelaInicial() {
   const hoje = new Date();
   const [dataSelecionada, setDataSelecionada] = useState(hoje);
@@ -18,13 +20,28 @@ export default function TelaInicial() {
 
   const hora = hoje.getHours();
 
-  // Carregar nome do usuário logado do AsyncStorage
+  // Carregar nome do usuário logado do backend
   useEffect(() => {
-    const carregarNome = async () => {
-      const nome = await AsyncStorage.getItem("userName");
-      if (nome) setNomeUsuario(nome);
+    const carregarNomeUsuario = async () => {
+      try {
+        const token = await AsyncStorage.getItem("token");
+        if (!token) return;
+
+        const response = await fetch(`${API_URL}/me`, {
+          headers: { Authorization: `Bearer ${token}` },
+        });
+        const data = await response.json();
+
+        if (response.ok) {
+          setNomeUsuario(data.name);
+          await AsyncStorage.setItem("userName", data.name);
+        }
+      } catch (err) {
+        console.error("Erro ao buscar dados do usuário:", err);
+      }
     };
-    carregarNome();
+
+    carregarNomeUsuario();
   }, []);
 
   const saudacao = nomeUsuario
@@ -62,7 +79,6 @@ export default function TelaInicial() {
 
   return (
     <ScrollView style={estilos.tela}>
-      {/* Cabeçalho azul */}
       <View style={estilos.cabecalho}>
         <LinearGradient
           colors={coresGradiente}
@@ -83,11 +99,7 @@ export default function TelaInicial() {
 
         <View style={estilos.infoCabecalho}>
           <Text style={[estilos.dataHoje, { color: corTextoCabecalho }]}>
-            Hoje,{" "}
-            {hoje.toLocaleDateString("pt-BR", {
-              day: "numeric",
-              month: "short",
-            })}
+            Hoje, {hoje.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
           </Text>
           <Text style={[estilos.tituloAtividades, { color: corTextoCabecalho }]}>
             Monitoramento das Placas Solares
@@ -114,7 +126,6 @@ export default function TelaInicial() {
         </View>
       </View>
 
-      {/* Caixinhas de monitoramento das placas solares */}
       <View style={estilos.gridMonitoramento}>
         <View style={[estilos.cardMonitoramento, estilos.cardVerde]}>
           <FontAwesome5 name="solar-panel" size={24} color="#2e7d32" />
@@ -151,6 +162,7 @@ export default function TelaInicial() {
     </ScrollView>
   );
 }
+
 
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: "#fafafaff" },

@@ -141,8 +141,8 @@ const styles = StyleSheet.create({
   icon: { marginRight: 10 },
   iconRight: { marginLeft: 10 },
   loginButton: { backgroundColor: "#fcbb30", paddingVertical: 15, borderRadius: 10, alignItems: "center", marginBottom: 20 },
-  loginButtonText: { color: "white", fontSize: 18, fontWeight: "bold" },
+  loginButtonText: { color: "#000", fontSize: 18, fontWeight: "bold" },
   signupContainer: { flexDirection: "row", justifyContent: "center" },
   signupText: { color: "#888" },
-  signupLink: { color: "#fcbb30", fontWeight: "bold" },
+  signupLink: { color: "#000", fontWeight: "bold" },
 });

@@ -21,7 +21,7 @@ export default function WelcomeScreen() {
       <StatusBar barStyle="light-content" />
 
       <ImageBackground
-        source={require("@/assets/fundo-sol.jpeg")}
+        source={require("@/assets/fundo3.jpg")}
         style={styles.background}
         resizeMode="cover"
       >
@@ -75,8 +75,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   button: {
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    borderColor: "rgba(255, 255, 255, 0.5)",
+    backgroundColor: "#fcbb30",
+    borderColor: "#000",
     borderWidth: 1.5,
     paddingVertical: height * 0.02,
     paddingHorizontal: width * 0.25,
@@ -84,12 +84,12 @@ const styles = StyleSheet.create({
     marginBottom: height * 0.02,
   },
   buttonText: {
-    color: "#fff",
+    color: "#000",
     fontSize: width * 0.05,
     fontWeight: "600",
   },
   linkText: {
-    color: "#fff",
+    color: "#fcbb30",
     fontSize: width * 0.04,
     fontWeight: "600",
   },

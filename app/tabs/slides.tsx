@@ -24,8 +24,7 @@ export default function Onboarding() {
     const [loading, setLoading] = useState(true);
     const flatListRef = useRef(null);
     const router = useRouter();
-
-    // Verifica se o usuário já viu o onboarding
+    
     useEffect(() => {
         const checkOnboarding = async () => {
             const seen = await AsyncStorage.getItem("hasSeenOnboarding");
@@ -174,7 +173,7 @@ const styles = StyleSheet.create({
     },
     nextButtonText:
     {
-        color: '#fff',
+        color: '#000',
         fontWeight: 'bold'
     },
     loadingContainer:
