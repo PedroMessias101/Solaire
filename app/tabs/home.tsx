@@ -102,7 +102,7 @@ export default function TelaInicial() {
             Hoje, {hoje.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
           </Text>
           <Text style={[estilos.tituloAtividades, { color: corTextoCabecalho }]}>
-            Monitoramento das Placas Solares
+            Monitoramento
           </Text>
         </View>
 
