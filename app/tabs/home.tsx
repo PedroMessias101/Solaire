@@ -90,7 +90,7 @@ export default function TelaInicial() {
             })}
           </Text>
           <Text style={[estilos.tituloAtividades, { color: corTextoCabecalho }]}>
-            Monitoramento das Placas Solares
+            Monitoramento
           </Text>
         </View>
 
