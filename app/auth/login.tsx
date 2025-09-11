@@ -1,27 +1,64 @@
 import React, { useState } from "react";
-import { 
-  View, 
-  Text, 
-  StyleSheet, 
-  ImageBackground, 
-  TouchableOpacity, 
-  TextInput 
+import {
+  View,
+  Text,
+  StyleSheet,
+  ImageBackground,
+  TouchableOpacity,
+  TextInput
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
+// API Render
+const API_URL = "https://solaireapp.onrender.com";
+
 export default function LoginScreen() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
+  const [loading, setLoading] = useState(false);
 
   const handleLogin = async () => {
-    if (username && password) {
-      await AsyncStorage.setItem("userToken", "meuToken123");
-      router.replace("/tabs/home");
-    } else {
+    if (!username || !password) {
       alert("Preencha usuário e senha!");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: username, password }),
+      });
+
+      const data = await response.json();
+      console.log("Resposta da API:", data);
+
+      if (response.ok) {
+        // Salva token e nome do usuário
+        await AsyncStorage.setItem("userToken", data.token);
+        await AsyncStorage.setItem("userName", data.user?.name || username);
+
+        // Verifica se o usuário já viu o onboarding
+        const hasSeenOnboarding = await AsyncStorage.getItem("hasSeenOnboarding");
+
+        if (hasSeenOnboarding) {
+          router.replace("/tabs/home"); // Já viu, vai direto para a tela inicial
+        } else {
+          router.replace("/tabs/slides"); // Não viu, mostra o onboarding
+        }
+      } else {
+        alert(data.error || "Erro ao fazer login");
+      }
+    } catch (err) {
+      console.log(err);
+      alert("Erro de conexão com a API");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -31,8 +68,7 @@ export default function LoginScreen() {
         source={require("@/assets/fundo-sol.jpeg")}
         style={styles.imageBackground}
         resizeMode="cover"
-      >
-      </ImageBackground>
+      />
 
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Bem-vindo de volta!</Text>
@@ -43,9 +79,11 @@ export default function LoginScreen() {
           <FontAwesome5 name="user" size={16} color="#888" style={styles.icon} />
           <TextInput
             style={styles.input}
-            placeholder="Nome de usuário"
+            placeholder="E-mail"
             value={username}
             onChangeText={setUsername}
+            autoCapitalize="none"
+            keyboardType="email-address"
           />
         </View>
 
@@ -62,18 +100,15 @@ export default function LoginScreen() {
           <Ionicons name="eye" size={20} color="#888" style={styles.iconRight} />
         </View>
 
-        <View style={styles.forgotPasswordContainer}>
-          <Text style={styles.rememberText}>
-            <Ionicons name="checkbox-outline" size={16} color="green" /> lembre-se de mim
-          </Text>
-          <TouchableOpacity>
-            <Text style={styles.forgotText}>Esqueceu a senha?</Text>
-          </TouchableOpacity>
-        </View>
-
         {/* Botão Login */}
-        <TouchableOpacity style={styles.loginButton} onPress={handleLogin}>
-          <Text style={styles.loginButtonText}>Login</Text>
+        <TouchableOpacity
+          style={styles.loginButton}
+          onPress={handleLogin}
+          disabled={loading}
+        >
+          <Text style={styles.loginButtonText}>
+            {loading ? "Entrando..." : "Login"}
+          </Text>
         </TouchableOpacity>
 
         {/* Link Cadastro */}
@@ -89,22 +124,8 @@ export default function LoginScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#e6f3f0",
-  },
-  imageBackground: {
-    height: 250,
-    width: "100%",
-  },
-  backButton: {
-    position: "absolute",
-    top: 60,
-    left: 20,
-    backgroundColor: "rgba(255, 255, 255, 0.2)",
-    padding: 10,
-    borderRadius: 50,
-  },
+  container: { flex: 1, backgroundColor: "#e6f3f0" },
+  imageBackground: { height: 250, width: "100%" },
   card: {
     flex: 1,
     backgroundColor: "white",
@@ -113,73 +134,15 @@ const styles = StyleSheet.create({
     marginTop: -40,
     padding: 30,
   },
-  cardTitle: {
-    fontSize: 28,
-    fontWeight: "bold",
-    textAlign: "center",
-    marginBottom: 5,
-    color: "#333",
-  },
-  cardSubtitle: {
-    fontSize: 16,
-    color: "#888",
-    textAlign: "center",
-    marginBottom: 40,
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#f5f5f5",
-    borderRadius: 10,
-    paddingHorizontal: 15,
-    marginBottom: 20,
-  },
-  input: {
-    flex: 1,
-    height: 50,
-    paddingLeft: 10,
-  },
-  icon: {
-    marginRight: 10,
-  },
-  iconRight: {
-    marginLeft: 10,
-  },
-  forgotPasswordContainer: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginBottom: 30,
-  },
-  rememberText: {
-    fontSize: 14,
-    color: "#555",
-  },
-  forgotText: {
-    fontSize: 14,
-    color: "#fcbb30",
-  },
-  loginButton: {
-    backgroundColor: "#fcbb30",
-    paddingVertical: 15,
-    borderRadius: 10,
-    alignItems: "center",
-    marginBottom: 20,
-  },
-  loginButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "bold",
-  },
-  signupContainer: {
-    flexDirection: "row",
-    justifyContent: "center",
-  },
-  signupText: {
-    color: "#888",
-  },
-  signupLink: {
-    color: "#fcbb30",
-    fontWeight: "bold",
-  },
+  cardTitle: { fontSize: 28, fontWeight: "bold", textAlign: "center", marginBottom: 5, color: "#333" },
+  cardSubtitle: { fontSize: 16, color: "#888", textAlign: "center", marginBottom: 40 },
+  inputContainer: { flexDirection: "row", alignItems: "center", backgroundColor: "#f5f5f5", borderRadius: 10, paddingHorizontal: 15, marginBottom: 20 },
+  input: { flex: 1, height: 50, paddingLeft: 10 },
+  icon: { marginRight: 10 },
+  iconRight: { marginLeft: 10 },
+  loginButton: { backgroundColor: "#fcbb30", paddingVertical: 15, borderRadius: 10, alignItems: "center", marginBottom: 20 },
+  loginButtonText: { color: "white", fontSize: 18, fontWeight: "bold" },
+  signupContainer: { flexDirection: "row", justifyContent: "center" },
+  signupText: { color: "#888" },
+  signupLink: { color: "#fcbb30", fontWeight: "bold" },
 });
