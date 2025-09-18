@@ -21,7 +21,7 @@ export default function WelcomeScreen() {
       <StatusBar barStyle="light-content" />
 
       <ImageBackground
-        source={require("@/assets/fundo3.jpg")}
+        source={require("@/assets/fundo2.jpg")}
         style={styles.background}
         resizeMode="cover"
       >
@@ -66,7 +66,7 @@ const styles = StyleSheet.create({
   },
   title: {
     fontSize: width * 0.1,
-    color: "#fff",
+    color: "#fcbb30",
     fontWeight: "600",
     lineHeight: width * 0.12,
   },

@@ -84,7 +84,7 @@ export default function TelaPerfil() {
 <Text style={estilos.labelIndicador}>Economia</Text>
 </View>
 <View style={estilos.cardIndicador}>
-<MaterialIcons name="solar-power" size={28} color="#fcbb30" />
+<MaterialIcons name="solar-power" size={28} color="#20B2AA" />
 <Text style={estilos.valorIndicador}>
               {placasAtivas} Ativa{placasAtivas !== 1 ? "s" : ""}
 </Text>
@@ -170,19 +170,17 @@ const estilos = StyleSheet.create({
   avatar: {
     width: 90,
     height: 90,
-    borderRadius: 45,
-    borderWidth: 2,
-    borderColor: "#fcbb30",
-    backgroundColor: "#eee",
+    borderColor: "#fff",
+   
   },
   editAvatar: {
     position: "absolute",
-    bottom: 0,
-    right: 0,
-    backgroundColor: "#fcbb30",
-    borderRadius: 14,
-    padding: 6,
-    elevation: 2,
+    bottom: 6,
+    right: 6,
+    backgroundColor: "#000",
+    borderRadius: 24,
+    padding: 2,
+   
   },
   nome: {
     fontSize: 22,
@@ -204,18 +202,20 @@ const estilos = StyleSheet.create({
     textAlign: "center",
   },
   botaoEditar: {
-    backgroundColor: "#fcbb30",
+    backgroundColor: "#000",
     paddingVertical: 7,
-    paddingHorizontal: 22,
-    borderRadius: 10,
-    marginTop: 8,
-    marginBottom: 2,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    borderWidth: 2,
+    borderColor: "#FFC125",
+    marginTop: 6,
+    marginBottom: 1,
     alignSelf: "center",
   },
   textoBotaoEditar: {
-    color: "#fff",
+    color: "#FFC125",
     fontWeight: "bold",
-    fontSize: 16,
+    fontSize: 14,
   },
   indicadores: {
     flexDirection: "row",
@@ -249,7 +249,7 @@ const estilos = StyleSheet.create({
   },
   labelIndicador: {
     fontSize: 13,
-    color: "#888",
+    color: "#000",
     marginTop: 2,
   },
   secaoPlacas: {
@@ -278,17 +278,17 @@ const estilos = StyleSheet.create({
   botaoAdicionar: {
     backgroundColor: "#fcbb30",
     paddingVertical: 6,
-    paddingHorizontal: 14,
-    borderRadius: 8,
+    paddingHorizontal: 12,
+    borderRadius: 16,
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
   textoBotaoAdicionar: {
-    color: "#fff",
+    color: "#000",
     fontWeight: "bold",
-    fontSize: 14,
-    marginLeft: 4,
+    fontSize: 12,
+    marginLeft: 5,
   },
   cardPlaca: {
     backgroundColor: "#f9f9f9",
@@ -305,7 +305,7 @@ const estilos = StyleSheet.create({
     shadowRadius: 4,
   },
   nomePlaca: {
-    fontSize: 16,
+    fontSize: 15,
     color: "#0a3a5a",
     fontWeight: "bold",
     marginBottom: 2,
@@ -314,7 +314,7 @@ const estilos = StyleSheet.create({
     fontSize: 13,
     color: "#fff",
     fontWeight: "bold",
-    borderRadius: 8,
+    borderRadius: 12,
     paddingHorizontal: 10,
     paddingVertical: 2,
     alignSelf: "flex-start",
