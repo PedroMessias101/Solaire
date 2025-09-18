@@ -1,8 +1,10 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 export default function TelaConfig() {
+    const router = useRouter();
   return (
     <ScrollView style={estilos.tela}>
 
@@ -13,7 +15,8 @@ export default function TelaConfig() {
       </View>
 
       <Text style={estilos.tituloSecao}>Conta</Text>
-      <TouchableOpacity style={estilos.item}>
+      <TouchableOpacity style={estilos.item}
+       onPress={() => router.push("/tabs/gerenciarConta")}>
         <View style={estilos.caixaIcone}>
           <Ionicons name="person-outline" size={22} color="#000" />
         </View>

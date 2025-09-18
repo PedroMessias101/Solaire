@@ -10,26 +10,20 @@ import {
 import { AnimatedCircularProgress } from "react-native-circular-progress";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-<<<<<<< HEAD
+import AsyncStorage from "@react-native-async-storage/async-storage"
 
 // URL da sua API
 const API_URL = "https://solaireapp.onrender.com"; 
-=======
- 
->>>>>>> 054a8ac11bbf65b9a7207f637ce450baa77a9187
+
 export default function TelaInicial() {
   const hoje = new Date();
   const [dataSelecionada, setDataSelecionada] = useState(hoje);
   const [nomeUsuario, setNomeUsuario] = useState<string | null>(null);
  
   const hora = hoje.getHours();
-<<<<<<< HEAD
 
   // Carregar nome do usuário logado do backend
-=======
- 
->>>>>>> 054a8ac11bbf65b9a7207f637ce450baa77a9187
+
   useEffect(() => {
     const carregarNomeUsuario = async () => {
       try {
@@ -88,7 +82,6 @@ export default function TelaInicial() {
  
   return (
     <ScrollView style={estilos.tela}>
-<<<<<<< HEAD
       <View style={estilos.cabecalho}>
         <LinearGradient
           colors={coresGradiente}
@@ -136,7 +129,6 @@ export default function TelaInicial() {
         </View>
       </View>
 
-=======
       {/* Informações do topo */}
       <View style={estilos.infoTopo}>
         <Image
@@ -189,7 +181,6 @@ export default function TelaInicial() {
      
  
       {/* Cards de monitoramento */}
->>>>>>> 054a8ac11bbf65b9a7207f637ce450baa77a9187
       <View style={estilos.gridMonitoramento}>
         <View style={[estilos.cardMonitoramento, estilos.cardVerde]}>
           <FontAwesome5 name="solar-panel" size={24} color="#2e7d32" />
@@ -226,12 +217,6 @@ export default function TelaInicial() {
     </ScrollView>
   );
 }
-<<<<<<< HEAD
-
-
-=======
- 
->>>>>>> 054a8ac11bbf65b9a7207f637ce450baa77a9187
 const estilos = StyleSheet.create({
   tela: { flex: 1, backgroundColor: "#ededed" },
   infoTopo: {
