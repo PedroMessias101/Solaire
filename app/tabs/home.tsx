@@ -1,335 +1,275 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import {
   View,
   Text,
-  StyleSheet,
-  TouchableOpacity,
   Image,
+  StyleSheet,
+  ActivityIndicator,
   ScrollView,
+  TouchableOpacity,
 } from "react-native";
-import { AnimatedCircularProgress } from "react-native-circular-progress";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather, MaterialCommunityIcons, FontAwesome5 } from "@expo/vector-icons";
-import AsyncStorage from "@react-native-async-storage/async-storage"
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
+import { useRouter } from "expo-router";
 
-// URL da sua API
-const API_URL = "https://solaireapp.onrender.com"; 
+export default function HomeScreen() {
+  const router = useRouter();
+  const [user, setUser] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeIndex, setActiveIndex] = useState(0);
 
-export default function TelaInicial() {
-  const hoje = new Date();
-  const [dataSelecionada, setDataSelecionada] = useState(hoje);
-  const [nomeUsuario, setNomeUsuario] = useState<string | null>(null);
- 
-  const hora = hoje.getHours();
+  const fetchUser = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        setError("Token não encontrado. Faça login novamente.");
+        setLoading(false);
+        return;
+      }
 
-  // Carregar nome do usuário logado do backend
+      const res = await fetch("https://solaireapp.onrender.com/users/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+      const data = await res.json();
+      const userObj = data?.user || data?.data || data;
+
+      if (!userObj || userObj?.message || userObj?.error) {
+        setError(userObj?.message ?? userObj?.error ?? "Resposta inválida da API");
+        setLoading(false);
+        return;
+      }
+
+      setUser(userObj);
+    } catch (err) {
+      setError(err.message || "Erro inesperado");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const carregarNomeUsuario = async () => {
-      try {
-        const token = await AsyncStorage.getItem("token");
-        if (!token) return;
-
-        const response = await fetch(`${API_URL}/me`, {
-          headers: { Authorization: `Bearer ${token}` },
-        });
-        const data = await response.json();
-
-        if (response.ok) {
-          setNomeUsuario(data.name);
-          await AsyncStorage.setItem("userName", data.name);
-        }
-      } catch (err) {
-        console.error("Erro ao buscar dados do usuário:", err);
-      }
-    };
-
-    carregarNomeUsuario();
+    fetchUser();
   }, []);
- 
-  const saudacao = nomeUsuario
-    ? hora < 12
-      ? `Bom dia, ${nomeUsuario}`
-      : hora < 18
-        ? `Boa tarde, ${nomeUsuario}`
-        : `Boa noite, ${nomeUsuario}`
-    : "";
- 
-  let coresGradiente;
-  let corTextoCabecalho;
- 
-  if (hora < 12) {
-    coresGradiente = ["#f8ec81ff", "#ed7914ff", "#fd7a2eff"];
-    corTextoCabecalho = "#333";
-  } else if (hora < 18) {
-    coresGradiente = ["#FFC125", "#FF4500"];
-    corTextoCabecalho = "#333";
-  } else {
-    coresGradiente = ["#f9d86fff", "#f58d38ff", "#000000"];
-    corTextoCabecalho = "#fff";
+
+  if (loading) {
+    return (
+      <View style={estilos.loading}>
+        <ActivityIndicator size="large" color="#FFD700" />
+      </View>
+    );
   }
- 
-  const formatarData = (data: Date) => {
-    return data.toLocaleDateString("pt-BR", { day: "numeric", month: "short" });
-  };
- 
-  const dias: Date[] = [];
-  for (let i = -1; i <= 1; i++) {
-    const d = new Date(hoje);
-    d.setDate(hoje.getDate() + i);
-    dias.push(d);
-  }
- 
+
   return (
-    <ScrollView style={estilos.tela}>
-      <View style={estilos.cabecalho}>
-        <LinearGradient
-          colors={coresGradiente}
-          start={{ x: 0, y: 1 }}
-          end={{ x: 1, y: 3 }}
-          style={estilos.fundoGradiente}
-        />
-
-        <View style={estilos.linhaPerfil}>
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={estilos.tela}
+        contentContainerStyle={{ paddingBottom: 80 }}
+      >
+        {/* Header com avatar e engrenagem */}
+        <View style={estilos.header}>
           <Image
-            source={require("../../assets/perfil-avatar.png")}
-            style={estilos.imagemPerfil}
+            source={{
+              uri:
+                user?.avatar ||
+                "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+            }}
+            style={estilos.avatar}
           />
-          <Text style={[estilos.saudacao, { color: corTextoCabecalho }]}>
-            {saudacao}
-          </Text>
+          <View style={{ flex: 1 }}>
+            <Text style={estilos.saudacao}>
+              Olá, <Text style={estilos.username}>{user?.name || "Bem-vindo!"}</Text>
+            </Text>
+            {user?.email && <Text style={estilos.email}>{user.email}</Text>}
+          </View>
+
+          {/* Botão de configurações */}
+          <TouchableOpacity
+            style={estilos.settingsButton}
+            onPress={() => router.push("./config")}
+          >
+            <Feather name="settings" size={28} color="#333" />
+          </TouchableOpacity>
         </View>
 
-        <View style={estilos.infoCabecalho}>
-          <Text style={[estilos.dataHoje, { color: corTextoCabecalho }]}>
-            Hoje, {hoje.toLocaleDateString("pt-BR", { day: "numeric", month: "short" })}
-          </Text>
-          <Text style={[estilos.tituloAtividades, { color: corTextoCabecalho }]}>
-            Monitoramento
-          </Text>
-        </View>
-
-        <View style={estilos.linhaDias}>
-          {dias.map((dia, index) => {
-            const selecionado = formatarData(dia) === formatarData(dataSelecionada);
-            return (
-              <TouchableOpacity
-                key={index}
-                onPress={() => setDataSelecionada(dia)}
-                style={[estilos.botaoDia, selecionado && estilos.botaoDiaAtivo]}
-              >
-                <Text
-                  style={[estilos.textoDia, selecionado && estilos.textoDiaAtivo]}
-                >
-                  {formatarData(dia)}
-                </Text>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
-      </View>
-
-      {/* Informações do topo */}
-      <View style={estilos.infoTopo}>
-        <Image
-          source={require("../../assets/perfil-avatar.png")}
-          style={estilos.imagemPerfil}
-        />
-        <View>
-          <Text style={estilos.saudacao}>{saudacao}</Text>
-         
-        </View>
-      </View>
-      
- 
-      {/* Gráfico circular de eficiência */}
-      <View style={estilos.circuloContainer}>
-        <AnimatedCircularProgress
-          size={160}
-          width={16}
-          fill={8}
-          tintColor="#FFC125"
-          backgroundColor="#BDBDBD"
-          rotation={0}
-        >
-          {fill => (
-            <Text style={estilos.percentualTexto}>{`${Math.round(fill)}%`}</Text>
-          )}
-        </AnimatedCircularProgress>
-      </View>
-      
-      <View style={estilos.linhaDias}>
-        {dias.map((dia, index) => {
-          const selecionado = formatarData(dia) === formatarData(dataSelecionada);
-          return (
-            <TouchableOpacity
-              key={index}
-              onPress={() => setDataSelecionada(dia)}
-              style={[estilos.botaoDia, selecionado && estilos.botaoDiaAtivo]}
-            >
-              <Text
-                style={[estilos.textoDia, selecionado && estilos.textoDiaAtivo]}
-              >
-                {formatarData(dia)}
-              </Text>
+        {error && (
+          <View style={estilos.errorBox}>
+            <Text style={estilos.errorText}>{error}</Text>
+            <TouchableOpacity style={estilos.retryBtn} onPress={fetchUser}>
+              <Text style={estilos.retryText}>Tentar novamente</Text>
             </TouchableOpacity>
-          );
-        })}
-      </View>
- 
-     
-     
- 
-      {/* Cards de monitoramento */}
-      <View style={estilos.gridMonitoramento}>
-        <View style={[estilos.cardMonitoramento, estilos.cardVerde]}>
-          <FontAwesome5 name="solar-panel" size={24} color="#2e7d32" />
-          <Text style={estilos.tituloCard}>Geração Atual</Text>
-          <Text style={estilos.valorCard}>3200W</Text>
-          <Text style={estilos.statusCard}>Normal</Text>
+          </View>
+        )}
+
+        <LinearGradient
+          colors={["#000", "#FFC125"]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={estilos.cardPrincipal}
+        >
+          <Text style={estilos.cardTitulo}>Visão Geral</Text>
+          <Text style={estilos.cardValor}>3.200W</Text>
+          <Text style={estilos.cardLegenda}>Geração Atual</Text>
+        </LinearGradient>
+
+        <View style={estilos.grid}>
+          <View style={estilos.card}>
+            <Feather name="thermometer" size={28} color="#FFC125" />
+            <Text style={estilos.cardLabel}>Temperatura</Text>
+            <Text style={estilos.cardValor}>42°C</Text>
+          </View>
+          <View style={estilos.card}>
+            <MaterialCommunityIcons name="flash" size={28} color="#FFC125" />
+            <Text style={estilos.cardLabel}>Tensão</Text>
+            <Text style={estilos.cardValor}>220V</Text>
+          </View>
+          <View style={estilos.card}>
+            <MaterialCommunityIcons name="current-ac" size={28} color="#FFC125" />
+            <Text style={estilos.cardLabel}>Corrente</Text>
+            <Text style={estilos.cardValor}>14A</Text>
+          </View>
+          <View style={estilos.card}>
+            <MaterialCommunityIcons name="percent" size={28} color="#FFC125" />
+            <Text style={estilos.cardLabel}>Eficiência</Text>
+            <Text style={estilos.cardValor}>87%</Text>
+          </View>
         </View>
-        <View style={estilos.cardMonitoramento}>
-          <Feather name="thermometer" size={24} color="#1976d2" />
-          <Text style={estilos.tituloCard}>Temperatura</Text>
-          <Text style={estilos.valorCard}>42°C</Text>
+
+        <View style={[estilos.card, estilos.cardStatus]}>
+          <MaterialCommunityIcons name="alert-circle-check" size={28} color="#2e7d32" />
+          <View>
+            <Text style={estilos.cardLabel}>Status</Text>
+            <Text style={[estilos.cardValor, { color: "#2e7d32" }]}>Tudo funcionando bem</Text>
+          </View>
         </View>
-        <View style={estilos.cardMonitoramento}>
-          <MaterialCommunityIcons name="percent" size={24} color="#0288d1" />
-          <Text style={estilos.tituloCard}>Eficiência</Text>
-          <Text style={estilos.valorCard}>87%</Text>
-        </View>
-        <View style={estilos.cardMonitoramento}>
-          <MaterialCommunityIcons name="flash" size={24} color="#fbc02d" />
-          <Text style={estilos.tituloCard}>Tensão</Text>
-          <Text style={estilos.valorCard}>220V</Text>
-        </View>
-        <View style={estilos.cardMonitoramento}>
-          <MaterialCommunityIcons name="current-ac" size={24} color="#7b1fa2" />
-          <Text style={estilos.tituloCard}>Corrente</Text>
-          <Text style={estilos.valorCard}>14A</Text>
-        </View>
-        <View style={estilos.cardMonitoramento}>
-          <MaterialCommunityIcons name="alert-circle" size={24} color="#e53935" />
-          <Text style={estilos.tituloCard}>Status</Text>
-          <Text style={estilos.valorCard}>Sem alertas</Text>
-        </View>
-      </View>
-    </ScrollView>
+      </ScrollView>
+
+      <AnimatedBottomNavBar
+        activeIndex={activeIndex}
+        onTabPress={setActiveIndex}
+      />
+    </View>
   );
 }
+
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: "#ededed" },
-  infoTopo: {
+  tela: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 16,
+    paddingTop: 40,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  header: {
     flexDirection: "row",
     alignItems: "center",
-    marginTop: 32,
-    marginBottom: 10,
-    paddingHorizontal: 20,
-  },
-  imagemPerfil: {
-    width: 60,
-    height: 60,
-    marginRight: 14,
-    borderColor: "#rgba(0,0,0,0.00)",
-    borderWidth: 3,
-    borderRadius: 30,
+    marginBottom: 12,
   },
   saudacao: {
     fontSize: 20,
     fontWeight: "600",
-    color: "#333",
+    color: "#000",
   },
-  dataHoje: {
-    fontSize: 14,
+  username: {
+    fontWeight: "700",
+    color: "#000000ff",
+  },
+  email: {
+    fontSize: 12,
     color: "#666",
     marginTop: 2,
   },
-  circuloContainer: {
-    alignItems: "center",
-    marginBottom: 18,
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: "#FFD700",
   },
-  percentualTexto: {
+  settingsButton: {
+    marginLeft: 12,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardPrincipal: {
+    borderRadius: 20,
+    padding: 24,
+    marginBottom: 20,
+  },
+  cardTitulo: {
+    fontSize: 16,
+    color: "#fff",
+    marginBottom: 6,
+  },
+  cardValor: {
     fontSize: 28,
     fontWeight: "bold",
-    color: "#FFC125",
-    marginTop: 8,
+    color: "#fff",
   },
-  linhaDias: {
-    flexDirection: "row",
-    justifyContent: "space-around",
-    marginVertical: 18,
-    width: "100%",
-    paddingHorizontal: 10,
-    height: 33,
-  },
-  botaoDia: {
-    paddingVertical: 8,
-    paddingHorizontal: 15,
-    borderRadius: 20,
-    backgroundColor: "#fff",
-    borderWidth: 1,
-    borderColor: "#eee",
-  },
-  textoDia: {
+  cardLegenda: {
     fontSize: 14,
-    color: "#707070ff",
+    color: "#fff",
+    marginTop: 4,
   },
-  botaoDiaAtivo: {
-    backgroundColor: "#000",
-    borderColor: "#FFC125",
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.08,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  textoDiaAtivo: {
-    color: "#FFC125",
-    fontWeight: "bold",
-  },
-  gridMonitoramento: {
+  grid: {
     flexDirection: "row",
     flexWrap: "wrap",
     justifyContent: "space-between",
-    padding: 18,
-    marginTop: 10,
   },
-  cardMonitoramento: {
+  card: {
     backgroundColor: "#fff",
-    borderRadius: 16,
-    width: "47%",
-    padding: 16,
+    borderRadius: 20,
+    padding: 18,
     marginBottom: 16,
+    width: "47%",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
   },
-  cardVerde: {
-    backgroundColor: "#e6f9ed",
-    borderColor: "#4aacd9",
-    borderWidth: 1,
-  },
-  tituloCard: {
-    fontSize: 13,
+  cardLabel: {
+    fontSize: 14,
     color: "#333",
     marginTop: 8,
-    marginBottom: 6,
-    fontWeight: "bold",
+    fontWeight: "500",
   },
-  valorCard: {
-    fontSize: 18,
-    fontWeight: "bold",
-    color: "#333",
+  cardStatus: {
+    width: "100%",
+    flexDirection: "row",
+    justifyContent: "flex-start",
+    alignItems: "center",
+    gap: 12,
   },
-  statusCard: {
-    fontSize: 12,
-    color: "#2e7d32",
-    backgroundColor: "#d2f7e6",
+  errorBox: {
+    backgroundColor: "#ffece6",
+    padding: 12,
+    borderRadius: 10,
+    marginBottom: 12,
+  },
+  errorText: {
+    color: "#b00020",
+    marginBottom: 8,
+  },
+  retryBtn: {
+    alignSelf: "flex-start",
+    backgroundColor: "#000",
+    paddingHorizontal: 12,
+    paddingVertical: 8,
     borderRadius: 8,
-    paddingHorizontal: 8,
-    paddingVertical: 2,
-    marginTop: 4,
   },
+  retryText: { color: "#FFC125" },
 });
- 

@@ -46,14 +46,6 @@ export default function ContaScreen() {
         keyboardType="email-address"
       />
 
-      <Text style={estilos.label}>Telefone</Text>
-      <TextInput
-        style={estilos.input}
-        value={telefone}
-        onChangeText={setTelefone}
-        keyboardType="phone-pad"
-      />
-
       {/* Botão salvar */}
       <TouchableOpacity style={estilos.botao}>
         <Text style={estilos.textoBotao}>Salvar Alterações</Text>

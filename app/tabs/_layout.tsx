@@ -8,12 +8,14 @@ export default function TabsLayout() {
         name="home"
         options={{
           title: "Home",
+              tabBarStyle: { display: "none" }, 
         }}
       />
       <Tabs.Screen
         name="perfil"
         options={{
           title: "Perfil",
+              tabBarStyle: { display: "none" }, 
         }}
       />
     </Tabs>

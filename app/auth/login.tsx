@@ -11,14 +11,12 @@ import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-// API Render
-const API_URL = "https://solaireapp.onrender.com";
-
 export default function LoginScreen() {
   const router = useRouter();
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
+  const API_URL = "https://solaireapp.onrender.com";
 
   const handleLogin = async () => {
     if (!username || !password) {
@@ -29,7 +27,8 @@ export default function LoginScreen() {
     setLoading(true);
 
     try {
-      const response = await fetch(`${API_URL}/login`, {
+      // ✅ URL corrigida
+      const response = await fetch(`${API_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: username, password }),
