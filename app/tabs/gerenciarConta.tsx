@@ -13,7 +13,12 @@ export default function ManageAccountScreen() {
   const router = useRouter();
   return (
     <ScrollView style={styles.container}>
-      <Text style={styles.header}>Gerenciar Conta</Text>
+      <View>
+        <Ionicons name="arrow-back" size={22} color="#000"
+          onPress={() => router.push("/tabs/config")} />
+        <Text style={styles.header}>Gerenciar Conta</Text>
+      </View>
+
 
       {/* Conta */}
       <View style={styles.section}>

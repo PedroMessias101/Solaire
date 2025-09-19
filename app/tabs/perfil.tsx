@@ -12,6 +12,7 @@ import {
 } from "react-native";
 import { Feather, MaterialIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { LinearGradient } from "expo-linear-gradient"; // Importação adicionada
 
 const ECONOMIA_POR_PLACA = 16.0;
 
@@ -80,12 +81,17 @@ export default function TelaPerfil() {
   return (
     <SafeAreaView style={{ flex: 1, backgroundColor: "#f5f5f5" }}>
       <ScrollView style={estilos.tela} contentContainerStyle={{ paddingBottom: 32 }}>
-        {/* Header */}
-        <View style={estilos.cabecalho}>
+        {/* Header com LinearGradient */}
+        <LinearGradient
+          colors={['#FFC125', '#000']} // Degradê de amarelo para preto
+          style={estilos.cabecalho}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+        >
           <View style={estilos.avatarContainer}>
             <Image source={require("../../assets/perfil-avatar.png")} style={estilos.avatar} />
             <TouchableOpacity style={estilos.editAvatar}>
-              <Feather name="edit-2" size={18} color="#fff" />
+              <Feather name="edit-2" size={18} color="#ffc125" />
             </TouchableOpacity>
           </View>
           <Text style={estilos.nome}>{usuario.name}</Text>
@@ -94,7 +100,7 @@ export default function TelaPerfil() {
           <TouchableOpacity style={estilos.botaoEditar}>
             <Text style={estilos.textoBotaoEditar}>Editar Perfil</Text>
           </TouchableOpacity>
-        </View>
+        </LinearGradient>
 
         {/* Cards indicadores */}
         <View style={estilos.indicadores}>
@@ -162,7 +168,7 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     paddingTop: 40,
     paddingBottom: 30,
-    backgroundColor: "#000",
+    // Note: 'backgroundColor' foi removido daqui
     borderBottomLeftRadius: 32,
     borderBottomRightRadius: 32,
     marginBottom: 20,
@@ -173,13 +179,13 @@ const estilos = StyleSheet.create({
     shadowRadius: 8,
   },
   avatarContainer: { position: "relative", marginBottom: 12 },
-  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: "#FFC125" },
-  editAvatar: { position: "absolute", bottom: 0, right: 0, backgroundColor: "#FFC125", borderRadius: 20, padding: 4 },
-  nome: { fontSize: 22, fontWeight: "bold", color: "#FFC125", marginBottom: 2, textAlign: "center" },
+  avatar: { width: 100, height: 100, borderRadius: 50, borderWidth: 3, borderColor: "#000" },
+  editAvatar: { position: "absolute", bottom: 0, right: 0, backgroundColor: "#000", borderRadius: 20, padding: 4 },
+  nome: { fontSize: 22, fontWeight: "bold", color: "#fff", marginBottom: 2, textAlign: "center" },
   email: { fontSize: 14, color: "#fff", marginBottom: 2, textAlign: "center" },
   bio: { fontSize: 13, color: "#fff", marginBottom: 10, textAlign: "center" },
-  botaoEditar: { backgroundColor: "#FFC125", paddingVertical: 8, paddingHorizontal: 24, borderRadius: 25, marginTop: 6 },
-  textoBotaoEditar: { color: "#000", fontWeight: "bold", fontSize: 14 },
+  botaoEditar: { borderWidth: 2, borderColor: "#fff", paddingVertical: 8, paddingHorizontal: 24, borderRadius: 25, marginTop: 6 },
+  textoBotaoEditar: { color: "#fff", fontWeight: "bold", fontSize: 14 },
   indicadores: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between", marginVertical: 18 },
   cardIndicador: {
     backgroundColor: "#fff",

@@ -9,7 +9,8 @@ export default function TelaConfig() {
     <ScrollView style={estilos.tela}>
 
       <View style={estilos.cabecalho}>
-        <Ionicons name="arrow-back" size={22} color="#000" />
+        <Ionicons name="arrow-back" size={22} color="#000"
+        onPress={() => router.push("/tabs/home")} />
         <Text style={estilos.tituloCabecalho}>Configurações</Text>
         <View style={{ width: 22 }} />
       </View>
