@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -6,33 +6,78 @@ import {
   TextInput,
   TouchableOpacity,
   ScrollView,
+  ActivityIndicator,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 
 export default function ContaScreen() {
   const router = useRouter();
 
-  const [nome, setNome] = useState("João Silva");
-  const [email, setEmail] = useState("joao@email.com");
-  const [telefone, setTelefone] = useState("(11) 98765-4321");
+  const [nome, setNome] = useState("");
+  const [email, setEmail] = useState("");
+  const [telefone, setTelefone] = useState("");
+  const [loading, setLoading] = useState(true);
+
+  // Buscar usuário logado
+  const fetchUser = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+
+      const res = await fetch("https://solaireapp.onrender.com/users/me", {
+        method: "GET",
+        headers: {
+          Authorization: `Bearer ${token}`,
+          Accept: "application/json",
+        },
+      });
+
+      const data = await res.json();
+      const userObj = data?.user || data?.data || data;
+
+      setNome(userObj?.name || "");
+      setEmail(userObj?.email || "");
+      setTelefone(userObj?.telefone || ""); // só se existir no backend
+    } catch (error) {
+      console.error("Erro ao buscar usuário:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchUser();
+  }, []);
+
+  if (loading) {
+    return (
+      <View style={estilos.loading}>
+        <ActivityIndicator size="large" color="#fcbb30" />
+      </View>
+    );
+  }
 
   return (
     <ScrollView style={estilos.tela}>
       <View style={estilos.cabecalho}>
-        <Ionicons name="arrow-back" size={22} color="#000"
-          onPress={() => router.push("/tabs/home")} />
+        <Ionicons
+          name="arrow-back"
+          size={22}
+          color="#000"
+          onPress={() => router.push("/tabs/home")}
+        />
         <Text style={estilos.tituloCabecalho}>Minha Conta</Text>
         <View style={{ width: 22 }} />
       </View>
 
       {/* Campos de informações */}
       <Text style={estilos.label}>Nome</Text>
-      <TextInput
-        style={estilos.input}
-        value={nome}
-        onChangeText={setNome}
-      />
+      <TextInput style={estilos.input} value={nome} onChangeText={setNome} />
 
       <Text style={estilos.label}>E-mail</Text>
       <TextInput
@@ -112,5 +157,10 @@ const estilos = StyleSheet.create({
     color: "#333",
     fontWeight: "600",
     fontSize: 15,
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

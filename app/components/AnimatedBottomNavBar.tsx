@@ -30,15 +30,6 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ activeIndex, onTabPress 
 
   return (
     <View style={styles.container}>
-      {/* Círculo animado atrás do ícone */}
-      <Animated.View
-        style={[
-          styles.circle,
-          {
-            transform: [{ translateX: translateX }],
-          },
-        ]}
-      />
       {tabs.map((tab, index) => (
         <TouchableOpacity
           key={index}
@@ -48,7 +39,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ activeIndex, onTabPress 
           <Ionicons
             name={tab.icon}           // <- aqui está a mudança principal
             size={28}
-            color={activeIndex === index ? "#000" : "#fff"} // preto se ativo, branco se não
+            color={activeIndex === index ? "#ffc215" : "#fff"} 
           />
         </TouchableOpacity>
       ))}
@@ -76,7 +67,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 20, // garante que o ícone fique acima do círculo
+    zIndex: 20,
   },
   circle: {
     position: "absolute",
