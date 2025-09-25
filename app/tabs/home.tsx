@@ -24,12 +24,14 @@ export default function HomeScreen() {
   const [activeIndex, setActiveIndex] = useState(0);
 
   const dicas = [
-    "Desligue aparelhos da tomada quando não estiver usando.",
-    "Prefira eletrodomésticos com selo Procel A.",
-    "Aproveite a luz natural e economize energia.",
+    "Usar energia solar pode reduzir até 1,5 tonelada de CO₂ por ano — o equivalente a plantar 40 árvores",
+    "Painéis solares podem cortar até 95% da sua conta de luz",
+    "A energia solar é silenciosa, renovável e não poluente",
     "Use lâmpadas de LED, consomem até 80% menos.",
   ];
+
   const [dica, setDica] = useState("");
+  const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
 
   const fetchUser = async () => {
     setLoading(true);
@@ -68,14 +70,26 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchUser();
+
+    // Escolhe uma dica inicial aleatória
     const random = Math.floor(Math.random() * dicas.length);
     setDica(dicas[random]);
+
+    // Intervalo para trocar a dica de loading a cada 5 segundos
+    const interval = setInterval(() => {
+      setLoadingDicaIndex((prev) => (prev + 1) % dicas.length);
+    }, 5000);
+
+    return () => clearInterval(interval); // limpa o intervalo ao sair da tela
   }, []);
 
+  // Loading com "Você sabia?"
   if (loading) {
     return (
       <View style={estilos.loading}>
         <ActivityIndicator size="large" color="#FFD700" />
+        <Text style={estilos.loadingText}>Você sabia?</Text>
+        <Text style={estilos.loadingDica}>{dicas[loadingDicaIndex]}</Text>
       </View>
     );
   }
@@ -134,30 +148,53 @@ export default function HomeScreen() {
           <LineChart
             data={{
               labels: ["Seg", "Ter", "Qua", "Qui", "Sex", "Sáb", "Dom"],
-              datasets: [{ data: [1200, 1500, 1000, 1800, 2000, 2200, 1900] }],
+              datasets: [
+                {
+                  data: [1200, 1500, 1000, 1800, 2000, 2200, 1900],
+                  color: (opacity = 1) => `rgba(255, 193, 37, ${opacity})`, // linha dourada
+                  strokeWidth: 3, // espessura da linha
+                },
+              ],
             }}
-            width={Dimensions.get("window").width - 27} 
-            height={Dimensions.get("window").width * 0.5} 
-            withDots={false}
-            withInnerLines={false}
-            withOuterLines={false}
-            withVerticalLabels={true}
-            withHorizontalLabels={false}
+            width={Dimensions.get("window").width - 32}
+            height={Dimensions.get("window").width * 0.55}
+            withDots={true}
             withShadow={true}
+            withInnerLines={true}
+            withOuterLines={false}
+            withVerticalLabels
+            withHorizontalLabels={true}
+            yAxisSuffix="W"
             chartConfig={{
               backgroundColor: "transparent",
-              backgroundGradientFrom: "transparent",
-              backgroundGradientTo: "transparent",
+              backgroundGradientFrom: "#fff",
+              backgroundGradientTo: "#fff",
               decimalPlaces: 0,
-              color: () => "#333",
-              labelColor: () => "#333",
-              fillShadowGradient: "#ffc125",
-              fillShadowGradientOpacity: 0.3,
-              strokeWidth: 2,
-              propsForBackgroundLines: { strokeWidth: 0 },
+              color: (opacity = 1) => `rgba(51, 51, 51, ${opacity})`, // cor das labels
+              labelColor: (opacity = 1) => `rgba(102, 102, 102, ${opacity})`,
+              fillShadowGradient: "#FFD700",
+              fillShadowGradientOpacity: 0.2,
+              propsForDots: {
+                r: "5",
+                strokeWidth: "2",
+                stroke: "#FFD700",
+                fill: "#fff",
+              },
+              propsForBackgroundLines: {
+                strokeDasharray: "", // linhas contínuas
+                stroke: "#eee",
+              },
             }}
             bezier
-            style={{ marginVertical: 0, borderRadius: 16 }}
+            style={{
+              marginVertical: 8,
+              borderRadius: 16,
+              shadowColor: "#000",
+              shadowOffset: { width: 0, height: 3 },
+              shadowOpacity: 0.1,
+              shadowRadius: 5,
+              elevation: 3,
+            }}
           />
         </View>
 
@@ -235,7 +272,25 @@ const estilos = StyleSheet.create({
     paddingHorizontal: 16,
     paddingTop: 40,
   },
-  loading: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333",
+  },
+  loadingDica: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#555",
+    textAlign: "center",
+    paddingHorizontal: 20,
+  },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   saudacao: { fontSize: 20, fontWeight: "600", color: "#000" },
   username: { fontWeight: "700", color: "#000000ff" },

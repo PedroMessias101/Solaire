@@ -8,7 +8,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     const checkLogin = async () => {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // tempo da splash
+      await new Promise(resolve => setTimeout(resolve, 2000));
 
       const token = await AsyncStorage.getItem("userToken");
       setIsLoggedIn(!!token);
@@ -17,15 +17,6 @@ export default function RootLayout() {
 
     checkLogin();
   }, []);
-
-  if (isLoading) {
-    // Enquanto carrega, força a splash
-    return (
-      <Stack screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="tabs/splash" />
-      </Stack>
-    );
-  }
 
   return (
     <Stack screenOptions={{ headerShown: false }}>

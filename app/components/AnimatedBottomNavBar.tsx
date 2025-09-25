@@ -1,32 +1,29 @@
-import React, { useEffect, useRef } from "react";
-import { View, TouchableOpacity, StyleSheet, Animated, Dimensions } from "react-native";
+import React from "react";
+import { View, TouchableOpacity, StyleSheet, Dimensions } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
+import { useRouter, usePathname } from "expo-router";
 
 const { width } = Dimensions.get("window");
 
 // 3 abas: Home, Adicionar Placa e Perfil
 const tabs = [
-  { icon: "home" },        // Home
-  { icon: "add-circle" },  // Adicionar placa
-  { icon: "person" },      // Perfil
+  { icon: "home", route: "/tabs/home" },
+  { icon: "add-circle", route: "/add-plate" },
+  { icon: "person", route: "/tabs/perfil" },
 ];
 
 const tabWidth = width / tabs.length;
 
-interface Props {
-  activeIndex: number;
-  onTabPress: (index: number) => void;
-}
+export const AnimatedBottomNavBar: React.FC = () => {
+  const router = useRouter();
+  const pathname = usePathname(); // pega a rota atual
 
-export const AnimatedBottomNavBar: React.FC<Props> = ({ activeIndex, onTabPress }) => {
-  const translateX = useRef(new Animated.Value(activeIndex * tabWidth)).current;
+  // Define qual aba está ativa com base na rota atual
+  const activeIndex = tabs.findIndex(tab => tab.route === pathname);
 
-  useEffect(() => {
-    Animated.spring(translateX, {
-      toValue: activeIndex * tabWidth,
-      useNativeDriver: true,
-    }).start();
-  }, [activeIndex]);
+  const handlePress = (route: string) => {
+    router.push(route);
+  };
 
   return (
     <View style={styles.container}>
@@ -34,12 +31,12 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ activeIndex, onTabPress 
         <TouchableOpacity
           key={index}
           style={styles.tab}
-          onPress={() => onTabPress(index)}
+          onPress={() => handlePress(tab.route)}
         >
           <Ionicons
-            name={tab.icon}           // <- aqui está a mudança principal
+            name={tab.icon}
             size={28}
-            color={activeIndex === index ? "#ffc215" : "#fff"} 
+            color={activeIndex === index ? "#ffc215" : "#fff"}
           />
         </TouchableOpacity>
       ))}
@@ -67,16 +64,5 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    zIndex: 20,
-  },
-  circle: {
-    position: "absolute",
-    width: tabWidth - 70, // tamanho menor
-    height: tabWidth - 70,
-    borderRadius: (tabWidth - 70) / 2,
-    backgroundColor: "#ffc125",
-    bottom: 5,
-    left: (tabWidth - (tabWidth - 70)) / 2, // centraliza atrás do ícone
-    zIndex: 10,
   },
 });

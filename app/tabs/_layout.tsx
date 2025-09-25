@@ -18,6 +18,48 @@ export default function TabsLayout() {
               tabBarStyle: { display: "none" }, 
         }}
       />
+       <Tabs.Screen
+        name="config"
+        options={{
+          title: "Config",
+              tabBarStyle: { display: "none" }, 
+        }}
+      />
+       <Tabs.Screen
+        name="gerenciarConta"
+        options={{
+          title: "gerenciarConta",
+              tabBarStyle: { display: "none" }, 
+        }}
+      />
+       <Tabs.Screen
+        name="slides"
+        options={{
+          title: "slides",
+              tabBarStyle: { display: "none" }, 
+        }}
+      />
+       <Tabs.Screen
+        name="alterar-senha"
+        options={{
+          title: "alterar-senha",
+              tabBarStyle: { display: "none" }, 
+        }}
+      />
+       <Tabs.Screen
+        name="chat-bot"
+        options={{
+          title: "chatbot",
+              tabBarStyle: { display: "none" }, 
+        }}
+      />
+       <Tabs.Screen
+        name="conta"
+        options={{
+          title: "conta",
+              tabBarStyle: { display: "none" }, 
+        }}
+      />
     </Tabs>
   );
 }

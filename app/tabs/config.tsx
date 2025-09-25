@@ -1,86 +1,97 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 
 export default function TelaConfig() {
-    const router = useRouter();
+  const router = useRouter();
+
   return (
-    <ScrollView style={estilos.tela}>
+    <View style={{ flex: 1 }}>
+      <ScrollView style={estilos.tela}>
+        <View style={estilos.cabecalho}>
+          <Ionicons
+            name="arrow-back"
+            size={22}
+            color="#000"
+            onPress={() => router.push("/tabs/home")}
+          />
+          <Text style={estilos.tituloCabecalho}>Configurações</Text>
+          <View style={{ width: 22 }} />
+        </View>
 
-      <View style={estilos.cabecalho}>
-        <Ionicons name="arrow-back" size={22} color="#000"
-        onPress={() => router.push("/tabs/home")} />
-        <Text style={estilos.tituloCabecalho}>Configurações</Text>
-        <View style={{ width: 22 }} />
-      </View>
+        <Text style={estilos.tituloSecao}>Conta</Text>
+        <TouchableOpacity
+          style={estilos.item}
+          onPress={() => router.push("/tabs/gerenciarConta")}
+        >
+          <View style={estilos.caixaIcone}>
+            <Ionicons name="person-outline" size={22} color="#000" />
+          </View>
+          <View>
+            <Text style={estilos.tituloItem}>Contas</Text>
+            <Text style={estilos.subtituloItem}>Gerencie os detalhes da sua conta</Text>
+          </View>
+        </TouchableOpacity>
 
-      <Text style={estilos.tituloSecao}>Conta</Text>
-      <TouchableOpacity style={estilos.item}
-       onPress={() => router.push("/tabs/gerenciarConta")}>
-        <View style={estilos.caixaIcone}>
-          <Ionicons name="person-outline" size={22} color="#000" />
-        </View>
-        <View>
-          <Text style={estilos.tituloItem}>Contas</Text>
-          <Text style={estilos.subtituloItem}>Gerencie os detalhes da sua conta</Text>
-        </View>
-      </TouchableOpacity>
+        <Text style={estilos.tituloSecao}>Energia</Text>
+        <TouchableOpacity style={estilos.item}>
+          <View style={estilos.caixaIcone}>
+            <MaterialIcons name="bar-chart" size={22} color="#000" />
+          </View>
+          <View>
+            <Text style={estilos.tituloItem}>Relatórios de Consumo</Text>
+            <Text style={estilos.subtituloItem}>Veja consumo e geração diária</Text>
+          </View>
+        </TouchableOpacity>
 
+        <TouchableOpacity style={estilos.item}>
+          <View style={estilos.caixaIcone}>
+            <Ionicons name="cloud-download-outline" size={22} color="#000" />
+          </View>
+          <View>
+            <Text style={estilos.tituloItem}>Exportar Dados</Text>
+            <Text style={estilos.subtituloItem}>Baixe os relatórios em PDF ou Excel</Text>
+          </View>
+        </TouchableOpacity>
 
-      <Text style={estilos.tituloSecao}>Energia</Text>
-      <TouchableOpacity style={estilos.item}>
-        <View style={estilos.caixaIcone}>
-          <MaterialIcons name="bar-chart" size={22} color="#000" />
-        </View>
-        <View>
-          <Text style={estilos.tituloItem}>Relatórios de Consumo</Text>
-          <Text style={estilos.subtituloItem}>Veja consumo e geração diária</Text>
-        </View>
-      </TouchableOpacity>
+        <Text style={estilos.tituloSecao}>Notificação</Text>
+        <TouchableOpacity style={estilos.item}>
+          <View style={estilos.caixaIcone}>
+            <Ionicons name="alert-circle-outline" size={22} color="#000" />
+          </View>
+          <View>
+            <Text style={estilos.tituloItem}>Alertas de Produção Baixa</Text>
+            <Text style={estilos.subtituloItem}>Seja avisado quando a produção cai</Text>
+          </View>
+        </TouchableOpacity>
 
-      <TouchableOpacity style={estilos.item}>
-        <View style={estilos.caixaIcone}>
-          <Ionicons name="cloud-download-outline" size={22} color="#000" />
-        </View>
-        <View>
-          <Text style={estilos.tituloItem}>Exportar Dados</Text>
-          <Text style={estilos.subtituloItem}>Baixe os relatórios em PDF ou Excel</Text>
-        </View>
-      </TouchableOpacity>
+        <TouchableOpacity style={estilos.item}>
+          <View style={estilos.caixaIcone}>
+            <Ionicons name="notifications-outline" size={22} color="#000" />
+          </View>
+          <View>
+            <Text style={estilos.tituloItem}>Notificações de Manutenção</Text>
+            <Text style={estilos.subtituloItem}>Lembretes para inspeções preventivas</Text>
+          </View>
+        </TouchableOpacity>
 
-      <Text style={estilos.tituloSecao}>Notificação</Text>
-      <TouchableOpacity style={estilos.item}>
-        <View style={estilos.caixaIcone}>
-          <Ionicons name="alert-circle-outline" size={22} color="#000" />
-        </View>
-        <View>
-          <Text style={estilos.tituloItem}>Alertas de Produção Baixa</Text>
-          <Text style={estilos.subtituloItem}>Seja avisado quando a produção cai</Text>
-        </View>
-      </TouchableOpacity>
+        <Text style={estilos.tituloSecao}>Ajuda e Suporte</Text>
+        <TouchableOpacity style={estilos.item}>
+          <View style={estilos.caixaIcone}>
+            <Ionicons name="help-circle-outline" size={22} color="#000" />
+          </View>
+          <View>
+            <Text style={estilos.tituloItem}>Suporte</Text>
+            <Text style={estilos.subtituloItem}>Obtenha ajuda e suporte</Text>
+          </View>
+        </TouchableOpacity>
+      </ScrollView>
 
-      <TouchableOpacity style={estilos.item}>
-        <View style={estilos.caixaIcone}>
-          <Ionicons name="notifications-outline" size={22} color="#000" />
-        </View>
-        <View>
-          <Text style={estilos.tituloItem}>Notificações de Manutenção</Text>
-          <Text style={estilos.subtituloItem}>Lembretes para inspeções preventivas</Text>
-        </View>
-      </TouchableOpacity>
-
-      <Text style={estilos.tituloSecao}>Ajuda e Suporte</Text>
-      <TouchableOpacity style={estilos.item}>
-        <View style={estilos.caixaIcone}>
-          <Ionicons name="help-circle-outline" size={22} color="#000" />
-        </View>
-        <View>
-          <Text style={estilos.tituloItem}>Suporte</Text>
-          <Text style={estilos.subtituloItem}>Obtenha ajuda e suporte</Text>
-        </View>
-      </TouchableOpacity>
-    </ScrollView>
+      {/* Navbar fixa no rodapé, sem precisar de estado */}
+      <AnimatedBottomNavBar />
+    </View>
   );
 }
 
