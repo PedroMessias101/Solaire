@@ -173,13 +173,6 @@ export default function TelaPerfil() {
         <View style={styles.secaoPlacas}>
           <View style={styles.headerPlacas}>
             <Text style={styles.tituloSecao}>Suas Placas</Text>
-            <TouchableOpacity
-              style={styles.botaoAdicionar}
-              onPress={() => router.push("/tabs/cadastro-placa")}
-            >
-              <Feather name="plus" size={18} color="#fff" />
-              <Text style={styles.textoBotaoAdicionar}>Adicionar</Text>
-            </TouchableOpacity>
           </View>
 
           {placas.map((item) => (
@@ -225,15 +218,13 @@ const styles = StyleSheet.create({
   /* Indicadores */
   indicadores: { flexDirection: "row", justifyContent: "space-around", marginVertical: 20, marginHorizontal: 16 },
   cardIndicador: { alignItems: "center", padding: 12, minWidth: 100, borderRadius: 12, backgroundColor: "#f7f7f7" },
-  valorIndicador: { color: "#FFC125", fontWeight: "700", marginTop: 6 },
+  valorIndicador: { color: "#000", fontWeight: "700", marginTop: 6 },
   labelIndicador: { color: "#555", fontSize: 12, marginTop: 2 },
 
   /* Placas */
   secaoPlacas: { marginHorizontal: 16 },
   headerPlacas: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
-  tituloSecao: { fontSize: 16, fontWeight: "700", color: "#FFC125" },
-  botaoAdicionar: { backgroundColor: "#FFC125", paddingVertical: 6, paddingHorizontal: 14, borderRadius: 20, flexDirection: "row", alignItems: "center", gap: 6 },
-  textoBotaoAdicionar: { color: "#000", fontWeight: "700", fontSize: 12 },
+  tituloSecao: { fontSize: 16, fontWeight: "700", color: "#000" },
 
   cardPlaca: { flexDirection: "row", alignItems: "center", padding: 16, marginBottom: 12, backgroundColor: "#f7f7f7", borderRadius: 12 },
   statusIndicator: { width: 14, height: 14, borderRadius: 7 },

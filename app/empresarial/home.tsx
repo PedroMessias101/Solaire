@@ -7,14 +7,14 @@ import {
   ActivityIndicator,
   ScrollView,
   TouchableOpacity,
+  Dimensions,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
-import { graficoBarras} from "../components/grafico-barras"
 import { useRouter } from "expo-router";
-import GraficoBarras from "../components/grafico-barras";
+import { LineChart } from "react-native-chart-kit";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -70,16 +70,20 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchUser();
+
+    // Escolhe uma dica inicial aleatória
     const random = Math.floor(Math.random() * dicas.length);
     setDica(dicas[random]);
 
+    // Intervalo para trocar a dica de loading a cada 5 segundos
     const interval = setInterval(() => {
       setLoadingDicaIndex((prev) => (prev + 1) % dicas.length);
     }, 5000);
 
-    return () => clearInterval(interval);
+    return () => clearInterval(interval); // limpa o intervalo ao sair da tela
   }, []);
 
+  // Loading com "Você sabia?"
   if (loading) {
     return (
       <View style={estilos.loading}>
@@ -135,9 +139,8 @@ export default function HomeScreen() {
           <Text style={estilos.cardValor}>3.200W</Text>
           <Text style={estilos.cardLegenda}>Geração Atual</Text>
         </LinearGradient>
-        {/* gráfico */ }
 
-        <GraficoBarras />
+        {/* Gráfico */}
 
         {/* Métricas rápidas */}
         <View style={estilos.grid}>
@@ -163,9 +166,44 @@ export default function HomeScreen() {
           </View>
         </View>
 
+        {/* Economia acumulada */}
+        <View style={estilos.card}>
+          <MaterialCommunityIcons name="cash" size={28} color="#ffc125" />
+          <Text style={estilos.cardLabel}>Economia acumulada</Text>
+          <Text style={[estilos.cardValor, { color: "#333" }]}>R$ 560,00</Text>
+        </View>
+
+        {/* Status geral */}
+        <View style={[estilos.card, estilos.cardStatus]}>
+          <MaterialCommunityIcons name="alert-circle-check" size={28} color="#fffc125" />
+          <View>
+            <Text style={estilos.cardLabel}>Status</Text>
+            <Text style={[estilos.cardValor, { color: "#333" }]}>
+              Tudo funcionando bem
+            </Text>
+          </View>
+        </View>
+
+        {/* Dica do dia */}
+        <View style={[estilos.card, { alignItems: "flex-start" }]}>
+          <MaterialCommunityIcons name="leaf" size={28} color="#388e3c" />
+          <Text style={[estilos.cardLabel, { marginTop: 6 }]}>Dica sustentável</Text>
+          <Text style={{ marginTop: 6, color: "#444" }}>{dica}</Text>
+        </View>
+
+        {/* Botão Relatório */}
+        <TouchableOpacity
+          style={estilos.botaoRelatorio}
+          onPress={() => router.push("./relatorio")}
+        >
+          <Text style={estilos.botaoTexto}>Ver Relatório Detalhado</Text>
+        </TouchableOpacity>
       </ScrollView>
 
-      <AnimatedBottomNavBar activeIndex={activeIndex} onTabPress={setActiveIndex} />
+      <AnimatedBottomNavBar
+        activeIndex={activeIndex}
+        onTabPress={setActiveIndex}
+      />
     </View>
   );
 }
@@ -181,7 +219,7 @@ const estilos = StyleSheet.create({
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20,
+    paddingHorizontal: 20
   },
   loadingText: {
     marginTop: 20,
@@ -238,6 +276,16 @@ const estilos = StyleSheet.create({
     justifyContent: "flex-start",
     alignItems: "center",
     gap: 12,
+  },
+  chartBox: {
+    backgroundColor: "#fff",
+    borderRadius: 16,
+    marginBottom: 20,
+    elevation: 2,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    paddingVertical: 0,
   },
   errorBox: {
     backgroundColor: "#ffece6",

@@ -22,6 +22,8 @@ export default function LoginScreen() {
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const API_URL = "https://solaireapp.onrender.com";
+  const [showPassword, setShowPassword] = useState(false);
+
 
   // Animação da bolha
   const scaleX = useRef(new Animated.Value(1)).current;
@@ -90,7 +92,7 @@ export default function LoginScreen() {
       style={styles.container}
     >
       <StatusBar barStyle="light-content" />
-      
+
       {/* Bolha animada */}
       <Animated.View
         style={[
@@ -113,7 +115,7 @@ export default function LoginScreen() {
 
         {/* Input E-mail */}
         <View style={styles.inputContainer}>
-          <FontAwesome5 name="user" size={16} color="#fcbb30" style={styles.icon} />
+          <FontAwesome5 name="user" size={16} color="#ffc125" style={styles.icon} />
           <TextInput
             style={styles.input}
             placeholder="E-mail"
@@ -127,17 +129,25 @@ export default function LoginScreen() {
 
         {/* Input Senha */}
         <View style={styles.inputContainer}>
-          <FontAwesome5 name="lock" size={16} color="#fcbb30" style={styles.icon} />
+          <FontAwesome5 name="lock" size={16} color="#ffc125" style={styles.icon} />
           <TextInput
             style={styles.input}
             placeholder="Senha"
             placeholderTextColor="#ccc"
-            secureTextEntry={true}
+            secureTextEntry={!showPassword}
             value={password}
             onChangeText={setPassword}
           />
-          <Ionicons name="eye" size={20} color="#fcbb30" style={styles.iconRight} />
+          <TouchableOpacity onPress={() => setShowPassword(prev => !prev)}>
+            <Ionicons
+              name={showPassword ? "eye-off" : "eye"}
+              size={20}
+              color="#ffc125"
+              style={styles.iconRight}
+            />
+          </TouchableOpacity>
         </View>
+
 
         {/* Botão Login */}
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
@@ -187,13 +197,13 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     elevation: 8,
   },
-  cardTitle: { fontSize: 26, fontWeight: "bold", color: "#fcbb30", marginBottom: 5 },
-  cardSubtitle: { fontSize: 16, color: "#ccc", marginBottom: 30 },
+  cardTitle: { fontSize: 26, fontWeight: "bold", color: "#fff", marginBottom: 5 },
+  cardSubtitle: { fontSize: 16, color: "#fff", marginBottom: 30 },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 2,
-    borderBottomColor: "#fcbb30",
+    borderBottomColor: "#ffff",
     marginBottom: 20,
     width: "100%",
     paddingVertical: 5,
@@ -209,6 +219,6 @@ const styles = StyleSheet.create({
   },
   loginButtonText: { color: "#000", fontWeight: "bold", fontSize: 18 },
   signupContainer: { flexDirection: "row", marginTop: 15 },
-  signupText: { color: "#ccc" },
+  signupText: { color: "#fff" },
   signupLink: { color: "#fcbb30", fontWeight: "bold" },
 });

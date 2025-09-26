@@ -1,99 +1,78 @@
-import React from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  TouchableOpacity,
-  ScrollView,
-} from "react-native";
+import React, { useState } from "react";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Feather, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
+import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
 export default function ManageAccountScreen() {
   const router = useRouter();
+  const [activeIndex, setActiveIndex] = useState(0);
+
   return (
-    <ScrollView style={styles.container}>
-      <View>
-        <Ionicons name="arrow-back" size={22} color="#000"
-          onPress={() => router.push("/tabs/config")} />
+    <View style={{ flex: 1 }}>
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 80 }}>
         <Text style={styles.header}>Gerenciar Conta</Text>
-      </View>
 
+        {/* Conta */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Conta</Text>
+          <TouchableOpacity
+            style={styles.item}
+            onPress={() => router.push("/tabs/conta")}
+          >
+            <View style={styles.iconContainer}>
+              <Feather name="user" size={22} color="#000" />
+            </View>
+            <View>
+              <Text style={styles.itemTitle}>Informações Pessoais</Text>
+              <Text style={styles.itemSubtitle}>Altere nome, e-mail e telefone</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
-      {/* Conta */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Conta</Text>
+        {/* Preferências */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Preferências</Text>
+          <TouchableOpacity style={styles.item}>
+            <View style={styles.iconContainer}>
+              <Ionicons name="notifications-outline" size={22} color="#000" />
+            </View>
+            <View>
+              <Text style={styles.itemTitle}>Notificações</Text>
+              <Text style={styles.itemSubtitle}>Gerencie seus alertas e avisos</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
 
-        <TouchableOpacity style={styles.item}
-          onPress={() => router.push("/tabs/conta")}>
-          <View style={styles.iconContainer}>
-            <Feather name="user" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={styles.itemTitle}>Informações Pessoais</Text>
-            <Text style={styles.itemSubtitle}>Altere nome, e-mail e telefone</Text>
-          </View>
-        </TouchableOpacity>
+        {/* Dados */}
+        <View style={styles.section}>
+          <Text style={styles.sectionTitle}>Dados e Conta</Text>
+          <TouchableOpacity style={styles.item}>
+            <View style={styles.iconContainer}>
+              <MaterialIcons name="delete-outline" size={22} color="#000" />
+            </View>
+            <View>
+              <Text style={styles.itemTitle}>Excluir Conta</Text>
+              <Text style={styles.itemSubtitle}>Remova permanentemente sua conta</Text>
+            </View>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
 
-        <TouchableOpacity style={styles.item}>
-          <View style={styles.iconContainer}>
-            <Feather name="lock" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={styles.itemTitle}>Segurança</Text>
-            <Text style={styles.itemSubtitle}>Altere senha ou configure 2FA</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {/* Preferências */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Preferências</Text>
-
-        <TouchableOpacity style={styles.item}>
-          <View style={styles.iconContainer}>
-            <Ionicons name="notifications-outline" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={styles.itemTitle}>Notificações</Text>
-            <Text style={styles.itemSubtitle}>Gerencie seus alertas e avisos</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-      {/* Dados */}
-      <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Dados e Conta</Text>
-
-        <TouchableOpacity style={styles.item}>
-          <View style={styles.iconContainer}>
-            <MaterialIcons name="file-download" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={styles.itemTitle}>Baixar Meus Dados</Text>
-            <Text style={styles.itemSubtitle}>Exporte suas informações</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={styles.item}>
-          <View style={styles.iconContainer}>
-            <MaterialIcons name="delete-outline" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={styles.itemTitle}>Excluir Conta</Text>
-            <Text style={styles.itemSubtitle}>Remova permanentemente sua conta</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-
-    </ScrollView>
+      {/* Barra de navegação fixa */}
+      <AnimatedBottomNavBar
+        activeIndex={activeIndex}
+        onTabPress={setActiveIndex}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+      />
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#F9FAFB",
+    backgroundColor: "#F5f5f5",
     paddingHorizontal: 16,
   },
   header: {
@@ -126,7 +105,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   iconContainer: {
-    backgroundColor: "#FCD34D",
+    backgroundColor: "#ffc125",
     padding: 10,
     borderRadius: 10,
     marginRight: 12,

@@ -7,13 +7,15 @@ import {
   TouchableOpacity,
   ScrollView,
   ActivityIndicator,
+  Alert,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
 export default function ContaScreen() {
   const router = useRouter();
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
@@ -42,11 +44,39 @@ export default function ContaScreen() {
 
       setNome(userObj?.name || "");
       setEmail(userObj?.email || "");
-      setTelefone(userObj?.telefone || ""); // só se existir no backend
+      setTelefone(userObj?.telefone || "");
     } catch (error) {
       console.error("Erro ao buscar usuário:", error);
+      Alert.alert("Erro", "Não foi possível carregar os dados do usuário.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  // Salvar alterações
+  const salvarAlteracoes = async () => {
+    try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) return;
+
+      const res = await fetch("https://solaireapp.onrender.com/users/me", {
+        method: "PUT", // ou PATCH dependendo da API
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({ name: nome, email, telefone }),
+      });
+
+      const data = await res.json();
+      if (res.ok) {
+        Alert.alert("Sucesso", "Alterações salvas com sucesso!");
+      } else {
+        Alert.alert("Erro", data.message || "Não foi possível salvar alterações.");
+      }
+    } catch (err) {
+      console.error(err);
+      Alert.alert("Erro", "Erro ao salvar alterações.");
     }
   };
 
@@ -63,43 +93,62 @@ export default function ContaScreen() {
   }
 
   return (
-    <ScrollView style={estilos.tela}>
-      <View style={estilos.cabecalho}>
-        <Ionicons
-          name="arrow-back"
-          size={22}
-          color="#000"
-          onPress={() => router.push("/tabs/home")}
-        />
-        <Text style={estilos.tituloCabecalho}>Minha Conta</Text>
-        <View style={{ width: 22 }} />
-      </View>
-
-      {/* Campos de informações */}
-      <Text style={estilos.label}>Nome</Text>
-      <TextInput style={estilos.input} value={nome} onChangeText={setNome} />
-
-      <Text style={estilos.label}>E-mail</Text>
-      <TextInput
-        style={estilos.input}
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-      />
-
-      {/* Botão salvar */}
-      <TouchableOpacity style={estilos.botao}>
-        <Text style={estilos.textoBotao}>Salvar Alterações</Text>
-      </TouchableOpacity>
-
-      {/* Alterar senha */}
-      <TouchableOpacity
-        style={[estilos.botao, estilos.botaoSecundario]}
-        onPress={() => router.push("/tabs/alterar-senha")}
+    <View style={{ flex: 1 }}>
+      <ScrollView
+        style={estilos.tela}
+        contentContainerStyle={{ paddingBottom: 120 }}
       >
-        <Text style={estilos.textoBotaoSecundario}>Alterar Senha</Text>
-      </TouchableOpacity>
-    </ScrollView>
+        <View style={estilos.cabecalho}>
+          <Text style={estilos.tituloCabecalho}>Minha Conta</Text>
+        </View>
+
+        {/* Campos de informações */}
+        <Text style={estilos.label}>Nome</Text>
+        <TextInput
+          style={estilos.input}
+          value={nome}
+          onChangeText={setNome}
+          autoCapitalize="words"
+        />
+
+        <Text style={estilos.label}>E-mail</Text>
+        <TextInput
+          style={estilos.input}
+          value={email}
+          onChangeText={setEmail}
+          keyboardType="email-address"
+          autoCapitalize="none"
+        />
+
+        <Text style={estilos.label}>Telefone</Text>
+        <TextInput
+          style={estilos.input}
+          value={telefone}
+          onChangeText={setTelefone}
+          keyboardType="phone-pad"
+        />
+
+        {/* Botão salvar */}
+        <TouchableOpacity style={estilos.botao} onPress={salvarAlteracoes}>
+          <Text style={estilos.textoBotao}>Salvar Alterações</Text>
+        </TouchableOpacity>
+
+        {/* Alterar senha */}
+        <TouchableOpacity
+          style={[estilos.botao, estilos.botaoSecundario]}
+          onPress={() => router.push("/tabs/alterar-senha")}
+        >
+          <Text style={estilos.textoBotaoSecundario}>Alterar Senha</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
+      {/* Barra de navegação fixa */}
+      <AnimatedBottomNavBar
+        activeIndex={activeIndex}
+        onTabPress={setActiveIndex}
+        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
+      />
+    </View>
   );
 }
 
@@ -111,9 +160,6 @@ const estilos = StyleSheet.create({
     paddingTop: 40,
   },
   cabecalho: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
     marginBottom: 20,
   },
   tituloCabecalho: {

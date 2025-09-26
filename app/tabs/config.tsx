@@ -11,12 +11,6 @@ export default function TelaConfig() {
     <View style={{ flex: 1 }}>
       <ScrollView style={estilos.tela}>
         <View style={estilos.cabecalho}>
-          <Ionicons
-            name="arrow-back"
-            size={22}
-            color="#000"
-            onPress={() => router.push("/tabs/home")}
-          />
           <Text style={estilos.tituloCabecalho}>Configurações</Text>
           <View style={{ width: 22 }} />
         </View>
@@ -35,27 +29,6 @@ export default function TelaConfig() {
           </View>
         </TouchableOpacity>
 
-        <Text style={estilos.tituloSecao}>Energia</Text>
-        <TouchableOpacity style={estilos.item}>
-          <View style={estilos.caixaIcone}>
-            <MaterialIcons name="bar-chart" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={estilos.tituloItem}>Relatórios de Consumo</Text>
-            <Text style={estilos.subtituloItem}>Veja consumo e geração diária</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={estilos.item}>
-          <View style={estilos.caixaIcone}>
-            <Ionicons name="cloud-download-outline" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={estilos.tituloItem}>Exportar Dados</Text>
-            <Text style={estilos.subtituloItem}>Baixe os relatórios em PDF ou Excel</Text>
-          </View>
-        </TouchableOpacity>
-
         <Text style={estilos.tituloSecao}>Notificação</Text>
         <TouchableOpacity style={estilos.item}>
           <View style={estilos.caixaIcone}>
@@ -64,16 +37,6 @@ export default function TelaConfig() {
           <View>
             <Text style={estilos.tituloItem}>Alertas de Produção Baixa</Text>
             <Text style={estilos.subtituloItem}>Seja avisado quando a produção cai</Text>
-          </View>
-        </TouchableOpacity>
-
-        <TouchableOpacity style={estilos.item}>
-          <View style={estilos.caixaIcone}>
-            <Ionicons name="notifications-outline" size={22} color="#000" />
-          </View>
-          <View>
-            <Text style={estilos.tituloItem}>Notificações de Manutenção</Text>
-            <Text style={estilos.subtituloItem}>Lembretes para inspeções preventivas</Text>
           </View>
         </TouchableOpacity>
 
@@ -89,7 +52,6 @@ export default function TelaConfig() {
         </TouchableOpacity>
       </ScrollView>
 
-      {/* Navbar fixa no rodapé, sem precisar de estado */}
       <AnimatedBottomNavBar />
     </View>
   );
@@ -98,7 +60,7 @@ export default function TelaConfig() {
 const estilos = StyleSheet.create({
   tela: {
     flex: 1,
-    backgroundColor: "#fff",
+    backgroundColor: "#f5f5f5",
     paddingHorizontal: 16,
     paddingTop: 40,
   },
@@ -123,7 +85,7 @@ const estilos = StyleSheet.create({
   item: {
     flexDirection: "row",
     alignItems: "center",
-    backgroundColor: "#fafafa",
+    backgroundColor: "#fff",
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
@@ -132,7 +94,7 @@ const estilos = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: "#fcbb30a8",
+    backgroundColor: "#ffc125",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,

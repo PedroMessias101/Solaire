@@ -52,7 +52,7 @@ export default function WelcomeScreen() {
 
   return (
     <LinearGradient
-      colors={["#fcbb30", "#866112ff", "#4f3e06ff", "#000"]}
+      colors={["#000", "#2f2103ff", "#fcbb30"]}
       start={{ x: 0, y: 0 }}
       end={{ x: 1, y: 1 }}
       style={styles.container}
@@ -69,7 +69,7 @@ export default function WelcomeScreen() {
         ]}
       >
         <LinearGradient
-          colors={["#000", "#3d2d05ff", "#ffc125"]} 
+          colors={["#000", "#fcbb30"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradientCircle}
