@@ -48,7 +48,7 @@ export default function Onboarding() {
         } else {
             // marca como visto
             await AsyncStorage.setItem("hasSeenOnboarding", "true");
-            router.replace("/tabs/home");
+            router.replace("/pagamento/pagamento");
         }
     };
 

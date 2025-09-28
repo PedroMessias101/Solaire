@@ -8,6 +8,7 @@ import {
   Dimensions,
   SafeAreaView,
   Animated,
+  Image,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
@@ -78,8 +79,10 @@ export default function WelcomeScreen() {
 
       {/* Conteúdo principal */}
       <View style={styles.contentContainer}>
-        <Text style={styles.title}>Mais controle,{"\n"}mais economia.</Text>
-
+        <Image
+          source={require('@/assets/slogan.png')}
+          style={styles.image}
+        />
         <View style={styles.buttonContainer}>
           <TouchableOpacity onPress={() => router.push("/auth/login")}>
             <LinearGradient
@@ -146,6 +149,12 @@ const styles = StyleSheet.create({
     elevation: 6,
     marginBottom: height * 0.03,
   },
+  image: {
+  width: 400,
+  height: 250,
+  marginBottom: 230, 
+  marginLeft: 70,
+},
   buttonText: {
     color: "#000",
     fontSize: width * 0.05,
