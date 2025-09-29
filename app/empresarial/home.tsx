@@ -1,313 +1,166 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import {
   View,
   Text,
-  Image,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
   TouchableOpacity,
-  Dimensions,
+  Modal,
 } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { LinearGradient } from "expo-linear-gradient";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
-import { useRouter } from "expo-router";
-import { LineChart } from "react-native-chart-kit";
+import { MaterialCommunityIcons } from "@expo/vector-icons";
+import ExportarPDF from "../components/ExportarPDF";
 
 export default function HomeScreen() {
-  const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
-  const [activeIndex, setActiveIndex] = useState(0);
+  const [filialSelecionada, setFilialSelecionada] = useState("Matriz");
+  const [modalVisivel, setModalVisivel] = useState(false);
 
-  const dicas = [
-    "Usar energia solar pode reduzir até 1,5 tonelada de CO₂ por ano — o equivalente a plantar 40 árvores",
-    "Painéis solares podem cortar até 95% da sua conta de luz",
-    "A energia solar é silenciosa, renovável e não poluente",
-    "Use lâmpadas de LED, consomem até 80% menos.",
-  ];
+  const filiais = ["Matriz", "Filial RJ", "Filial SP"];
 
-  const [dica, setDica] = useState("");
-  const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
-
-  const fetchUser = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        setError("Token não encontrado. Faça login novamente.");
-        setLoading(false);
-        return;
-      }
-
-      const res = await fetch("https://solaireapp.onrender.com/users/me", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
-      });
-      const data = await res.json();
-      const userObj = data?.user || data?.data || data;
-
-      if (!userObj || userObj?.message || userObj?.error) {
-        setError(userObj?.message ?? userObj?.error ?? "Resposta inválida da API");
-        setLoading(false);
-        return;
-      }
-
-      setUser(userObj);
-    } catch (err) {
-      setError(err.message || "Erro inesperado");
-    } finally {
-      setLoading(false);
-    }
+  const dadosRelatorio = {
+    irradiacao: "5.8 kWh/m²",
+    corrente: "12.4 A",
+    tensao: "220 V",
+    potencia: "2.3 kW",
+    co2: "1.245 kg",
+    ranking: ["Todas - 17.200 kWh", "Filial RJ - 9.800 kWh", "Filial SP - 7.400 kWh"],
+    projecao: "Economia anual: R$ 38.200, ROI estimado: 3,5 anos",
   };
 
-  useEffect(() => {
-    fetchUser();
-
-    // Escolhe uma dica inicial aleatória
-    const random = Math.floor(Math.random() * dicas.length);
-    setDica(dicas[random]);
-
-    // Intervalo para trocar a dica de loading a cada 5 segundos
-    const interval = setInterval(() => {
-      setLoadingDicaIndex((prev) => (prev + 1) % dicas.length);
-    }, 5000);
-
-    return () => clearInterval(interval); // limpa o intervalo ao sair da tela
-  }, []);
-
-  // Loading com "Você sabia?"
-  if (loading) {
-    return (
-      <View style={estilos.loading}>
-        <ActivityIndicator size="large" color="#FFD700" />
-        <Text style={estilos.loadingText}>Você sabia?</Text>
-        <Text style={estilos.loadingDica}>{dicas[loadingDicaIndex]}</Text>
-      </View>
-    );
-  }
-
   return (
-    <View style={{ flex: 1 }}>
-      <ScrollView style={estilos.tela} contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Header */}
-        <View style={estilos.header}>
-          <Image
-            source={{
-              uri: user?.avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-            }}
-            style={estilos.avatar}
-          />
-          <View style={{ flex: 1 }}>
-            <Text style={estilos.saudacao}>
-              Olá, <Text style={estilos.username}>{user?.name || "Bem-vindo!"}</Text>
-            </Text>
-            {user?.email && <Text style={estilos.email}>{user.email}</Text>}
-          </View>
-          <TouchableOpacity
-            style={estilos.settingsButton}
-            onPress={() => router.push("./config")}
-          >
-            <Feather name="settings" size={28} color="#333" />
-          </TouchableOpacity>
+    <ScrollView style={estilos.container}>
+      {/* Seleção de filial */}
+      <View style={estilos.header}>
+        <TouchableOpacity onPress={() => setModalVisivel(true)}>
+          <Text style={estilos.filialTexto}>{filialSelecionada} ▼</Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Grid de métricas */}
+      <View style={estilos.grid}>
+        <View style={estilos.card}>
+          <MaterialCommunityIcons name="weather-sunny" size={28} color="#FFA726" />
+          <Text style={estilos.cardLabel}>Irradiação</Text>
+          <Text style={estilos.cardValor}>{dadosRelatorio.irradiacao}</Text>
+        </View>
+        <View style={estilos.card}>
+          <MaterialCommunityIcons name="flash" size={28} color="#ffc125" />
+          <Text style={estilos.cardLabel}>Corrente</Text>
+          <Text style={estilos.cardValor}>{dadosRelatorio.corrente}</Text>
+        </View>
+        <View style={estilos.card}>
+          <MaterialCommunityIcons name="sine-wave" size={28} color="#ffc125" />
+          <Text style={estilos.cardLabel}>Tensão</Text>
+          <Text style={estilos.cardValor}>{dadosRelatorio.tensao}</Text>
+        </View>
+        <View style={estilos.card}>
+          <MaterialCommunityIcons name="chart-line" size={28} color="#ffc125" />
+          <Text style={estilos.cardLabel}>Potência</Text>
+          <Text style={estilos.cardValor}>{dadosRelatorio.potencia}</Text>
+        </View>
+      </View>
+
+      {/* Cards empresariais */}
+      <View style={{ marginTop: 20 }}>
+        <View style={estilos.cardFull}>
+          <MaterialCommunityIcons name="leaf" size={28} color="#ffc125" />
+          <Text style={estilos.cardLabel}>CO₂ evitado</Text>
+          <Text style={[estilos.cardValor, { color: "#333" }]}>{dadosRelatorio.co2}</Text>
         </View>
 
-        {error && (
-          <View style={estilos.errorBox}>
-            <Text style={estilos.errorText}>{error}</Text>
-            <TouchableOpacity style={estilos.retryBtn} onPress={fetchUser}>
-              <Text style={estilos.retryText}>Tentar novamente</Text>
+        <View style={estilos.cardFull}>
+          <MaterialCommunityIcons name="office-building" size={28} color="#FFC125" />
+          <Text style={estilos.cardLabel}>Ranking de Unidades</Text>
+          {dadosRelatorio.ranking.map((item, i) => (
+            <Text key={i} style={estilos.rankingItem}>{item}</Text>
+          ))}
+        </View>
+
+        <View style={estilos.cardFull}>
+          <MaterialCommunityIcons name="cash-multiple" size={28} color="#ffc125" />
+          <Text style={estilos.cardLabel}>Projeção Financeira</Text>
+          <Text style={estilos.rankingItem}>{dadosRelatorio.projecao}</Text>
+        </View>
+
+        {/* Botão Exportar PDF */}
+        <ExportarPDF
+          filial={filialSelecionada}
+          dados={dadosRelatorio}
+          styleBotao={[estilos.botaoRelatorio, { backgroundColor: "#ffc125" }]}
+          styleTexto={[estilos.botaoTexto, { color: "#000" }]}
+        />
+      </View>
+
+      {/* Modal de troca de filial */}
+      <Modal
+        visible={modalVisivel}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setModalVisivel(false)}
+      >
+        <View style={estilos.modalOverlay}>
+          <View style={estilos.modalBox}>
+            <Text style={estilos.modalTitulo}>Selecionar Filial</Text>
+            {filiais.map((filial, index) => (
+              <TouchableOpacity
+                key={index}
+                style={estilos.modalItem}
+                onPress={() => {
+                  setFilialSelecionada(filial);
+                  setModalVisivel(false);
+                }}
+              >
+                <Text style={estilos.modalTexto}>{filial}</Text>
+              </TouchableOpacity>
+            ))}
+            <TouchableOpacity
+              style={[estilos.modalItem, { backgroundColor: "#eee" }]}
+              onPress={() => setModalVisivel(false)}
+            >
+              <Text style={{ color: "#444" }}>Cancelar</Text>
             </TouchableOpacity>
           </View>
-        )}
-
-        {/* Card Principal */}
-        <LinearGradient
-          colors={["#000", "#FFC125"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={estilos.cardPrincipal}
-        >
-          <Text style={estilos.cardTitulo}>Visão Geral</Text>
-          <Text style={estilos.cardValor}>3.200W</Text>
-          <Text style={estilos.cardLegenda}>Geração Atual</Text>
-        </LinearGradient>
-
-        {/* Gráfico */}
-
-        {/* Métricas rápidas */}
-        <View style={estilos.grid}>
-          <View style={estilos.card}>
-            <Feather name="thermometer" size={28} color="#FFC125" />
-            <Text style={estilos.cardLabel}>Temperatura</Text>
-            <Text style={estilos.cardVvalor}>42°C</Text>
-          </View>
-          <View style={estilos.card}>
-            <MaterialCommunityIcons name="flash" size={28} color="#FFC125" />
-            <Text style={estilos.cardLabel}>Tensão</Text>
-            <Text style={estilos.cardVvalor}>220V</Text>
-          </View>
-          <View style={estilos.card}>
-            <MaterialCommunityIcons name="current-ac" size={28} color="#FFC125" />
-            <Text style={estilos.cardLabel}>Corrente</Text>
-            <Text style={estilos.cardVvalor}>14A</Text>
-          </View>
-          <View style={estilos.card}>
-            <MaterialCommunityIcons name="percent" size={28} color="#FFC125" />
-            <Text style={estilos.cardLabel}>Eficiência</Text>
-            <Text style={estilos.cardVvalor}>87%</Text>
-          </View>
         </View>
-
-        {/* Economia acumulada */}
-        <View style={estilos.card}>
-          <MaterialCommunityIcons name="cash" size={28} color="#ffc125" />
-          <Text style={estilos.cardLabel}>Economia acumulada</Text>
-          <Text style={[estilos.cardValor, { color: "#333" }]}>R$ 560,00</Text>
-        </View>
-
-        {/* Status geral */}
-        <View style={[estilos.card, estilos.cardStatus]}>
-          <MaterialCommunityIcons name="alert-circle-check" size={28} color="#fffc125" />
-          <View>
-            <Text style={estilos.cardLabel}>Status</Text>
-            <Text style={[estilos.cardValor, { color: "#333" }]}>
-              Tudo funcionando bem
-            </Text>
-          </View>
-        </View>
-
-        {/* Dica do dia */}
-        <View style={[estilos.card, { alignItems: "flex-start" }]}>
-          <MaterialCommunityIcons name="leaf" size={28} color="#388e3c" />
-          <Text style={[estilos.cardLabel, { marginTop: 6 }]}>Dica sustentável</Text>
-          <Text style={{ marginTop: 6, color: "#444" }}>{dica}</Text>
-        </View>
-
-        {/* Botão Relatório */}
-        <TouchableOpacity
-          style={estilos.botaoRelatorio}
-          onPress={() => router.push("./relatorio")}
-        >
-          <Text style={estilos.botaoTexto}>Ver Relatório Detalhado</Text>
-        </TouchableOpacity>
-      </ScrollView>
-
-      <AnimatedBottomNavBar
-        activeIndex={activeIndex}
-        onTabPress={setActiveIndex}
-      />
-    </View>
+      </Modal>
+    </ScrollView>
   );
 }
 
+// Estilos
 const estilos = StyleSheet.create({
-  tela: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    paddingHorizontal: 16,
-    paddingTop: 40,
-  },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20
-  },
-  loadingText: {
-    marginTop: 20,
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  loadingDica: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#555",
-    textAlign: "center",
-    paddingHorizontal: 20,
-  },
-  header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
-  saudacao: { fontSize: 20, fontWeight: "600", color: "#000" },
-  username: { fontWeight: "700", color: "#000000ff" },
-  email: { fontSize: 12, color: "#666", marginTop: 2 },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: "#FFD700",
-  },
-  settingsButton: { marginLeft: 12, justifyContent: "center", alignItems: "center" },
-  cardPrincipal: { borderRadius: 20, padding: 24, marginBottom: 20 },
-  cardTitulo: { fontSize: 16, color: "#fff", marginBottom: 6 },
-  cardValor: { fontSize: 22, fontWeight: "bold", color: "#fff" },
-  cardVvalor: { fontSize: 22, fontWeight: "bold", color: "#333" },
-  cardLegenda: { fontSize: 14, color: "#fff", marginTop: 4 },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
+  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 20 },
+  header: { alignItems: "center", marginBottom: 15 },
+  filialTexto: { fontSize: 18, fontWeight: "700", color: "#000" },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
   card: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 16,
+    marginBottom: 16,
+    width: "48%",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  cardFull: {
     backgroundColor: "#fff",
     borderRadius: 20,
     padding: 18,
     marginBottom: 16,
-    width: "47%",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
-  cardLabel: { fontSize: 14, color: "#333", marginTop: 8, fontWeight: "500" },
-  cardStatus: {
     width: "100%",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    gap: 12,
-  },
-  chartBox: {
-    backgroundColor: "#fff",
-    borderRadius: 16,
-    marginBottom: 20,
-    elevation: 2,
     shadowColor: "#000",
     shadowOpacity: 0.05,
     shadowRadius: 4,
-    paddingVertical: 0,
+    elevation: 2,
   },
-  errorBox: {
-    backgroundColor: "#ffece6",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
-  errorText: { color: "#b00020", marginBottom: 8 },
-  retryBtn: {
-    alignSelf: "flex-start",
-    backgroundColor: "#000",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
-  retryText: { color: "#FFC125" },
-  botaoRelatorio: {
-    backgroundColor: "#FFC125",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  botaoTexto: { fontWeight: "700", color: "#000", fontSize: 16 },
+  cardLabel: { fontSize: 14, color: "#777", marginTop: 8 },
+  cardValor: { fontSize: 18, fontWeight: "bold", color: "#222", marginTop: 4 },
+  rankingItem: { marginTop: 6, fontSize: 14, color: "#444" },
+  botaoRelatorio: { borderRadius: 14, paddingVertical: 14, alignItems: "center", marginTop: 12 },
+  botaoTexto: { fontSize: 16, fontWeight: "600" },
+  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.4)", justifyContent: "center", alignItems: "center" },
+  modalBox: { backgroundColor: "#fff", padding: 20, borderRadius: 12, width: "80%", alignItems: "center" },
+  modalTitulo: { fontSize: 18, fontWeight: "bold", marginBottom: 15 },
+  modalItem: { padding: 12, width: "100%", alignItems: "center", borderBottomWidth: 0.5, borderBottomColor: "#ddd" },
+  modalTexto: { fontSize: 16, color: "#333" },
 });
