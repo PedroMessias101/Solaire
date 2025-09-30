@@ -10,9 +10,17 @@ export default function ManageAccountScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 80 }}>
+      <View style={styles.headerContainer}>
+        <TouchableOpacity
+          onPress={() => router.back()}
+          style={styles.backButton}
+        >
+          <Ionicons name="chevron-back" size={28} color="#333" />
+        </TouchableOpacity>
         <Text style={styles.header}>Gerenciar Conta</Text>
+      </View>
 
+      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 80 }}>
         {/* Conta */}
         <View style={styles.section}>
           <Text style={styles.sectionTitle}>Conta</Text>
@@ -70,17 +78,30 @@ export default function ManageAccountScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
+  headerContainer: {
+    height: 80,
+    justifyContent: "center",
+    alignItems: "center",
+    position: "relative",
     backgroundColor: "#F5f5f5",
+    paddingTop: 40, // espaço para status bar
     paddingHorizontal: 16,
+  },
+  backButton: {
+    position: "absolute",
+    left: 16,
+    top: 40,
   },
   header: {
     fontSize: 20,
     fontWeight: "bold",
-    marginVertical: 20,
-    textAlign: "center",
     color: "#111",
+    textAlign: "center",
+  },
+  container: {
+    flex: 1,
+    backgroundColor: "#F5f5f5",
+    paddingHorizontal: 16,
   },
   section: {
     marginBottom: 24,

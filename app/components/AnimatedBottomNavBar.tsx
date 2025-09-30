@@ -117,7 +117,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => 
             />
             <View style={styles.buttonRow}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#aaa" }]}
+                style={[styles.modalButton, { backgroundColor: "#d6d6d6ff" }]}
                 onPress={() => setModalVisible(false)}
               >
                 <Text style={styles.modalButtonText}>Cancelar</Text>
@@ -160,5 +160,5 @@ const styles = StyleSheet.create({
   input: { borderWidth: 1, borderColor: "#ccc", width: "100%", padding: 10, borderRadius: 8 },
   buttonRow: { flexDirection: "row", marginTop: 12, width: "100%", justifyContent: "space-between" },
   modalButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: "center", marginHorizontal: 5 },
-  modalButtonText: { color: "#fff", fontWeight: "700", fontSize: 16 },
+  modalButtonText: { color: "#000", fontWeight: "700", fontSize: 16 },
 });

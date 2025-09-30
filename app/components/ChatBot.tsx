@@ -15,31 +15,85 @@ interface Mensagem {
   texto: string;
 }
 
-export default function ChatAssistenteModal() {
+interface Categoria {
+  nome: string;
+  perguntas: { pergunta: string; resposta: string }[];
+}
+
+export default function ChatAssistenteModal(): JSX.Element {
   const [mensagens, setMensagens] = useState<Mensagem[]>([]);
   const [categoriaSelecionada, setCategoriaSelecionada] = useState<string | null>(null);
   const [visivel, setVisivel] = useState(false);
-  const [digitando, setDigitando] = useState(false); // controla bolinhas
+  const [digitando, setDigitando] = useState(false);
   const scrollViewRef = useRef<ScrollView>(null);
 
-  const categorias =
-    [{
+  const categorias: Categoria[] = [
+    {
       nome: "Sobre o Sistema",
-      perguntas: [{ pergunta: "Como o meu sistema de energia solar funciona?", resposta: "Os painéis solares captam a luz do sol e a transformam em energia elétrica. Essa energia é enviada para um equipamento chamado inversor, que a converte para o formato que você usa em sua casa. A energia excedente é enviada para a rede da distribuidora, gerando créditos para você." },
-      { pergunta: "O que acontece em dias nublados ou chuvosos?", resposta: "Em dias nublados, a produção de energia é menor, mas o sistema continua funcionando, pois os painéis captam a luz difusa. Se a produção for insuficiente, o aplicativo irá buscar a energia que falta da rede elétrica da distribuidora, garantindo o funcionamento normal da sua casa." },
-      { pergunta: "Preciso limpar os painéis solares? Com que frequência?", resposta: "Recomendamos uma limpeza anual para garantir o melhor desempenho. A chuva costuma fazer uma limpeza natural, mas o acúmulo de poeira ou folhas pode reduzir a eficiência. Se notar sujeira, é bom limpar." },],
+      perguntas: [
+        {
+          pergunta: "Como o meu sistema de energia solar funciona?",
+          resposta:
+            "Os painéis solares captam a luz do sol e a transformam em energia elétrica. Essa energia é enviada para um equipamento chamado inversor, que a converte para o formato que você usa em sua casa. A energia excedente é enviada para a rede da distribuidora, gerando créditos para você.",
+        },
+        {
+          pergunta: "O que acontece em dias nublados ou chuvosos?",
+          resposta:
+            "Em dias nublados, a produção de energia é menor, mas o sistema continua funcionando, pois os painéis captam a luz difusa. Se a produção for insuficiente, o aplicativo irá buscar a energia que falta da rede elétrica da distribuidora, garantindo o funcionamento normal da sua casa.",
+        },
+        {
+          pergunta: "Preciso limpar os painéis solares? Com que frequência?",
+          resposta:
+            "Recomendamos uma limpeza anual para garantir o melhor desempenho. A chuva costuma fazer uma limpeza natural, mas o acúmulo de poeira ou folhas pode reduzir a eficiência. Se notar sujeira, é bom limpar.",
+        },
+      ],
     },
     {
-      nome: "Problemas e Suporte Técnico", perguntas: [{ pergunta: "O sistema parou de funcionar. O que devo fazer?", resposta: "Primeiro, verifique se há alguma mensagem de erro no seu inversor e se a chave de energia está ligada. Se o problema persistir, abra um chamado no aplicativo, e nosso suporte técnico entrará em contato com você o mais rápido possível." },
-      { pergunta: "O meu inversor está com uma luz vermelha. O que isso quer dizer?", resposta: "Uma luz vermelha geralmente indica um problema no inversor. Pode ser um erro de conexão ou outro problema técnico. Por favor, tire uma foto e abra um chamado em nosso suporte técnico no aplicativo para que possamos analisar e te ajudar." },
-      { pergunta: "Meu sistema não aparece no aplicativo. O que devo fazer?", resposta: "Isso pode acontecer por alguns motivos. Primeiro, verifique sua conexão com a internet. Se estiver tudo certo, pode ser um problema de comunicação com o inversor. Reinicie o aplicativo. Se o problema persistir por mais de 30 minutos, por favor, entre em contato com nosso suporte técnico pelo próprio aplicativo" },
-      { pergunta: "O aplicativo não está atualizando os dados. Existe um problema?", resposta: "A maioria dos dados é atualizada a cada 5 ou 10 minutos. Se você notar que os dados estão parados por um tempo prolongado, verifique a conexão Wi-Fi do seu inversor. Se o problema persistir, entre em contato com o suporte" },
-      { pergunta: "Posso baixar um relatório de produção de energia em PDF ou Excel?", resposta: "Sim! Vá em Configurações > Exportar Dados para baixar um relatório detalhado." },],
+      nome: "Problemas e Suporte Técnico",
+      perguntas: [
+        {
+          pergunta: "O sistema parou de funcionar. O que devo fazer?",
+          resposta:
+            "Primeiro, verifique se há alguma mensagem de erro no seu inversor e se a chave de energia está ligada. Se o problema persistir, abra um chamado no aplicativo, e nosso suporte técnico entrará em contato com você o mais rápido possível.",
+        },
+        {
+          pergunta: "O meu inversor está com uma luz vermelha. O que isso quer dizer?",
+          resposta:
+            "Uma luz vermelha geralmente indica um problema no inversor. Pode ser um erro de conexão ou outro problema técnico. Por favor, tire uma foto e abra um chamado em nosso suporte técnico no aplicativo para que possamos analisar e te ajudar.",
+        },
+        {
+          pergunta: "Meu sistema não aparece no aplicativo. O que devo fazer?",
+          resposta:
+            "Isso pode acontecer por alguns motivos. Primeiro, verifique sua conexão com a internet. Se estiver tudo certo, pode ser um problema de comunicação com o inversor. Reinicie o aplicativo. Se o problema persistir por mais de 30 minutos, por favor, entre em contato com nosso suporte técnico pelo próprio aplicativo",
+        },
+        {
+          pergunta: "O aplicativo não está atualizando os dados. Existe um problema?",
+          resposta:
+            "A maioria dos dados é atualizada a cada 5 ou 10 minutos. Se você notar que os dados estão parados por um tempo prolongado, verifique a conexão Wi-Fi do seu inversor. Se o problema persistir, entre em contato com o suporte",
+        },
+        {
+          pergunta: "Posso baixar um relatório de produção de energia em PDF ou Excel?",
+          resposta:
+            "Sim! Vá em Configurações > Exportar Dados para baixar um relatório detalhado.",
+        },
+      ],
     },
     {
-      nome: "Sobre Alertas e Notificações", perguntas: [{ pergunta: "Recebi uma notificação sobre 'baixa produção'. O que isso quer dizer?", resposta: "Isso significa que o seu sistema está gerando menos energia do que o esperado para o horário. Pode ser devido a condições climáticas (nuvens ou chuva), sujeira nos painéis ou um problema técnico. O aplicativo geralmente sugere a causa provável." },
-      { pergunta: "O que devo fazer quando recebo um alerta de erro?", resposta: "Não se preocupe! A maioria dos erros pode ser resolvida facilmente. O alerta fornecerá um código de erro ou uma descrição do problema. Siga as instruções do aplicativo. Se for necessário, ele irá direcioná-lo para a opção de solicitar suporte técnico." },],
-    },];
+      nome: "Sobre Alertas e Notificações",
+      perguntas: [
+        {
+          pergunta: "Recebi uma notificação sobre 'baixa produção'. O que isso quer dizer?",
+          resposta:
+            "Isso significa que o seu sistema está gerando menos energia do que o esperado para o horário. Pode ser devido a condições climáticas (nuvens ou chuva), sujeira nos painéis ou um problema técnico. O aplicativo geralmente sugere a causa provável.",
+        },
+        {
+          pergunta: "O que devo fazer quando recebo um alerta de erro?",
+          resposta:
+            "Não se preocupe! A maioria dos erros pode ser resolvida facilmente. O alerta fornecerá um código de erro ou uma descrição do problema. Siga as instruções do aplicativo. Se for necessário, ele irá direcioná-lo para a opção de solicitar suporte técnico.",
+        },
+      ],
+    },
+  ];
 
   // Primeira mensagem com delay
   useEffect(() => {
@@ -57,7 +111,7 @@ export default function ChatAssistenteModal() {
     return () => clearTimeout(timer);
   }, []);
 
-  // Responder pergunta com atraso e bolinhas
+  // Responder pergunta com atraso
   const responderPergunta = (pergunta: string, resposta: string) => {
     setMensagens((prev) => [...prev, { remetente: "user", texto: pergunta }]);
     setDigitando(true);
@@ -68,6 +122,7 @@ export default function ChatAssistenteModal() {
     }, 2000);
   };
 
+  // Sempre rolar para o final
   useEffect(() => {
     scrollViewRef.current?.scrollToEnd({ animated: true });
   }, [mensagens, digitando]);
@@ -76,11 +131,11 @@ export default function ChatAssistenteModal() {
     <View style={{ flex: 1 }}>
       {/* Botão flutuante */}
       <TouchableOpacity style={estilos.botaoChat} onPress={() => setVisivel(true)}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#000" />
+        <Ionicons name="chatbubble-ellipses" size={26} color="#ffc125" />
       </TouchableOpacity>
 
       {/* Modal */}
-      <Modal visible={visivel} animationType="slide" transparent={true}>
+      <Modal visible={visivel} animationType="slide" transparent>
         <View style={estilos.modalFundo}>
           <View style={estilos.modalContainer}>
             <View style={estilos.topoModal}>
@@ -101,16 +156,14 @@ export default function ChatAssistenteModal() {
                   key={index}
                   style={[
                     estilos.mensagem,
-                    msg.remetente === "user"
-                      ? estilos.mensagemUser
-                      : estilos.mensagemBot,
+                    msg.remetente === "user" ? estilos.mensagemUser : estilos.mensagemBot,
                   ]}
                 >
                   <Text style={estilos.textoMensagem}>{msg.texto}</Text>
                 </View>
               ))}
 
-              {/* digitando (bolinhas)*/}
+              {/* digitando */}
               {digitando && (
                 <View style={[estilos.mensagem, estilos.mensagemBot]}>
                   <IndicadorDigitando />
@@ -154,9 +207,7 @@ export default function ChatAssistenteModal() {
                       <TouchableOpacity
                         key={index}
                         style={estilos.botaoOpcao}
-                        onPress={() =>
-                          responderPergunta(item.pergunta, item.resposta)
-                        }
+                        onPress={() => responderPergunta(item.pergunta, item.resposta)}
                       >
                         <Text style={estilos.textoOpcao}>{item.pergunta}</Text>
                       </TouchableOpacity>
@@ -172,7 +223,7 @@ export default function ChatAssistenteModal() {
 }
 
 /* digitando */
-function IndicadorDigitando() {
+function IndicadorDigitando(): JSX.Element {
   const ponto1 = useRef(new Animated.Value(0)).current;
   const ponto2 = useRef(new Animated.Value(0)).current;
   const ponto3 = useRef(new Animated.Value(0)).current;
@@ -216,7 +267,7 @@ const estilos = StyleSheet.create({
     position: "absolute",
     bottom: 30,
     right: 20,
-    backgroundColor: "#fcbb30",
+    backgroundColor: "#000",
     padding: 16,
     borderRadius: 50,
     elevation: 5,

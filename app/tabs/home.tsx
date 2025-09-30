@@ -4,17 +4,18 @@ import {
   Text,
   Image,
   StyleSheet,
-  ActivityIndicator,
   ScrollView,
   TouchableOpacity,
+  Animated,
+  Easing,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
-import { graficoBarras} from "../components/grafico-barras"
 import { useRouter } from "expo-router";
 import GraficoBarras from "../components/grafico-barras";
+import ChatBot from "../components/ChatBot";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -30,8 +31,24 @@ export default function HomeScreen() {
     "Use lâmpadas de LED, consomem até 80% menos.",
   ];
 
-  const [dica, setDica] = useState("");
   const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
+
+  // animação do sol
+  const spinValue = useState(new Animated.Value(0))[0];
+  useEffect(() => {
+    Animated.loop(
+      Animated.timing(spinValue, {
+        toValue: 1,
+        duration: 4000,
+        easing: Easing.linear,
+        useNativeDriver: true,
+      })
+    ).start();
+  }, []);
+  const spin = spinValue.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "360deg"],
+  });
 
   const fetchUser = async () => {
     setLoading(true);
@@ -70,9 +87,6 @@ export default function HomeScreen() {
 
   useEffect(() => {
     fetchUser();
-    const random = Math.floor(Math.random() * dicas.length);
-    setDica(dicas[random]);
-
     const interval = setInterval(() => {
       setLoadingDicaIndex((prev) => (prev + 1) % dicas.length);
     }, 5000);
@@ -83,7 +97,9 @@ export default function HomeScreen() {
   if (loading) {
     return (
       <View style={estilos.loading}>
-        <ActivityIndicator size="large" color="#FFD700" />
+        <Animated.View style={{ transform: [{ rotate: spin }] }}>
+          <MaterialCommunityIcons name="white-balance-sunny" size={40} color="#FFc125" />
+        </Animated.View>
         <Text style={estilos.loadingText}>Você sabia?</Text>
         <Text style={estilos.loadingDica}>{dicas[loadingDicaIndex]}</Text>
       </View>
@@ -135,8 +151,8 @@ export default function HomeScreen() {
           <Text style={estilos.cardValor}>3.200W</Text>
           <Text style={estilos.cardLegenda}>Geração Atual</Text>
         </LinearGradient>
-        {/* gráfico */ }
 
+        {/* gráfico */}
         <GraficoBarras />
 
         {/* Métricas rápidas */}
@@ -162,8 +178,12 @@ export default function HomeScreen() {
             <Text style={estilos.cardVvalor}>87%</Text>
           </View>
         </View>
-
       </ScrollView>
+
+      {/* ChatBot fixo acima da navbar */}
+      <View style={{ position: "absolute", bottom: 80, right: 0 }}>
+        <ChatBot />
+      </View>
 
       <AnimatedBottomNavBar activeIndex={activeIndex} onTabPress={setActiveIndex} />
     </View>
@@ -232,13 +252,6 @@ const estilos = StyleSheet.create({
     elevation: 2,
   },
   cardLabel: { fontSize: 14, color: "#333", marginTop: 8, fontWeight: "500" },
-  cardStatus: {
-    width: "100%",
-    flexDirection: "row",
-    justifyContent: "flex-start",
-    alignItems: "center",
-    gap: 12,
-  },
   errorBox: {
     backgroundColor: "#ffece6",
     padding: 12,
@@ -254,12 +267,4 @@ const estilos = StyleSheet.create({
     borderRadius: 8,
   },
   retryText: { color: "#FFC125" },
-  botaoRelatorio: {
-    backgroundColor: "#FFC125",
-    paddingVertical: 14,
-    borderRadius: 12,
-    alignItems: "center",
-    marginTop: 10,
-  },
-  botaoTexto: { fontWeight: "700", color: "#000", fontSize: 16 },
 });
