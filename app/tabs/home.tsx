@@ -17,11 +17,14 @@ import { useRouter } from "expo-router";
 import GraficoBarras from "../components/grafico-barras";
 import ChatBot from "../components/ChatBot";
 
+const API_USUARIO_URL = "https://solaireapp.onrender.com";
+
 export default function HomeScreen() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState<any>(null);
+  const [placas, setPlacas] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+  const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const dicas = [
@@ -50,7 +53,7 @@ export default function HomeScreen() {
     outputRange: ["0deg", "360deg"],
   });
 
-  const fetchUser = async () => {
+  const fetchUserAndPanels = async () => {
     setLoading(true);
     setError(null);
     try {
@@ -61,24 +64,20 @@ export default function HomeScreen() {
         return;
       }
 
-      const res = await fetch("https://solaireapp.onrender.com/users/me", {
-        method: "GET",
-        headers: {
-          Authorization: `Bearer ${token}`,
-          Accept: "application/json",
-        },
+      // dados do usuário
+      const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      const data = await res.json();
-      const userObj = data?.user || data?.data || data;
+      const userData = await resUser.json();
+      setUser(userData);
 
-      if (!userObj || userObj?.message || userObj?.error) {
-        setError(userObj?.message ?? userObj?.error ?? "Resposta inválida da API");
-        setLoading(false);
-        return;
-      }
-
-      setUser(userObj);
-    } catch (err) {
+      // dados das placas
+      const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const dataPlacas = await resPlacas.json();
+      setPlacas(dataPlacas.data || []);
+    } catch (err: any) {
       setError(err.message || "Erro inesperado");
     } finally {
       setLoading(false);
@@ -86,13 +85,24 @@ export default function HomeScreen() {
   };
 
   useEffect(() => {
-    fetchUser();
+    fetchUserAndPanels();
     const interval = setInterval(() => {
       setLoadingDicaIndex((prev) => (prev + 1) % dicas.length);
     }, 5000);
 
     return () => clearInterval(interval);
   }, []);
+
+  const calcularTotais = () => {
+    const totalEnergia = placas
+      .filter((p) => p.status === "Ativa")
+      .reduce((acc, p) => acc + (p.energia_kWh || 0), 0);
+    const eficiencia =
+      placas.length > 0
+        ? (placas.filter((p) => p.status === "Ativa").length / placas.length) * 100
+        : 0;
+    return { totalEnergia, eficiencia };
+  };
 
   if (loading) {
     return (
@@ -105,6 +115,8 @@ export default function HomeScreen() {
       </View>
     );
   }
+
+  const { totalEnergia, eficiencia } = calcularTotais();
 
   return (
     <View style={{ flex: 1 }}>
@@ -134,7 +146,7 @@ export default function HomeScreen() {
         {error && (
           <View style={estilos.errorBox}>
             <Text style={estilos.errorText}>{error}</Text>
-            <TouchableOpacity style={estilos.retryBtn} onPress={fetchUser}>
+            <TouchableOpacity style={estilos.retryBtn} onPress={fetchUserAndPanels}>
               <Text style={estilos.retryText}>Tentar novamente</Text>
             </TouchableOpacity>
           </View>
@@ -148,34 +160,40 @@ export default function HomeScreen() {
           style={estilos.cardPrincipal}
         >
           <Text style={estilos.cardTitulo}>Visão Geral</Text>
-          <Text style={estilos.cardValor}>3.200W</Text>
+          <Text style={estilos.cardValor}>{totalEnergia.toFixed(2)} kWh</Text>
           <Text style={estilos.cardLegenda}>Geração Atual</Text>
         </LinearGradient>
 
         {/* gráfico */}
-        <GraficoBarras />
+        <GraficoBarras placas={placas} />
 
         {/* Métricas rápidas */}
         <View style={estilos.grid}>
           <View style={estilos.card}>
             <Feather name="thermometer" size={28} color="#FFC125" />
             <Text style={estilos.cardLabel}>Temperatura</Text>
-            <Text style={estilos.cardVvalor}>42°C</Text>
+            <Text style={estilos.cardVvalor}>
+              {placas.length > 0 ? `${placas[0].temperature || 0}°C` : "0°C"}
+            </Text>
           </View>
           <View style={estilos.card}>
             <MaterialCommunityIcons name="flash" size={28} color="#FFC125" />
             <Text style={estilos.cardLabel}>Tensão</Text>
-            <Text style={estilos.cardVvalor}>220V</Text>
+            <Text style={estilos.cardVvalor}>
+              {placas.length > 0 ? `${placas[0].voltage || 0}V` : "0V"}
+            </Text>
           </View>
           <View style={estilos.card}>
             <MaterialCommunityIcons name="current-ac" size={28} color="#FFC125" />
             <Text style={estilos.cardLabel}>Corrente</Text>
-            <Text style={estilos.cardVvalor}>14A</Text>
+            <Text style={estilos.cardVvalor}>
+              {placas.length > 0 ? `${placas[0].current || 0}A` : "0A"}
+            </Text>
           </View>
           <View style={estilos.card}>
             <MaterialCommunityIcons name="percent" size={28} color="#FFC125" />
             <Text style={estilos.cardLabel}>Eficiência</Text>
-            <Text style={estilos.cardVvalor}>87%</Text>
+            <Text style={estilos.cardVvalor}>{eficiencia.toFixed(0)}%</Text>
           </View>
         </View>
       </ScrollView>

@@ -19,6 +19,9 @@ interface Props {
   setPlacas: (placas: any[]) => void;
 }
 
+const API_USUARIO_URL = "https://solaireapp.onrender.com";
+const API_PLACAS_URL = "https://placa-api-eaho.onrender.com";
+
 export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => {
   const router = useRouter();
   const pathname = usePathname();
@@ -49,7 +52,8 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => 
     if (codigoPlaca.trim() === "") return;
 
     try {
-      const res = await fetch(`https://placa-api-eaho.onrender.com/${codigoPlaca.trim().toUpperCase()}`);
+      // Buscar dados da placa na API pública
+      const res = await fetch(`${API_PLACAS_URL}/${codigoPlaca.trim().toUpperCase()}`);
       if (!res.ok) {
         alert("Placa não encontrada na API.");
         return;
@@ -61,18 +65,45 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => 
         return;
       }
 
+      // Pegar token do usuário
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) {
+        alert("Usuário não logado.");
+        return;
+      }
+
+      // Salvar no back-end (provisionamento)
+      const resBackend = await fetch(`${API_USUARIO_URL}/panels/provision`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          serial: data.code,
+          location: `Placa ${data.id}`,
+          model: "Genérico",
+        }),
+      });
+
+      if (!resBackend.ok) {
+        alert("Erro ao salvar a placa no servidor.");
+        return;
+      }
+
+      const savedData = await resBackend.json();
+
+      // Construir objeto da placa com status e energia atualizados
       const novaPlaca = {
-        id: data.id,
-        serial: data.code,
-        location: `Placa ${data.id}`,
-        model: "Genérico",
-        status: data.status === "ativa" ? "Ativa" : "Desativada",
-        energia_kWh: data.energia_kWh ?? 0,
+        serial: savedData.panel.serial,
+        location: savedData.panel.location,
+        model: savedData.panel.model,
+        status: savedData.panel.status ?? "Ativa",
+        energia_kWh: savedData.panel.energia_kWh ?? 0,
       };
 
-      const novasPlacas = [...placas, novaPlaca];
-      setPlacas(novasPlacas);
-      await AsyncStorage.setItem("placas", JSON.stringify(novasPlacas));
+      // Atualizar estado local
+      setPlacas([...placas, novaPlaca]);
 
       setCodigoPlaca("");
       setModalVisible(false);
@@ -154,11 +185,39 @@ const styles = StyleSheet.create({
     shadowRadius: 10,
   },
   tab: { flex: 1, alignItems: "center", justifyContent: "center" },
-  modalOverlay: { flex: 1, backgroundColor: "rgba(0,0,0,0.5)", justifyContent: "center", alignItems: "center" },
-  modalContent: { width: "85%", backgroundColor: "#fff", borderRadius: 12, padding: 20, alignItems: "center" },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.5)",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  modalContent: {
+    width: "85%",
+    backgroundColor: "#fff",
+    borderRadius: 12,
+    padding: 20,
+    alignItems: "center",
+  },
   modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },
-  input: { borderWidth: 1, borderColor: "#ccc", width: "100%", padding: 10, borderRadius: 8 },
-  buttonRow: { flexDirection: "row", marginTop: 12, width: "100%", justifyContent: "space-between" },
-  modalButton: { flex: 1, padding: 12, borderRadius: 8, alignItems: "center", marginHorizontal: 5 },
+  input: {
+    borderWidth: 1,
+    borderColor: "#ccc",
+    width: "100%",
+    padding: 10,
+    borderRadius: 8,
+  },
+  buttonRow: {
+    flexDirection: "row",
+    marginTop: 12,
+    width: "100%",
+    justifyContent: "space-between",
+  },
+  modalButton: {
+    flex: 1,
+    padding: 12,
+    borderRadius: 8,
+    alignItems: "center",
+    marginHorizontal: 5,
+  },
   modalButtonText: { color: "#000", fontWeight: "700", fontSize: 16 },
 });
