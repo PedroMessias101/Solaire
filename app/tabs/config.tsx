@@ -21,7 +21,7 @@ export default function TelaConfig() {
           onPress={() => router.push("/tabs/gerenciarConta")}
         >
           <View style={estilos.caixaIcone}>
-            <Ionicons name="person-outline" size={22} color="#000" />
+            <Ionicons name="person-outline" size={22} color="#ffc125" />
           </View>
           <View>
             <Text style={estilos.tituloItem}>Contas</Text>
@@ -32,7 +32,7 @@ export default function TelaConfig() {
         <Text style={estilos.tituloSecao}>Notificação</Text>
         <TouchableOpacity style={estilos.item}>
           <View style={estilos.caixaIcone}>
-            <Ionicons name="alert-circle-outline" size={22} color="#000" />
+            <Ionicons name="alert-circle-outline" size={22} color="#ffc125" />
           </View>
           <View>
             <Text style={estilos.tituloItem}>Alertas de Produção Baixa</Text>
@@ -43,7 +43,7 @@ export default function TelaConfig() {
         <Text style={estilos.tituloSecao}>Ajuda e Suporte</Text>
         <TouchableOpacity style={estilos.item}>
           <View style={estilos.caixaIcone}>
-            <Ionicons name="help-circle-outline" size={22} color="#000" />
+            <Ionicons name="help-circle-outline" size={22} color="#ffc125" />
           </View>
           <View>
             <Text style={estilos.tituloItem}>Suporte</Text>
@@ -94,7 +94,7 @@ const estilos = StyleSheet.create({
     width: 40,
     height: 40,
     borderRadius: 10,
-    backgroundColor: "#ffc125",
+    backgroundColor: "#000",
     justifyContent: "center",
     alignItems: "center",
     marginRight: 12,
