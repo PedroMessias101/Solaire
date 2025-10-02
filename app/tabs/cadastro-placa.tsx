@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { View, Text, TextInput, Button, FlatList, Alert, StyleSheet } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 
-const API_APP = "https://solaireapp.onrender.com"; // backend do app
+const API_APP = "https://solaire-back-oficial.onrender.com"; // backend do app
 const API_SIM = "https://placa-api-eaho.onrender.com"; // API de simulação
 
 interface Placa {

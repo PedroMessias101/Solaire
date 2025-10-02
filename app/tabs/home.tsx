@@ -17,7 +17,7 @@ import { useRouter } from "expo-router";
 import GraficoBarras from "../components/grafico-barras";
 import ChatBot from "../components/ChatBot";
 
-const API_USUARIO_URL = "https://solaireapp.onrender.com";
+const API_USUARIO_URL = "https://solaire-back-oficial.onrender.com";
 
 export default function HomeScreen() {
   const router = useRouter();

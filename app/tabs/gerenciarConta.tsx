@@ -29,7 +29,7 @@ export default function ManageAccountScreen() {
             onPress={() => router.push("/tabs/conta")}
           >
             <View style={styles.iconContainer}>
-              <Feather name="user" size={22} color="#000" />
+              <Feather name="user" size={22} color="#ffc125" />
             </View>
             <View>
               <Text style={styles.itemTitle}>Informações Pessoais</Text>
@@ -43,7 +43,7 @@ export default function ManageAccountScreen() {
           <Text style={styles.sectionTitle}>Preferências</Text>
           <TouchableOpacity style={styles.item}>
             <View style={styles.iconContainer}>
-              <Ionicons name="notifications-outline" size={22} color="#000" />
+              <Ionicons name="notifications-outline" size={22} color="#ffc125" />
             </View>
             <View>
               <Text style={styles.itemTitle}>Notificações</Text>
@@ -57,7 +57,7 @@ export default function ManageAccountScreen() {
           <Text style={styles.sectionTitle}>Dados e Conta</Text>
           <TouchableOpacity style={styles.item}>
             <View style={styles.iconContainer}>
-              <MaterialIcons name="delete-outline" size={22} color="#000" />
+              <MaterialIcons name="delete-outline" size={22} color="#ffc125" />
             </View>
             <View>
               <Text style={styles.itemTitle}>Excluir Conta</Text>
@@ -126,7 +126,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 2 },
   },
   iconContainer: {
-    backgroundColor: "#ffc125",
+    backgroundColor: "#000",
     padding: 10,
     borderRadius: 10,
     marginRight: 12,

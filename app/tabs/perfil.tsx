@@ -8,14 +8,14 @@ import {
   ScrollView,
   Alert,
   SafeAreaView,
-  Animated,
+  Animated, 3072007
   Easing,
 } from "react-native";
 import { MaterialIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
-const API_USUARIO_URL = "https://solaireapp.onrender.com";
+const API_USUARIO_URL = "https://solaire-back-oficial.onrender.com";
 const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
 
 interface Placa {

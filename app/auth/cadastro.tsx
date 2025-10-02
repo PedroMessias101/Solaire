@@ -16,7 +16,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
 
 const { width, height } = Dimensions.get("window");
-const API_URL = "https://solaireapp.onrender.com";
+const API_URL = "https://solaire-back-oficial.onrender.com";
 
 export default function CadastroScreen() {
   const router = useRouter();

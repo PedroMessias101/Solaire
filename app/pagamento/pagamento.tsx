@@ -44,7 +44,7 @@ export default function App() {
 
   // Chave PIX pré-definida
   const [dadosPix] = useState({
-    chave: "f47ac10b-58cc-4372-a567-0e02b2c3d479", // Chave PIX pré-definida
+    chave: "f47ac10b-58cc-4372-a567-0e02b2c3d479",
     qrCode: "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PIX123456789",
   });
 
@@ -87,7 +87,6 @@ export default function App() {
     },
   };
 
-  // Função para copiar a chave PIX
   const copyToClipboard = async () => {
     try {
       await Clipboard.setStringAsync(dadosPix.chave);
@@ -634,7 +633,8 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     backgroundColor: "#f5f5f5",
-    padding: 20,
+    padding: 23,
+    paddingTop: 90,
   },
   progressContainer: {
     flexDirection: "row",

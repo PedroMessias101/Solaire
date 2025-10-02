@@ -21,7 +21,7 @@ export default function LoginScreen() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_URL = "https://solaireapp.onrender.com";
+  const API_URL = "https://solaire-back-oficial.onrender.com";
   const [showPassword, setShowPassword] = useState(false);
 
 
