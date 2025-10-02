@@ -27,6 +27,9 @@ export default function HomeScreen() {
   const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
 
+  const VALOR_KWH = 0.95; // preço médio R$/kWh (ajuste se quiser)
+  const CO2_KWH = 0.084; // kg CO2 evitado por kWh
+
   const dicas = [
     "Usar energia solar pode reduzir até 1,5 tonelada de CO₂ por ano — o equivalente a plantar 40 árvores",
     "Painéis solares podem cortar até 95% da sua conta de luz",
@@ -97,18 +100,24 @@ export default function HomeScreen() {
     const totalEnergia = placas
       .filter((p) => p.status === "Ativa")
       .reduce((acc, p) => acc + (p.energia_kWh || 0), 0);
+
     const eficiencia =
       placas.length > 0
         ? (placas.filter((p) => p.status === "Ativa").length / placas.length) * 100
         : 0;
-    return { totalEnergia, eficiencia };
+
+    const economia = totalEnergia * VALOR_KWH;
+    const co2 = totalEnergia * CO2_KWH;
+
+    return { totalEnergia, eficiencia, economia, co2 };
   };
+
 
   if (loading) {
     return (
       <View style={estilos.loading}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <MaterialCommunityIcons name="white-balance-sunny" size={40} color="#FFc125" />
+          <MaterialCommunityIcons name="white-balance-sunny" size={30} color="#FFc125" />
         </Animated.View>
         <Text style={estilos.loadingText}>Você sabia?</Text>
         <Text style={estilos.loadingDica}>{dicas[loadingDicaIndex]}</Text>

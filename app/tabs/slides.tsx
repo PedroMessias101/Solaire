@@ -16,7 +16,7 @@ const { width } = Dimensions.get("window");
 const slides = [
     { id: '1', title: 'Bem-vindo', description: ' Monitore a produção e o consumo de sua energia em tempo real, diretamente pelo seu celular.' },
     { id: '2', title: 'Explore Recursos', description: 'Identifique picos de consumo, otimize seu uso e veja a economia refletida na sua conta de luz.' },
-    { id: '3', title: 'Fique conectado', description: 'Receba atualizações em tempo real.' },
+    { id: '3', title: 'Fique conectado', description: 'Conheça nossos plano' },
 ];
 
 export default function Onboarding() {

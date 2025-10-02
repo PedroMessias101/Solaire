@@ -107,6 +107,27 @@ export default function TelaPerfil() {
     }
   };
 
+  // NOVO: enviar energia para o backend
+  const enviarEnergiaParaBackend = async (placa: Placa, energia: number) => {
+    const token = await AsyncStorage.getItem("userToken");
+    if (!token) return;
+    try {
+      await fetch(`${API_USUARIO_URL}/panels/${placa.serial}/status`, {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: placa.status || "Desconhecido",
+          energia_kWh: energia,
+        }),
+      });
+    } catch (err) {
+      console.log("Erro ao enviar energia para backend:", err);
+    }
+  };
+
   const salvarHistorico = async (placa: Placa) => {
     const token = await AsyncStorage.getItem("userToken");
     if (!token) return;
@@ -158,7 +179,14 @@ export default function TelaPerfil() {
         const placasAtualizadas = await Promise.all(
           placasData.map(async (placa) => {
             const energiaSimulada = placa.status === "Ativa" ? await buscarEnergiaSimulada(placa) : 0;
-            if (placa.status === "Ativa") await atualizarProducaoAcumulada(energiaSimulada);
+
+            if (placa.status === "Ativa") {
+              await atualizarProducaoAcumulada(energiaSimulada);
+            }
+
+            // 🔥 agora envia a energia simulada para o backend
+            await enviarEnergiaParaBackend(placa, energiaSimulada);
+
             await salvarHistorico({ ...placa, energia_kWh: energiaSimulada });
             return { ...placa, energia_kWh: energiaSimulada };
           })
@@ -209,6 +237,9 @@ export default function TelaPerfil() {
       const energiaSimulada = novoStatus === "Ativa" ? await buscarEnergiaSimulada(placa) : 0;
       if (novoStatus === "Ativa") await atualizarProducaoAcumulada(energiaSimulada);
 
+      // também envia energia nova para backend
+      await enviarEnergiaParaBackend({ ...placa, status: novoStatus }, energiaSimulada);
+
       const placaAtualizada = { ...placa, status: novoStatus, energia_kWh: energiaSimulada };
       setPlacas((prev) => prev.map((p) => (p.id === placa.id ? placaAtualizada : p)));
       await salvarHistorico(placaAtualizada);
@@ -245,12 +276,11 @@ export default function TelaPerfil() {
     return `Atualizado há ${diffMin} minutos`;
   };
 
-
   if (loading) {
     return (
       <View style={styles.loading}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <MaterialCommunityIcons name="white-balance-sunny" size={50} color="#ffc125" />
+          <MaterialCommunityIcons name="white-balance-sunny" size={30} color="#ffc125" />
         </Animated.View>
         <Text style={styles.loadingText}>Você sabia?</Text>
         <Text style={styles.loadingDica}>{dicas[loadingDicaIndex]}</Text>
@@ -368,7 +398,6 @@ export default function TelaPerfil() {
           </View>
         ))}
 
-
         {placas.length === 0 && (
           <View style={styles.emptyState}>
             <Feather name="info" size={28} color="#ffc125" />
@@ -384,6 +413,7 @@ export default function TelaPerfil() {
     </SafeAreaView>
   );
 }
+
 
 const styles = StyleSheet.create({
   container: {
