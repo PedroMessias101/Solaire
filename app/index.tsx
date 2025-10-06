@@ -2,6 +2,7 @@ import { View, Image, StyleSheet } from "react-native";
 import { useRouter } from "expo-router";
 import { useEffect } from "react";
 import { LinearGradient } from "expo-linear-gradient";
+import React from "react";
 
 export default function Splash() {
   const router = useRouter();
