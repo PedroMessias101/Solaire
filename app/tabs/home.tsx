@@ -16,8 +16,10 @@ import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 import GraficoBarras from "../components/grafico-barras";
 import ChatBot from "../components/ChatBot";
+import Notificacoes from "../components/notific";
 
-const API_USUARIO_URL = "https://solaire-back-oficial.onrender.com";
+
+const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -144,12 +146,19 @@ export default function HomeScreen() {
             </Text>
             {user?.email && <Text style={estilos.email}>{user.email}</Text>}
           </View>
-          <TouchableOpacity
-            style={estilos.settingsButton}
-            onPress={() => router.push("./config")}
-          >
-            <Feather name="settings" size={28} color="#333" />
-          </TouchableOpacity>
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {/* Sininho de notificações */}
+            <Notificacoes />
+
+            {/* Botão de config */}
+            <TouchableOpacity
+              style={estilos.settingsButton}
+              onPress={() => router.push("./config")}
+            >
+              <Feather name="settings" size={25} color="#000" />
+            </TouchableOpacity>
+          </View>
+
         </View>
 
         {error && (

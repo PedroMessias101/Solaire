@@ -8,6 +8,7 @@ import {
   Dimensions,
   Animated,
   StatusBar,
+  Alert,
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,12 +19,12 @@ const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_URL = "https://solaire-back-oficial.onrender.com";
   const [showPassword, setShowPassword] = useState(false);
 
+  const API_URL = "https://solaire-z8mw.onrender.com";
 
   // Animação da bolha
   const scaleX = useRef(new Animated.Value(1)).current;
@@ -58,31 +59,58 @@ export default function LoginScreen() {
     ).start();
   }, []);
 
-  const handleLogin = async () => {
-    if (!username || !password) {
-      alert("Preencha usuário e senha!");
-      return;
+const handleLogin = async () => {
+  if (!email || !password) {
+    Alert.alert("Erro", "Preencha e-mail e senha!");
+    return;
+  }
+
+  setLoading(true);
+
+  try {
+    console.log("🚀 Enviando login para:", `${API_URL}/users/login`);
+
+    const response = await fetch(`${API_URL}/users/login`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+    console.log("📥 Resposta da API:", data);
+
+    if (response.ok && data.success) {
+      // 🔄 limpa storage antigo
+      await AsyncStorage.clear();
+
+      // Salva infos no storage
+      await AsyncStorage.setItem("userToken", data.data.token);
+      await AsyncStorage.setItem("user", JSON.stringify(data.data));
+      await AsyncStorage.setItem("userName", data.data.name || email);
+
+      // 👇 pega o papel (role) do usuário
+      const role = data.data.role?.toUpperCase();
+
+      // Redireciona de acordo com o role
+      if (role === "RESIDENTIAL") {
+        router.replace("/tabs/home");
+      } else if (role === "BUSINESS") {
+        router.replace("/empresarial/home");
+      } else {
+        // fallback
+        router.replace("/tabs/home");
+      }
+    } else {
+      Alert.alert("Erro", data.message || data.error || "Erro ao fazer login");
     }
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_URL}/users/login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: username, password }),
-      });
-      const data = await response.json();
-      if (response.ok) {
-        await AsyncStorage.setItem("userToken", data.token);
-        await AsyncStorage.setItem("userName", data.user?.name || username);
-        const hasSeenOnboarding = await AsyncStorage.getItem("hasSeenOnboarding");
-        router.replace(hasSeenOnboarding ? "/tabs/home" : "/tabs/slides");
-      } else alert(data.error || "Erro ao fazer login");
-    } catch (err) {
-      alert("Erro de conexão com a API");
-    } finally {
-      setLoading(false);
-    }
-  };
+
+  } catch (err) {
+    console.error("❌ Erro no login:", err);
+    Alert.alert("Erro", "Erro de conexão com a API");
+  } finally {
+    setLoading(false);
+  }
+};
 
   return (
     <LinearGradient
@@ -120,8 +148,8 @@ export default function LoginScreen() {
             style={styles.input}
             placeholder="E-mail"
             placeholderTextColor="#ccc"
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
           />
@@ -147,7 +175,6 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
-
 
         {/* Botão Login */}
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
