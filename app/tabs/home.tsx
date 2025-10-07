@@ -16,6 +16,7 @@ import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 import GraficoBarras from "../components/grafico-barras";
 import ChatBot from "../components/ChatBot";
+import ClimaBox from "../components/ClimaBox";
 
 const API_USUARIO_URL = "https://solaireapp.onrender.com";
 
@@ -111,6 +112,7 @@ export default function HomeScreen() {
 
     return { totalEnergia, eficiencia, economia, co2 };
   };
+  
 
 
   if (loading) {
