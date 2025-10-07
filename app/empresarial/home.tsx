@@ -10,6 +10,7 @@ import {
 import { MaterialCommunityIcons } from "@expo/vector-icons";
 import ExportarPDF from "../components/ExportarPDF";
 
+
 export default function HomeScreen() {
   const [filialSelecionada, setFilialSelecionada] = useState("Matriz");
   const [modalVisivel, setModalVisivel] = useState(false);

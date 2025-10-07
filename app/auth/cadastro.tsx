@@ -72,35 +72,37 @@ export default function CadastroScreen() {
       return;
     }
 
-    try {
-      console.log("📤 Enviando dados para cadastro:", { nome, email, senha });
+    if (senha !== confirmaSenha) {
+      Alert.alert("Erro", "As senhas não coincidem.");
+      return;
+    }
 
-      const response = await fetch("https://solaire-z8mw.onrender.com", {
+    setLoading(true);
+
+    try {
+      console.log("📤 Enviando dados para cadastro:", { nome, email, senha, tab });
+
+      const response = await fetch(`${API_URL}/users`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          nome,
-          email,
-          senha,
-          tipo_usuario: tab, // garante que vai com o tipo selecionado
+          name: nome,
+          email: email,
+          password: senha,
+          role: tab === "residencial" ? "RESIDENTIAL" : "BUSINESS",
         }),
       });
 
       const data = await response.json();
 
       if (response.ok) {
-        console.log("✅ Cadastro realizado com sucesso!");
-
-        // Mostra alerta rápido
+        console.log("✅ Cadastro realizado com sucesso!", data);
         Alert.alert("Sucesso", `Conta ${tab} criada com sucesso!`);
-
-        // Redireciona automaticamente após 1 segundo
         setTimeout(() => {
           router.replace("/auth/login");
         }, 1000);
-
       } else {
         console.error("❌ Erro na resposta:", data);
         const errorMessage =
@@ -110,6 +112,8 @@ export default function CadastroScreen() {
     } catch (error) {
       console.error("❌ Erro no cadastro:", error);
       Alert.alert("Erro", "Não foi possível realizar o cadastro. Tente novamente.");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -155,10 +159,7 @@ export default function CadastroScreen() {
           </TouchableOpacity>
         </View>
 
-        <ScrollView
-          contentContainerStyle={{ paddingBottom: 20 }}
-          showsVerticalScrollIndicator={false}
-        >
+        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
           <Text style={styles.cardTitle}>
             Crie sua conta {tab === "residencial" ? "residencial" : "empresarial"}
           </Text>
@@ -274,11 +275,7 @@ export default function CadastroScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center"
-  },
+  container: { flex: 1, justifyContent: "center", alignItems: "center" },
   backgroundCircle: {
     position: "absolute",
     top: -height * 0.25,
@@ -288,9 +285,7 @@ const styles = StyleSheet.create({
     borderRadius: width * 0.65,
     overflow: "hidden",
   },
-  gradientCircle: {
-    flex: 1
-  },
+  gradientCircle: { flex: 1 },
   card: {
     width: width * 0.9,
     maxHeight: height * 0.85,
@@ -304,91 +299,22 @@ const styles = StyleSheet.create({
     shadowRadius: 15,
     elevation: 8,
   },
-  tabs: {
-    flexDirection: "row",
-    marginBottom: 20,
-    width: "100%"
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 10,
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "#ccc"
-  },
-  tabAtiva: {
-    borderBottomColor: "#fcbb30"
-  },
-  tabTexto: {
-    fontSize: 16,
-    color: "#aaa"
-  },
-  tabTextoAtivo: {
-    color: "#fcbb30",
-    fontWeight: "bold"
-  },
-  cardTitle: {
-    fontSize: 22,
-    fontWeight: "bold",
-    color: "#fff",
-    marginBottom: 5,
-    textAlign: "center"
-  },
-  cardSubtitle: {
-    fontSize: 14,
-    color: "#fff",
-    marginBottom: 20,
-    textAlign: "center"
-  },
-  inputContainer: {
-    flexDirection: "row",
-    alignItems: "center",
-    borderBottomWidth: 2,
-    borderBottomColor: "#fff",
-    marginBottom: 20,
-    width: "100%",
-    paddingVertical: 5,
-  },
-  input: {
-    flex: 1,
-    height: 40,
-    color: "#fff",
-    paddingLeft: 10,
-    fontSize: 16
-  },
-  icon: {
-    marginRight: 10
-  },
-  iconRight: {
-    marginLeft: 10
-  },
-  registerButton: {
-    width: "100%",
-    marginTop: 10
-  },
-  registerButtonDisabled: {
-    opacity: 0.6
-  },
-  registerButtonGradient: {
-    paddingVertical: 15,
-    borderRadius: 50,
-    alignItems: "center"
-  },
-  registerButtonText: {
-    color: "#000",
-    fontWeight: "bold",
-    fontSize: 18
-  },
-  loginContainer: {
-    flexDirection: "row",
-    marginTop: 15,
-    justifyContent: "center"
-  },
-  loginText: {
-    color: "#fff"
-  },
-  loginLink: {
-    color: "#fcbb30",
-    fontWeight: "bold"
-  },
+  tabs: { flexDirection: "row", marginBottom: 20, width: "100%" },
+  tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#ccc" },
+  tabAtiva: { borderBottomColor: "#fcbb30" },
+  tabTexto: { fontSize: 16, color: "#aaa" },
+  tabTextoAtivo: { color: "#fcbb30", fontWeight: "bold" },
+  cardTitle: { fontSize: 22, fontWeight: "bold", color: "#fff", marginBottom: 5, textAlign: "center" },
+  cardSubtitle: { fontSize: 14, color: "#fff", marginBottom: 20, textAlign: "center" },
+  inputContainer: { flexDirection: "row", alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#fff", marginBottom: 20, width: "100%", paddingVertical: 5 },
+  input: { flex: 1, height: 40, color: "#fff", paddingLeft: 10, fontSize: 16 },
+  icon: { marginRight: 10 },
+  iconRight: { marginLeft: 10 },
+  registerButton: { width: "100%", marginTop: 10 },
+  registerButtonDisabled: { opacity: 0.6 },
+  registerButtonGradient: { paddingVertical: 15, borderRadius: 50, alignItems: "center" },
+  registerButtonText: { color: "#000", fontWeight: "bold", fontSize: 18 },
+  loginContainer: { flexDirection: "row", marginTop: 15, justifyContent: "center" },
+  loginText: { color: "#fff" },
+  loginLink: { color: "#fcbb30", fontWeight: "bold" },
 });
