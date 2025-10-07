@@ -77,24 +77,22 @@ export default function LoginScreen() {
       const data = await response.json();
 
       if (response.ok && data.success) {
-        // 🔄 limpa storage antigo
+
         await AsyncStorage.clear();
 
-        // Salva token e dados do usuário
         await AsyncStorage.setItem("userToken", data.data.token);
         await AsyncStorage.setItem("user", JSON.stringify(data.data));
         await AsyncStorage.setItem("userName", data.data.name || email);
 
-        // pega o papel (role)
         const role = data.data.role?.toUpperCase();
 
         // Redireciona de acordo com o role
         if (role === "RESIDENTIAL") {
-          router.replace("/tabs/home");
+          router.replace("/tabs/slides");
         } else if (role === "BUSINESS") {
-          router.replace("/empresarial/home");
+          router.replace("/empresarial/wizard");
         } else {
-          router.replace("/tabs/home");
+          router.replace("/empresarial/wizard");
         }
       } else {
         Alert.alert("Erro", data.message || data.error || "Erro ao fazer login");
