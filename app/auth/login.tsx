@@ -8,6 +8,7 @@ import {
   Dimensions,
   Animated,
   StatusBar,
+  Alert,
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,12 +19,12 @@ const { width, height } = Dimensions.get("window");
 
 export default function LoginScreen() {
   const router = useRouter();
-  const [username, setUsername] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
-  const API_URL = "https://solaireapp.onrender.com";
   const [showPassword, setShowPassword] = useState(false);
 
+  const API_URL = "https://solaire-z8mw.onrender.com";
 
   // Animação da bolha
   const scaleX = useRef(new Animated.Value(1)).current;
@@ -59,26 +60,48 @@ export default function LoginScreen() {
   }, []);
 
   const handleLogin = async () => {
-    if (!username || !password) {
-      alert("Preencha usuário e senha!");
+    if (!email || !password) {
+      Alert.alert("Erro", "Preencha e-mail e senha!");
       return;
     }
+
     setLoading(true);
+
     try {
       const response = await fetch(`${API_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: username, password }),
+        body: JSON.stringify({ email, password }),
       });
+
       const data = await response.json();
-      if (response.ok) {
-        await AsyncStorage.setItem("userToken", data.token);
-        await AsyncStorage.setItem("userName", data.user?.name || username);
-        const hasSeenOnboarding = await AsyncStorage.getItem("hasSeenOnboarding");
-        router.replace(hasSeenOnboarding ? "/tabs/home" : "/tabs/slides");
-      } else alert(data.error || "Erro ao fazer login");
+
+      if (response.ok && data.success) {
+        // 🔄 limpa storage antigo
+        await AsyncStorage.clear();
+
+        // Salva token e dados do usuário
+        await AsyncStorage.setItem("userToken", data.data.token);
+        await AsyncStorage.setItem("user", JSON.stringify(data.data));
+        await AsyncStorage.setItem("userName", data.data.name || email);
+
+        // pega o papel (role)
+        const role = data.data.role?.toUpperCase();
+
+        // Redireciona de acordo com o role
+        if (role === "RESIDENTIAL") {
+          router.replace("/tabs/home");
+        } else if (role === "BUSINESS") {
+          router.replace("/empresarial/home");
+        } else {
+          router.replace("/tabs/home");
+        }
+      } else {
+        Alert.alert("Erro", data.message || data.error || "Erro ao fazer login");
+      }
     } catch (err) {
-      alert("Erro de conexão com a API");
+      console.error("Erro no login:", err);
+      Alert.alert("Erro", "Erro de conexão com a API");
     } finally {
       setLoading(false);
     }
@@ -93,7 +116,6 @@ export default function LoginScreen() {
     >
       <StatusBar barStyle="light-content" />
 
-      {/* Bolha animada */}
       <Animated.View
         style={[
           styles.backgroundCircle,
@@ -108,26 +130,23 @@ export default function LoginScreen() {
         />
       </Animated.View>
 
-      {/* Card de login */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Bem-vindo de volta!</Text>
         <Text style={styles.cardSubtitle}>Acesse sua conta</Text>
 
-        {/* Input E-mail */}
         <View style={styles.inputContainer}>
           <FontAwesome5 name="user" size={16} color="#ffc125" style={styles.icon} />
           <TextInput
             style={styles.input}
             placeholder="E-mail"
             placeholderTextColor="#ccc"
-            value={username}
-            onChangeText={setUsername}
+            value={email}
+            onChangeText={setEmail}
             autoCapitalize="none"
             keyboardType="email-address"
           />
         </View>
 
-        {/* Input Senha */}
         <View style={styles.inputContainer}>
           <FontAwesome5 name="lock" size={16} color="#ffc125" style={styles.icon} />
           <TextInput
@@ -148,8 +167,6 @@ export default function LoginScreen() {
           </TouchableOpacity>
         </View>
 
-
-        {/* Botão Login */}
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
           <LinearGradient
             colors={["#fcbb30", "#e6a600"]}
@@ -161,7 +178,6 @@ export default function LoginScreen() {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Link Cadastro */}
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>Não tem conta? </Text>
           <TouchableOpacity onPress={() => router.push("/auth/cadastro")}>
