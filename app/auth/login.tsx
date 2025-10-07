@@ -59,58 +59,53 @@ export default function LoginScreen() {
     ).start();
   }, []);
 
-const handleLogin = async () => {
-  if (!email || !password) {
-    Alert.alert("Erro", "Preencha e-mail e senha!");
-    return;
-  }
-
-  setLoading(true);
-
-  try {
-    console.log("🚀 Enviando login para:", `${API_URL}/users/login`);
-
-    const response = await fetch(`${API_URL}/users/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    console.log("📥 Resposta da API:", data);
-
-    if (response.ok && data.success) {
-      // 🔄 limpa storage antigo
-      await AsyncStorage.clear();
-
-      // Salva infos no storage
-      await AsyncStorage.setItem("userToken", data.data.token);
-      await AsyncStorage.setItem("user", JSON.stringify(data.data));
-      await AsyncStorage.setItem("userName", data.data.name || email);
-
-      // 👇 pega o papel (role) do usuário
-      const role = data.data.role?.toUpperCase();
-
-      // Redireciona de acordo com o role
-      if (role === "RESIDENTIAL") {
-        router.replace("/tabs/home");
-      } else if (role === "BUSINESS") {
-        router.replace("/empresarial/home");
-      } else {
-        // fallback
-        router.replace("/tabs/home");
-      }
-    } else {
-      Alert.alert("Erro", data.message || data.error || "Erro ao fazer login");
+  const handleLogin = async () => {
+    if (!email || !password) {
+      Alert.alert("Erro", "Preencha e-mail e senha!");
+      return;
     }
 
-  } catch (err) {
-    console.error("❌ Erro no login:", err);
-    Alert.alert("Erro", "Erro de conexão com a API");
-  } finally {
-    setLoading(false);
-  }
-};
+    setLoading(true);
+
+    try {
+      const response = await fetch(`${API_URL}/users/login`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // 🔄 limpa storage antigo
+        await AsyncStorage.clear();
+
+        // Salva token e dados do usuário
+        await AsyncStorage.setItem("userToken", data.data.token);
+        await AsyncStorage.setItem("user", JSON.stringify(data.data));
+        await AsyncStorage.setItem("userName", data.data.name || email);
+
+        // pega o papel (role)
+        const role = data.data.role?.toUpperCase();
+
+        // Redireciona de acordo com o role
+        if (role === "RESIDENTIAL") {
+          router.replace("/tabs/home");
+        } else if (role === "BUSINESS") {
+          router.replace("/empresarial/home");
+        } else {
+          router.replace("/tabs/home");
+        }
+      } else {
+        Alert.alert("Erro", data.message || data.error || "Erro ao fazer login");
+      }
+    } catch (err) {
+      console.error("Erro no login:", err);
+      Alert.alert("Erro", "Erro de conexão com a API");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <LinearGradient
@@ -121,7 +116,6 @@ const handleLogin = async () => {
     >
       <StatusBar barStyle="light-content" />
 
-      {/* Bolha animada */}
       <Animated.View
         style={[
           styles.backgroundCircle,
@@ -136,12 +130,10 @@ const handleLogin = async () => {
         />
       </Animated.View>
 
-      {/* Card de login */}
       <View style={styles.card}>
         <Text style={styles.cardTitle}>Bem-vindo de volta!</Text>
         <Text style={styles.cardSubtitle}>Acesse sua conta</Text>
 
-        {/* Input E-mail */}
         <View style={styles.inputContainer}>
           <FontAwesome5 name="user" size={16} color="#ffc125" style={styles.icon} />
           <TextInput
@@ -155,7 +147,6 @@ const handleLogin = async () => {
           />
         </View>
 
-        {/* Input Senha */}
         <View style={styles.inputContainer}>
           <FontAwesome5 name="lock" size={16} color="#ffc125" style={styles.icon} />
           <TextInput
@@ -176,7 +167,6 @@ const handleLogin = async () => {
           </TouchableOpacity>
         </View>
 
-        {/* Botão Login */}
         <TouchableOpacity style={styles.loginButton} onPress={handleLogin} disabled={loading}>
           <LinearGradient
             colors={["#fcbb30", "#e6a600"]}
@@ -188,7 +178,6 @@ const handleLogin = async () => {
           </LinearGradient>
         </TouchableOpacity>
 
-        {/* Link Cadastro */}
         <View style={styles.signupContainer}>
           <Text style={styles.signupText}>Não tem conta? </Text>
           <TouchableOpacity onPress={() => router.push("/auth/cadastro")}>

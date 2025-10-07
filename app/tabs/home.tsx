@@ -8,6 +8,7 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
+  Alert,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
@@ -18,7 +19,6 @@ import GraficoBarras from "../components/grafico-barras";
 import ChatBot from "../components/ChatBot";
 import Notificacoes from "../components/notific";
 
-
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 
 export default function HomeScreen() {
@@ -28,9 +28,11 @@ export default function HomeScreen() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [token, setToken] = useState<string | null>(null);
+  const [tokenChecked, setTokenChecked] = useState(false);
 
-  const VALOR_KWH = 0.95; // preço médio R$/kWh (ajuste se quiser)
-  const CO2_KWH = 0.084; // kg CO2 evitado por kWh
+  const VALOR_KWH = 0.95;
+  const CO2_KWH = 0.084;
 
   const dicas = [
     "Usar energia solar pode reduzir até 1,5 tonelada de CO₂ por ano — o equivalente a plantar 40 árvores",
@@ -38,7 +40,6 @@ export default function HomeScreen() {
     "A energia solar é silenciosa, renovável e não poluente",
     "Use lâmpadas de LED, consomem até 80% menos.",
   ];
-
   const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
 
   // animação do sol
@@ -58,39 +59,80 @@ export default function HomeScreen() {
     outputRange: ["0deg", "360deg"],
   });
 
-  const fetchUserAndPanels = async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const token = await AsyncStorage.getItem("userToken");
-      if (!token) {
-        setError("Token não encontrado. Faça login novamente.");
-        setLoading(false);
+  useEffect(() => {
+    const checkToken = async () => {
+      const storedToken = await AsyncStorage.getItem("userToken");
+      if (!storedToken) {
+        router.replace("/auth/login");
         return;
       }
-
-      // dados do usuário
-      const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const userData = await resUser.json();
-      setUser(userData);
-
-      // dados das placas
-      const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      const dataPlacas = await resPlacas.json();
-      setPlacas(dataPlacas.data || []);
-    } catch (err: any) {
-      setError(err.message || "Erro inesperado");
-    } finally {
-      setLoading(false);
-    }
-  };
-
+      setToken(storedToken);
+      setTokenChecked(true);
+    };
+    checkToken();
+  }, []);
   useEffect(() => {
-    fetchUserAndPanels();
+    if (tokenChecked && token) {
+      fetchUserAndPanels();
+    }
+  }, [tokenChecked, token]);
+
+  const fetchUserAndPanels = async () => {
+  setLoading(true);
+  setError(null);
+
+  try {
+    // ====================== DADOS DO USUÁRIO ======================
+    const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (resUser.status === 401) {
+      // Token inválido/expirado
+      Alert.alert("Sessão expirada", "Faça login novamente.");
+      await AsyncStorage.clear();
+      router.replace("/auth/login");
+      return;
+    }
+
+    const userResponse = await resUser.json();
+
+    if (userResponse.success) {
+      setUser(userResponse.data); // <-- só o objeto 'data'
+    } else {
+      setError(userResponse.error || "Erro ao carregar usuário");
+    }
+
+    // ====================== DADOS DAS PLACAS ======================
+    const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+
+    if (resPlacas.status === 401) {
+      Alert.alert("Sessão expirada", "Faça login novamente.");
+      await AsyncStorage.clear();
+      router.replace("/auth/login");
+      return;
+    }
+
+    const placasResponse = await resPlacas.json();
+
+    if (placasResponse.success) {
+      setPlacas(placasResponse.data || []);
+    } else {
+      setError(placasResponse.error || "Erro ao carregar placas");
+    }
+  } catch (err: any) {
+    console.error("Erro ao carregar dados:", err);
+    setError(err.message || "Erro inesperado");
+  } finally {
+    setLoading(false);
+  }
+};
+
+
+  // Alterna dicas
+  useEffect(() => {
     const interval = setInterval(() => {
       setLoadingDicaIndex((prev) => (prev + 1) % dicas.length);
     }, 5000);
@@ -114,8 +156,7 @@ export default function HomeScreen() {
     return { totalEnergia, eficiencia, economia, co2 };
   };
 
-
-  if (loading) {
+  if (!tokenChecked || loading) {
     return (
       <View style={estilos.loading}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
@@ -141,16 +182,12 @@ export default function HomeScreen() {
             style={estilos.avatar}
           />
           <View style={{ flex: 1 }}>
-            <Text style={estilos.saudacao}>
-              Olá, <Text style={estilos.username}>{user?.name || "Bem-vindo!"}</Text>
-            </Text>
+            <Text style={estilos.username}>{user?.name || "Bem-vindo!"}</Text>
+
             {user?.email && <Text style={estilos.email}>{user.email}</Text>}
           </View>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            {/* Sininho de notificações */}
             <Notificacoes />
-
-            {/* Botão de config */}
             <TouchableOpacity
               style={estilos.settingsButton}
               onPress={() => router.push("./config")}
@@ -158,19 +195,8 @@ export default function HomeScreen() {
               <Feather name="settings" size={25} color="#000" />
             </TouchableOpacity>
           </View>
-
         </View>
 
-        {error && (
-          <View style={estilos.errorBox}>
-            <Text style={estilos.errorText}>{error}</Text>
-            <TouchableOpacity style={estilos.retryBtn} onPress={fetchUserAndPanels}>
-              <Text style={estilos.retryText}>Tentar novamente</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {/* Card Principal */}
         <LinearGradient
           colors={["#000", "#FFC125"]}
           start={{ x: 0, y: 0 }}
@@ -182,10 +208,8 @@ export default function HomeScreen() {
           <Text style={estilos.cardLegenda}>Geração Atual</Text>
         </LinearGradient>
 
-        {/* gráfico */}
         <GraficoBarras placas={placas} />
 
-        {/* Métricas rápidas */}
         <View style={estilos.grid}>
           <View style={estilos.card}>
             <Feather name="thermometer" size={28} color="#FFC125" />
@@ -216,7 +240,6 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* ChatBot fixo acima da navbar */}
       <View style={{ position: "absolute", bottom: 80, right: 0 }}>
         <ChatBot />
       </View>
@@ -227,80 +250,26 @@ export default function HomeScreen() {
 }
 
 const estilos = StyleSheet.create({
-  tela: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    paddingHorizontal: 16,
-    paddingTop: 40,
-  },
-  loading: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: 20,
-  },
-  loadingText: {
-    marginTop: 20,
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#333",
-  },
-  loadingDica: {
-    marginTop: 8,
-    fontSize: 14,
-    color: "#555",
-    textAlign: "center",
-    paddingHorizontal: 20,
-  },
+  tela: { flex: 1, backgroundColor: "#f5f5f5", paddingHorizontal: 16, paddingTop: 40 },
+  loading: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 20 },
+  loadingText: { marginTop: 20, fontSize: 18, fontWeight: "600", color: "#333" },
+  loadingDica: { marginTop: 8, fontSize: 14, color: "#555", textAlign: "center", paddingHorizontal: 20 },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   saudacao: { fontSize: 20, fontWeight: "600", color: "#000" },
   username: { fontWeight: "700", color: "#000000ff" },
   email: { fontSize: 12, color: "#666", marginTop: 2 },
-  avatar: {
-    width: 56,
-    height: 56,
-    borderRadius: 28,
-    marginRight: 12,
-    borderWidth: 2,
-    borderColor: "#FFD700",
-  },
+  avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, borderWidth: 2, borderColor: "#FFD700" },
   settingsButton: { marginLeft: 12, justifyContent: "center", alignItems: "center" },
   cardPrincipal: { borderRadius: 20, padding: 24, marginBottom: 20 },
   cardTitulo: { fontSize: 16, color: "#fff", marginBottom: 6 },
   cardValor: { fontSize: 22, fontWeight: "bold", color: "#fff" },
   cardVvalor: { fontSize: 22, fontWeight: "bold", color: "#333" },
   cardLegenda: { fontSize: 14, color: "#fff", marginTop: 4 },
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  card: {
-    backgroundColor: "#fff",
-    borderRadius: 20,
-    padding: 18,
-    marginBottom: 16,
-    width: "47%",
-    alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    elevation: 2,
-  },
+  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+  card: { backgroundColor: "#fff", borderRadius: 20, padding: 18, marginBottom: 16, width: "47%", alignItems: "center", shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
   cardLabel: { fontSize: 14, color: "#333", marginTop: 8, fontWeight: "500" },
-  errorBox: {
-    backgroundColor: "#ffece6",
-    padding: 12,
-    borderRadius: 10,
-    marginBottom: 12,
-  },
+  errorBox: { backgroundColor: "#ffece6", padding: 12, borderRadius: 10, marginBottom: 12 },
   errorText: { color: "#b00020", marginBottom: 8 },
-  retryBtn: {
-    alignSelf: "flex-start",
-    backgroundColor: "#000",
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    borderRadius: 8,
-  },
+  retryBtn: { alignSelf: "flex-start", backgroundColor: "#000", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
   retryText: { color: "#FFC125" },
 });
