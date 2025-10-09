@@ -8,7 +8,7 @@ import {
   ScrollView,
   Alert,
 } from "react-native";
-import { useRouter } from "expo-router"; // 👈 Import do router
+import { useRouter } from "expo-router"; 
 
 type MatrizData = {
   nome: string;
@@ -24,7 +24,7 @@ type FilialData = {
 };
 
 export default function EmpresaSetupWizard() {
-  const router = useRouter(); // 👈 Instância do router
+  const router = useRouter(); 
   const [step, setStep] = useState(1);
   const [matriz, setMatriz] = useState<MatrizData>({
     nome: "",
@@ -60,7 +60,7 @@ export default function EmpresaSetupWizard() {
     Alert.alert("Sucesso", "Cadastro empresarial concluído!", [
       {
         text: "OK",
-        onPress: () => router.replace("/home"), // 👈 Redireciona para a Home
+        onPress: () => router.replace("/tabs/home"), 
       },
     ]);
   };
