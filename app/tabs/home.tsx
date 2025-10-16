@@ -18,6 +18,7 @@ import { useRouter } from "expo-router";
 import GraficoBarras from "../components/grafico-barras";
 import ChatBot from "../components/ChatBot";
 import Notificacoes from "../components/notific";
+
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 
 export default function HomeScreen() {

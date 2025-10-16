@@ -31,9 +31,9 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => 
 
   // Ícones e rotas
   const tabs = [
-    { icon: "home", route: "/tabs/home" },
+    { icon: "home", route: "/empresarial/home" },
     { icon: "add-circle", route: "modal" }, // abre modal
-    { icon: "person", route: "/tabs/perfil" },
+    { icon: "person", route: "/empresarial/perfil" },
   ];
 
 
