@@ -15,8 +15,9 @@ import ExportarPDF from "../components/ExportarPDF";
 import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBarEmpresarial";
 import { useRouter } from "expo-router";
 import Notificacoes from "../components/notific";
+import ChatBot from "../components/ChatBot";
 
-const { height } = Dimensions.get('window');
+const { width } = Dimensions.get('window');
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -98,7 +99,7 @@ export default function HomeScreen() {
 
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-300, 0], // Começa acima e desce até a posição normal
+    outputRange: [-20, 0], // Animação mais curta
   });
 
   const opacity = fadeAnim.interpolate({
@@ -111,12 +112,14 @@ export default function HomeScreen() {
       <ScrollView style={estilos.container} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header com avatar, usuário e configurações */}
         <View style={estilos.header}>
-          <Image
-            source={{
-              uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-            }}
-            style={estilos.avatar}
-          />
+          <TouchableOpacity onPress={abrirModal}>
+            <Image
+              source={{
+                uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
+              }}
+              style={estilos.avatar}
+            />
+          </TouchableOpacity>
           <View style={{ flex: 1 }}>
             <Text style={estilos.username}>Empresarial</Text>
             <Text style={estilos.email}>Painel Gerencial</Text>
@@ -199,7 +202,12 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* Modal animado de seleção de filial */}
+      {/* ChatBot posicionado acima da navbar */}
+      <View style={estilos.chatBotContainer}>
+        <ChatBot />
+      </View>
+
+      {/* Modal animado de seleção de filial - posicionado abaixo do header */}
       {modalVisivel && (
         <View style={estilos.modalContainer}>
           <Animated.View 
@@ -220,7 +228,7 @@ export default function HomeScreen() {
               estilos.modalContent,
               {
                 transform: [{ translateY }],
-                opacity: fadeAnim
+                opacity: fadeAnim,
               }
             ]}
           >
@@ -381,14 +389,21 @@ const estilos = StyleSheet.create({
     fontSize: 14, 
     color: "#444" 
   },
-  // Estilos do modal animado
+  // Container do ChatBot
+  chatBotContainer: {
+    position: "absolute",
+    bottom: 80,
+    right: 0,
+    zIndex: 1000,
+  },
+  // Estilos do modal animado - POSICIONAMENTO FIXO ABAIXO DO HEADER
   modalContainer: {
     position: 'absolute',
-    top: 0,
+    top: 120, // Posição fixa abaixo do header
     left: 0,
     right: 0,
     bottom: 0,
-    justifyContent: 'flex-start',
+    zIndex: 2000,
   },
   modalOverlay: {
     position: 'absolute',
@@ -404,7 +419,6 @@ const estilos = StyleSheet.create({
   modalContent: {
     backgroundColor: '#fff',
     marginHorizontal: 20,
-    marginTop: 100,
     borderRadius: 16,
     padding: 0,
     shadowColor: '#000',
@@ -420,12 +434,12 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    padding: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
   modalTitulo: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
     color: '#000',
   },
@@ -433,7 +447,7 @@ const estilos = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
+    padding: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
   },
@@ -441,7 +455,7 @@ const estilos = StyleSheet.create({
     backgroundColor: '#fff8e1',
   },
   modalTexto: {
-    fontSize: 16,
+    fontSize: 14,
     color: '#333',
   },
   modalTextoSelecionado: {
