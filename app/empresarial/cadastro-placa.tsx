@@ -1,4 +1,4 @@
-// CadastroPlaca.tsx
+
 import React, { useEffect, useState } from "react";
 import {
   View,
@@ -73,7 +73,6 @@ export default function CadastroPlaca(): JSX.Element {
         }
 
         const dados = await resposta.json();
-        // segurança: suporte para formatos diferentes
         setPlacasCadastradas(dados?.data ?? dados ?? []);
       } catch (erro) {
         console.log("Erro ao carregar placas:", erro);
@@ -94,7 +93,6 @@ export default function CadastroPlaca(): JSX.Element {
 
     setCarregandoCadastro(true);
     try {
-      // Buscar dados da simulação
       const respostaSimulacao = await fetch(`${API_SIM}/panel/${idSimulacao}`);
 
       if (!respostaSimulacao.ok) {
@@ -112,7 +110,6 @@ export default function CadastroPlaca(): JSX.Element {
         return;
       }
 
-      // Enviar dados para o backend do app
       const respostaApp = await fetch(`${API_APP}/panels/provision`, {
         method: "POST",
         headers: {
@@ -137,7 +134,7 @@ export default function CadastroPlaca(): JSX.Element {
           const jsonErro = JSON.parse(texto);
           mensagem = jsonErro?.error || mensagem;
         } catch {
-          // texto não é JSON
+   
         }
         Alert.alert("Erro", mensagem);
         return;
@@ -159,7 +156,6 @@ export default function CadastroPlaca(): JSX.Element {
 
       setPlacasCadastradas((anteriores) => [novaPlaca, ...anteriores]);
 
-      // Limpar campos
       setNomePlaca("");
       setIdSimulacao("");
       setNomeEmpresa("");
