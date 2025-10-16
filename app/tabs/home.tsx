@@ -17,8 +17,16 @@ import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 import GraficoBarras from "../components/grafico-barras";
 import ChatBot from "../components/ChatBot";
+<<<<<<< HEAD
+ 
 import ClimaBox from "../components/ClimaBox";
 import Notificacoes from "../components/notific";
+ 
+
+=======
+import ClimaBox from "../components/ClimaBox";
+import Notificacoes from "../components/notific";
+>>>>>>> 75280d3a42ed78b1a774fa7a9173b4bc8a81e76e
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 
 export default function HomeScreen() {
