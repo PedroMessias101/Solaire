@@ -342,17 +342,34 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     backgroundColor: "#fff",
   },
+  navButtons: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 20,
+  },
   button: {
     backgroundColor: "#ffc125",
-    padding: 12,
+    paddingVertical: 12,
     borderRadius: 10,
     alignItems: "center",
-    marginTop: 10,
+    justifyContent: "center",
     flex: 1,
+    marginLeft: 10,
+  },
+  backButton: {
+    backgroundColor: "#ebe7e7ff",
+    paddingVertical: 12, 
+    borderRadius: 10,
+    alignItems: "center",
+    justifyContent: "center",
+    flex: 1,
+    marginRight: 10,
   },
   buttonText: {
-    color: "#fff",
+    color: "#000",
     fontWeight: "600",
+    textAlignVertical: "center",
   },
   secondaryButton: {
     borderWidth: 1,
@@ -372,19 +389,6 @@ const styles = StyleSheet.create({
   item: {
     color: "#444",
     fontSize: 14,
-  },
-  navButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginTop: 20,
-  },
-  backButton: {
-    backgroundColor: "#999",
-    padding: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    flex: 1,
-    marginRight: 10,
   },
   buttonDisabled: {
     backgroundColor: "#ccc",
