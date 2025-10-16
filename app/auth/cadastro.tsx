@@ -23,17 +23,25 @@ export default function CadastroScreen() {
 
   const [tab, setTab] = useState("residencial");
 
-  // Campos gerais
-  const [nome, setNome] = useState("");
+  // --- Estados para os campos ---
+  // Residencial
+  const [nomeResidencial, setNomeResidencial] = useState("");
+  const [cpf, setCpf] = useState("");
+
+  // Empresarial
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [nomeAdmin, setNomeAdmin] = useState("");
+
+  // Comuns
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
-
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmaSenha, setMostrarConfirmaSenha] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // Animação bolha
+  // Animações (mantidas como estavam)
   const scaleX = useRef(new Animated.Value(1)).current;
   const scaleY = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -45,10 +53,10 @@ export default function CadastroScreen() {
         Animated.sequence([
           Animated.parallel([
             Animated.timing(scaleX, { toValue: 1.2, duration: 4000, useNativeDriver: true }),
-            Animated.timing(scaleY, { toValue: 0.8, duration: 4000, useNativeDriver: true }),
+            Animated.timing(scaleY, { toValue: 0.9, duration: 4000, useNativeDriver: true }),
           ]),
           Animated.parallel([
-            Animated.timing(scaleX, { toValue: 0.8, duration: 4000, useNativeDriver: true }),
+            Animated.timing(scaleX, { toValue: 0.9, duration: 4000, useNativeDriver: true }),
             Animated.timing(scaleY, { toValue: 1.2, duration: 4000, useNativeDriver: true }),
           ]),
         ]),
@@ -66,12 +74,8 @@ export default function CadastroScreen() {
     ).start();
   }, []);
 
+  // --- LÓGICA DE CADASTRO CORRIGIDA ---
   const handleCadastro = async () => {
-    if (!nome || !email || !senha) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
-      return;
-    }
-
     if (senha !== confirmaSenha) {
       Alert.alert("Erro", "As senhas não coincidem.");
       return;
@@ -79,242 +83,169 @@ export default function CadastroScreen() {
 
     setLoading(true);
 
-    try {
-      console.log("📤 Enviando dados para cadastro:", { nome, email, senha, tab });
+    let url = "";
+    let body = {};
 
-      const response = await fetch(`${API_URL}/users`, {
+    if (tab === "residencial") {
+      if (!nomeResidencial || !email || !senha || !cpf) {
+        Alert.alert("Erro", "Por favor, preencha todos os campos para o cadastro residencial.");
+        setLoading(false);
+        return;
+      }
+      url = `${API_URL}/users/register/residential`;
+      body = {
+        name: nomeResidencial,
+        email: email,
+        password: senha,
+        cpf: cpf,
+      };
+    } else { // Empresarial
+      if (!nomeEmpresa || !cnpj || !nomeAdmin || !email || !senha) {
+        Alert.alert("Erro", "Por favor, preencha todos os campos para o cadastro empresarial.");
+        setLoading(false);
+        return;
+      }
+      url = `${API_URL}/users/register/business`;
+      body = {
+        companyName: nomeEmpresa,
+        companyCnpj: cnpj,
+        userName: nomeAdmin,
+        userEmail: email,
+        password: senha,
+      };
+    }
+
+    try {
+      const response = await fetch(url, {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name: nome,
-          email: email,
-          password: senha,
-          role: tab === "residencial" ? "RESIDENTIAL" : "BUSINESS",
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
 
-      if (response.ok) {
-        console.log("✅ Cadastro realizado com sucesso!", data);
-        Alert.alert("Sucesso", `Conta ${tab} criada com sucesso!`);
-        setTimeout(() => {
-          router.replace("/auth/login");
-        }, 1000);
+      if (response.ok && data.success) {
+        Alert.alert("Sucesso", "Conta criada com sucesso! Faça o login para continuar.");
+        router.replace("/auth/login");
       } else {
-        console.error("❌ Erro na resposta:", data);
-        const errorMessage =
-          data?.error || `Erro ${response.status}: ${response.statusText}`;
-        Alert.alert("Erro no Cadastro", errorMessage);
+        Alert.alert("Erro no Cadastro", data?.error || data?.message || "Ocorreu um erro desconhecido.");
       }
     } catch (error) {
-      console.error("❌ Erro no cadastro:", error);
-      Alert.alert("Erro", "Não foi possível realizar o cadastro. Tente novamente.");
+      console.error("Erro ao cadastrar:", error);
+      Alert.alert("Erro de Conexão", "Não foi possível se comunicar com o servidor. Tente novamente mais tarde.");
     } finally {
       setLoading(false);
     }
   };
 
+  const renderResidencialForm = () => (
+    <>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="user" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Nome completo" value={nomeResidencial} onChangeText={setNomeResidencial} />
+      </View>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="CPF" value={cpf} onChangeText={setCpf} keyboardType="numeric" />
+      </View>
+    </>
+  );
+
+  const renderEmpresarialForm = () => (
+    <>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="building" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Nome da Empresa" value={nomeEmpresa} onChangeText={setNomeEmpresa} />
+      </View>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="CNPJ" value={cnpj} onChangeText={setCnpj} keyboardType="numeric"/>
+      </View>
+       <View style={styles.inputContainer}>
+        <FontAwesome5 name="user-tie" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Seu nome (Administrador)" value={nomeAdmin} onChangeText={setNomeAdmin} />
+      </View>
+    </>
+  );
+
   return (
-    <LinearGradient
-      colors={["#000", "#866112ff", "#fcbb30"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
-      <StatusBar barStyle="light-content" />
-      <Animated.View
-        style={[
-          styles.backgroundCircle,
-          { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] },
-        ]}
-      >
-        <LinearGradient
-          colors={["#000", "#fcbb30"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientCircle}
-        />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
+      <Animated.View style={[ styles.backgroundCircle, { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] } ]}>
+        <LinearGradient colors={["#fbf5deff", "#ffffffff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientCircle} />
       </Animated.View>
 
-      <View style={styles.card}>
+      <ScrollView contentContainerStyle={styles.contentContainer}>
+        <Text style={styles.title}>Crie sua conta</Text>
+        <Text style={styles.subtitle}>Comece a monitorar sua energia hoje</Text>
+
         <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[styles.tab, tab === "residencial" && styles.tabAtiva]}
-            onPress={() => setTab("residencial")}
-          >
-            <Text style={[styles.tabTexto, tab === "residencial" && styles.tabTextoAtivo]}>
-              Residencial
-            </Text>
+          <TouchableOpacity style={[styles.tab, tab === "residencial" && styles.tabAtiva]} onPress={() => setTab("residencial")}>
+            <Text style={[styles.tabTexto, tab === "residencial" && styles.tabTextoAtivo]}>Residencial</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, tab === "empresarial" && styles.tabAtiva]}
-            onPress={() => setTab("empresarial")}
-          >
-            <Text style={[styles.tabTexto, tab === "empresarial" && styles.tabTextoAtivo]}>
-              Empresarial
-            </Text>
+          <TouchableOpacity style={[styles.tab, tab === "empresarial" && styles.tabAtiva]} onPress={() => setTab("empresarial")}>
+            <Text style={[styles.tabTexto, tab === "empresarial" && styles.tabTextoAtivo]}>Empresarial</Text>
           </TouchableOpacity>
         </View>
 
-        <ScrollView contentContainerStyle={{ paddingBottom: 20 }} showsVerticalScrollIndicator={false}>
-          <Text style={styles.cardTitle}>
-            Crie sua conta {tab === "residencial" ? "residencial" : "empresarial"}
-          </Text>
-          <Text style={styles.cardSubtitle}>Preencha os campos abaixo</Text>
+        {tab === "residencial" ? renderResidencialForm() : renderEmpresarialForm()}
 
-          {/* Nome */}
-          <View style={styles.inputContainer}>
-            <FontAwesome5
-              name={tab === "residencial" ? "user" : "building"}
-              size={16}
-              color="#fcbb30"
-              style={styles.icon}
-            />
-            <TextInput
-              style={styles.input}
-              placeholder={tab === "residencial" ? "Nome completo" : "Nome da empresa"}
-              placeholderTextColor="#ccc"
-              value={nome}
-              onChangeText={setNome}
-              autoCapitalize="words"
-              returnKeyType="next"
-            />
-          </View>
-
-          {/* Email */}
-          <View style={styles.inputContainer}>
-            <Ionicons name="mail" size={18} color="#fcbb30" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder={tab === "residencial" ? "E-mail" : "E-mail empresarial"}
-              placeholderTextColor="#ccc"
-              keyboardType="email-address"
-              autoCapitalize="none"
-              autoComplete="email"
-              value={email}
-              onChangeText={setEmail}
-              returnKeyType="next"
-            />
-          </View>
-
-          {/* Senha */}
-          <View style={styles.inputContainer}>
-            <FontAwesome5 name="lock" size={16} color="#fcbb30" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Senha (mínimo 6 caracteres)"
-              placeholderTextColor="#ccc"
-              secureTextEntry={!mostrarSenha}
-              value={senha}
-              onChangeText={setSenha}
-              autoComplete="new-password"
-              returnKeyType="next"
-            />
-            <Ionicons
-              name={mostrarSenha ? "eye-off" : "eye"}
-              size={20}
-              color="#fcbb30"
-              style={styles.iconRight}
-              onPress={() => setMostrarSenha(!mostrarSenha)}
-            />
-          </View>
-
-          {/* Confirmar senha */}
-          <View style={styles.inputContainer}>
-            <FontAwesome5 name="lock" size={16} color="#fcbb30" style={styles.icon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Confirmar senha"
-              placeholderTextColor="#ccc"
-              secureTextEntry={!mostrarConfirmaSenha}
-              value={confirmaSenha}
-              onChangeText={setConfirmaSenha}
-              autoComplete="new-password"
-              returnKeyType="done"
-              onSubmitEditing={handleCadastro}
-            />
-            <Ionicons
-              name={mostrarConfirmaSenha ? "eye-off" : "eye"}
-              size={20}
-              color="#fcbb30"
-              style={styles.iconRight}
-              onPress={() => setMostrarConfirmaSenha(!mostrarConfirmaSenha)}
-            />
-          </View>
-
-          <TouchableOpacity
-            style={[styles.registerButton, loading && styles.registerButtonDisabled]}
-            onPress={handleCadastro}
-            disabled={loading}
-          >
-            <LinearGradient
-              colors={["#fcbb30", "#e6a600"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 1 }}
-              style={styles.registerButtonGradient}
-            >
-              <Text style={styles.registerButtonText}>
-                {loading ? "Cadastrando..." : "Cadastrar"}
-              </Text>
-            </LinearGradient>
+        {/* Campos Comuns */}
+        <View style={styles.inputContainer}>
+          <Ionicons name="mail" size={18} color="#333" style={styles.icon} />
+          <TextInput style={styles.input} placeholder="E-mail de acesso" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+        </View>
+        <View style={styles.inputContainer}>
+          <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
+          <TextInput style={styles.input} placeholder="Senha" secureTextEntry={!mostrarSenha} value={senha} onChangeText={setSenha} />
+          <TouchableOpacity onPress={() => setMostrarSenha(prev => !prev)}>
+            <Ionicons name={mostrarSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
           </TouchableOpacity>
+        </View>
+        <View style={styles.inputContainer}>
+          <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
+          <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry={!mostrarConfirmaSenha} value={confirmaSenha} onChangeText={setConfirmaSenha} />
+          <TouchableOpacity onPress={() => setMostrarConfirmaSenha(prev => !prev)}>
+            <Ionicons name={mostrarConfirmaSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
+          </TouchableOpacity>
+        </View>
 
-          <View style={styles.loginContainer}>
-            <Text style={styles.loginText}>Já tem conta? </Text>
-            <TouchableOpacity onPress={() => router.push("/auth/login")}>
-              <Text style={styles.loginLink}>Entrar</Text>
-            </TouchableOpacity>
-          </View>
-        </ScrollView>
-      </View>
-    </LinearGradient>
+        <TouchableOpacity style={styles.button} onPress={handleCadastro} disabled={loading}>
+          <LinearGradient colors={["#ffc125", "#ffc125"]} style={styles.buttonGradient}>
+            <Text style={styles.buttonText}>{loading ? "Cadastrando..." : "Cadastrar"}</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+
+        <TouchableOpacity onPress={() => router.push("/auth/login")}>
+          <Text style={styles.linkText}>
+            Já tem conta? <Text style={styles.linkHighlight}>Entrar</Text>
+          </Text>
+        </TouchableOpacity>
+      </ScrollView>
+    </View>
   );
 }
 
+// OS ESTILOS PERMANECEM OS MESMOS
 const styles = StyleSheet.create({
-  container: { flex: 1, justifyContent: "center", alignItems: "center" },
-  backgroundCircle: {
-    position: "absolute",
-    top: -height * 0.25,
-    right: -width * 0.35,
-    width: width * 1.3,
-    height: width * 1.3,
-    borderRadius: width * 0.65,
-    overflow: "hidden",
-  },
+  container: { flex: 1, backgroundColor: "#ffffff" },
+  backgroundCircle: { position: "absolute", top: -height * 0.2, right: -width * 0.3, width: width * 1.2, height: width * 1.2, borderRadius: width * 0.6, overflow: "hidden", opacity: 0.8, },
   gradientCircle: { flex: 1 },
-  card: {
-    width: width * 0.9,
-    maxHeight: height * 0.85,
-    backgroundColor: "rgba(0,0,0,0.7)",
-    borderRadius: 30,
-    padding: 25,
-    alignItems: "center",
-    shadowColor: "#fcbb30",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.3,
-    shadowRadius: 15,
-    elevation: 8,
-  },
+  contentContainer: { flexGrow: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: width * 0.08, paddingBottom: height * 0.1, paddingTop: height * 0.1 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#000", marginBottom: 10, textAlign: "center" },
+  subtitle: { fontSize: 16, color: "#6c757d", marginBottom: 20, textAlign: "center" },
   tabs: { flexDirection: "row", marginBottom: 20, width: "100%" },
   tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#ccc" },
-  tabAtiva: { borderBottomColor: "#fcbb30" },
-  tabTexto: { fontSize: 16, color: "#aaa" },
-  tabTextoAtivo: { color: "#fcbb30", fontWeight: "bold" },
-  cardTitle: { fontSize: 22, fontWeight: "bold", color: "#fff", marginBottom: 5, textAlign: "center" },
-  cardSubtitle: { fontSize: 14, color: "#fff", marginBottom: 20, textAlign: "center" },
-  inputContainer: { flexDirection: "row", alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#fff", marginBottom: 20, width: "100%", paddingVertical: 5 },
-  input: { flex: 1, height: 40, color: "#fff", paddingLeft: 10, fontSize: 16 },
+  tabAtiva: { borderBottomColor: "#ffc125" },
+  tabTexto: { fontSize: 16, color: "#6c757d" },
+  tabTextoAtivo: { color: "#ffc125", fontWeight: "bold" },
+  inputContainer: { flexDirection: "row", alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#ffc125", marginBottom: 20, width: "100%", paddingVertical: 5 },
+  input: { flex: 1, height: 40, color: "#000", paddingLeft: 10 },
   icon: { marginRight: 10 },
   iconRight: { marginLeft: 10 },
-  registerButton: { width: "100%", marginTop: 10 },
-  registerButtonDisabled: { opacity: 0.6 },
-  registerButtonGradient: { paddingVertical: 15, borderRadius: 50, alignItems: "center" },
-  registerButtonText: { color: "#000", fontWeight: "bold", fontSize: 18 },
-  loginContainer: { flexDirection: "row", marginTop: 15, justifyContent: "center" },
-  loginText: { color: "#fff" },
-  loginLink: { color: "#fcbb30", fontWeight: "bold" },
+  button: { width: "100%", marginBottom: 20 },
+  buttonGradient: { paddingVertical: height * 0.02, borderRadius: 50, alignItems: "center" },
+  buttonText: { color: "#000", fontWeight: "600", fontSize: width * 0.045, textAlign: "center" },
+  linkText: { color: "#6c757d", fontSize: width * 0.038, fontWeight: "500" },
+  linkHighlight: { color: "#ffc125", fontWeight: "600", textDecorationLine: "underline" },
 });

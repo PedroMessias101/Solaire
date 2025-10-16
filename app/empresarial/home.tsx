@@ -271,6 +271,7 @@ export default function HomeScreen() {
 
 // Estilos
 const estilos = StyleSheet.create({
+<<<<<<< HEAD
   container: { 
     flex: 1, 
     backgroundColor: "#f5f5f5", 
@@ -350,6 +351,27 @@ const estilos = StyleSheet.create({
     flexDirection: "row", 
     flexWrap: "wrap", 
     justifyContent: "space-between" 
+=======
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    padding: 20
+  },
+  header: {
+    alignItems: "center",
+    marginBottom: 15
+  },
+  filialTexto: {
+    fontSize: 18,
+    fontWeight: "700",
+    color: "#000",
+    margin: 10,
+  },
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between"
+>>>>>>> 8632775e1d66510bb387a51aa4ca325f5e5e39bb
   },
   card: {
     backgroundColor: "#fff",

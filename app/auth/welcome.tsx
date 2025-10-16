@@ -18,7 +18,7 @@ const { width, height } = Dimensions.get("window");
 export default function WelcomeScreen() {
   const router = useRouter();
 
-  // Animação da bolha
+  // Animação da bolha - mais suave
   const scaleX = useRef(new Animated.Value(1)).current;
   const scaleY = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -29,22 +29,22 @@ export default function WelcomeScreen() {
       Animated.parallel([
         Animated.sequence([
           Animated.parallel([
-            Animated.timing(scaleX, { toValue: 1.3, duration: 4000, useNativeDriver: true }),
-            Animated.timing(scaleY, { toValue: 0.8, duration: 4000, useNativeDriver: true }),
+            Animated.timing(scaleX, { toValue: 1.2, duration: 4000, useNativeDriver: true }),
+            Animated.timing(scaleY, { toValue: 0.9, duration: 4000, useNativeDriver: true }),
           ]),
           Animated.parallel([
-            Animated.timing(scaleX, { toValue: 0.8, duration: 4000, useNativeDriver: true }),
-            Animated.timing(scaleY, { toValue: 1.3, duration: 4000, useNativeDriver: true }),
+            Animated.timing(scaleX, { toValue: 0.9, duration: 4000, useNativeDriver: true }),
+            Animated.timing(scaleY, { toValue: 1.2, duration: 4000, useNativeDriver: true }),
           ]),
         ]),
         Animated.sequence([
-          Animated.timing(translateX, { toValue: 80, duration: 6000, useNativeDriver: true }),
-          Animated.timing(translateX, { toValue: -40, duration: 6000, useNativeDriver: true }),
+          Animated.timing(translateX, { toValue: 60, duration: 6000, useNativeDriver: true }),
+          Animated.timing(translateX, { toValue: -30, duration: 6000, useNativeDriver: true }),
           Animated.timing(translateX, { toValue: 0, duration: 6000, useNativeDriver: true }),
         ]),
         Animated.sequence([
-          Animated.timing(translateY, { toValue: 50, duration: 5000, useNativeDriver: true }),
-          Animated.timing(translateY, { toValue: -30, duration: 5000, useNativeDriver: true }),
+          Animated.timing(translateY, { toValue: 40, duration: 5000, useNativeDriver: true }),
+          Animated.timing(translateY, { toValue: -20, duration: 5000, useNativeDriver: true }),
           Animated.timing(translateY, { toValue: 0, duration: 5000, useNativeDriver: true }),
         ]),
       ])
@@ -52,15 +52,10 @@ export default function WelcomeScreen() {
   }, []);
 
   return (
-    <LinearGradient
-      colors={["#000", "#2f2103ff", "#fcbb30"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={styles.container}
-    >
-      <StatusBar barStyle="light-content" />
+    <View style={styles.container}>
+      <StatusBar barStyle="dark-content" />
 
-      {/* Bolha animada com gradiente preto -> amarelo */}
+      {/* Bolha animada suave com gradiente claro */}
       <Animated.View
         style={[
           styles.backgroundCircle,
@@ -70,7 +65,7 @@ export default function WelcomeScreen() {
         ]}
       >
         <LinearGradient
-          colors={["#000", "#fcbb30"]}
+          colors={["#fbf5deff", "#ffffffff"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
           style={styles.gradientCircle}
@@ -80,13 +75,13 @@ export default function WelcomeScreen() {
       {/* Conteúdo principal */}
       <View style={styles.contentContainer}>
         <Image
-          source={require('@/assets/slogan.png')}
+          source={require('@/assets/logo-principal.png')}
           style={styles.image}
         />
         <View style={styles.buttonContainer}>
           <TouchableOpacity onPress={() => router.push("/auth/login")}>
             <LinearGradient
-              colors={["#fcbb30", "#e6a600"]}
+              colors={["#ffc125", "#ffc125"]}
               start={{ x: 0, y: 0 }}
               end={{ x: 1, y: 1 }}
               style={styles.button}
@@ -103,20 +98,24 @@ export default function WelcomeScreen() {
           </TouchableOpacity>
         </View>
       </View>
-    </LinearGradient>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
+  container: { 
+    flex: 1, 
+    backgroundColor: "#ffffff" 
+  },
   backgroundCircle: {
     position: "absolute",
-    top: -height * 0.25,
-    right: -width * 0.35,
-    width: width * 1.3,
-    height: width * 1.3,
-    borderRadius: width * 0.65,
+    top: -height * 0.2,
+    right: -width * 0.3,
+    width: width * 1.2,
+    height: width * 1.2,
+    borderRadius: width * 0.6,
     overflow: "hidden",
+    opacity: 0.8,
   },
   gradientCircle: { flex: 1 },
   contentContainer: {
@@ -126,41 +125,41 @@ const styles = StyleSheet.create({
     paddingHorizontal: width * 0.08,
     paddingBottom: height * 0.15,
   },
-  title: {
-    fontSize: width * 0.11,
-    color: "#ffff",
-    fontWeight: "800",
-    textAlign: "center",
-    textTransform: "uppercase",
-    letterSpacing: 1.5,
-    marginBottom: height * 0.08,
-    position: "absolute",
-    top: height * 0.15,
+  buttonContainer: { 
+    width: "100%", 
+    alignItems: "center" 
   },
-  buttonContainer: { width: "100%", alignItems: "center" },
   button: {
     paddingVertical: height * 0.02,
     paddingHorizontal: width * 0.25,
     borderRadius: 50,
-    shadowColor: "#fcbb30",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 6,
+    shadowColor: "#ffc125",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
     marginBottom: height * 0.03,
   },
   image: {
-  width: 400,
-  height: 250,
-  marginBottom: 230, 
-  marginLeft: 70,
-},
+    width: 300,
+    height: 110,
+    marginBottom: 280, 
+    marginLeft: 5,
+  },
   buttonText: {
     color: "#000",
-    fontSize: width * 0.05,
-    fontWeight: "700",
+    fontSize: width * 0.045,
+    fontWeight: "600",
     textAlign: "center",
   },
-  linkText: { color: "#fff", fontSize: width * 0.04, fontWeight: "500" },
-  linkHighlight: { color: "#fcbb30", fontWeight: "700", textDecorationLine: "underline" },
+  linkText: { 
+    color: "#6c757d", 
+    fontSize: width * 0.038, 
+    fontWeight: "500" 
+  },
+  linkHighlight: { 
+    color: "#ffc125", 
+    fontWeight: "600", 
+    textDecorationLine: "underline" 
+  },
 });

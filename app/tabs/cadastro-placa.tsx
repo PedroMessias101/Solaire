@@ -17,7 +17,7 @@ interface Placa {
 export default function CadastroPlaca() {
   const [placasCadastradas, setPlacasCadastradas] = useState<Placa[]>([]);
   const [nomePlaca, setNomePlaca] = useState("");
-  const [idSim, setIdSim] = useState(""); // id da placa na API de simulação
+  const [idSim, setIdSim] = useState(""); 
   const [token, setToken] = useState("");
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function CadastroPlaca() {
     }
 
     try {
-      // 1️⃣ Buscar placa na API de simulação
+    
       const resSim = await fetch(`${API_SIM}/panel/${idSim}`);
       const simData = await resSim.json();
       console.log("Dados da simulação:", simData);
@@ -63,7 +63,7 @@ export default function CadastroPlaca() {
         return;
       }
 
-      // 2️⃣ Enviar para backend do app
+      
       const resApp = await fetch(`${API_APP}/panels/provision`, {
         method: "POST",
         headers: {
@@ -71,7 +71,7 @@ export default function CadastroPlaca() {
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          serial: simData.code,  // obrigatório
+          serial: simData.code,  
           location: nomePlaca,
           model: "Padrão",
         }),
@@ -84,7 +84,7 @@ export default function CadastroPlaca() {
         return;
       }
 
-      // Normalizar dados para exibição
+   
       const novaPlaca: Placa = {
         id: dataApp.panel.id,
         serial: simData.code,
