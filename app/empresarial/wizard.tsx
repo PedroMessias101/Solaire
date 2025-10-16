@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   Text,
@@ -7,8 +7,10 @@ import {
   StyleSheet,
   ScrollView,
   Alert,
+  ActivityIndicator,
 } from "react-native";
-import { useRouter } from "expo-router"; 
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useRouter } from "expo-router";
 
 type MatrizData = {
   nome: string;
@@ -24,7 +26,7 @@ type FilialData = {
 };
 
 export default function EmpresaSetupWizard() {
-  const router = useRouter(); 
+  const router = useRouter();
   const [step, setStep] = useState(1);
   const [matriz, setMatriz] = useState<MatrizData>({
     nome: "",
@@ -38,11 +40,29 @@ export default function EmpresaSetupWizard() {
     cnpj: "",
     endereco: "",
   });
+  const [isLoading, setIsLoading] = useState(false);
+  const [token, setToken] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchToken = async () => {
+      const savedToken = await AsyncStorage.getItem("userToken");
+      if (savedToken) setToken(savedToken);
+    };
+    fetchToken();
+  }, []);
+
+  const isValidCNPJ = (cnpj: string) => /^\d{14}$/.test(cnpj.replace(/\D/g, ""));
 
   const handleNext = () => {
-    if (step === 2 && (!matriz.nome || !matriz.cnpj)) {
-      Alert.alert("Atenção", "Preencha pelo menos nome e CNPJ da matriz.");
-      return;
+    if (step === 2) {
+      if (!matriz.nome || !matriz.cnpj) {
+        Alert.alert("Atenção", "Preencha pelo menos nome e CNPJ da matriz.");
+        return;
+      }
+      if (!isValidCNPJ(matriz.cnpj)) {
+        Alert.alert("CNPJ inválido", "Digite um CNPJ com 14 números.");
+        return;
+      }
     }
     setStep(step + 1);
   };
@@ -52,27 +72,116 @@ export default function EmpresaSetupWizard() {
       Alert.alert("Atenção", "Preencha nome e CNPJ da filial.");
       return;
     }
+    if (!isValidCNPJ(novaFilial.cnpj)) {
+      Alert.alert("CNPJ inválido", "Digite um CNPJ com 14 números.");
+      return;
+    }
     setFiliais([...filiais, novaFilial]);
     setNovaFilial({ nome: "", cnpj: "", endereco: "" });
   };
 
-  const handleFinish = () => {
-    Alert.alert("Sucesso", "Cadastro empresarial concluído!", [
-      {
-        text: "OK",
-        onPress: () => router.replace("/tabs/home"), 
-      },
-    ]);
+  const handleFinish = async () => {
+    if (!token) {
+      Alert.alert(
+        "Erro de Autenticação",
+        "Não foi possível encontrar o token de usuário. Faça login novamente."
+      );
+      return;
+    }
+
+    setIsLoading(true);
+
+    try {
+      // Criação da matriz
+      const companyResponse = await fetch(
+        "https://solaire-z8mw.onrender.com/companies",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${token}`,
+          },
+          body: JSON.stringify({
+            name: matriz.nome,
+            cnpj: matriz.cnpj,
+          }),
+        }
+      );
+
+      if (!companyResponse.ok) {
+        const errorData = await companyResponse.json();
+        throw new Error(errorData.error || "Falha ao cadastrar a matriz.");
+      }
+
+      const createdCompany = await companyResponse.json();
+      const companyId = createdCompany.data.id;
+      console.log("Matriz criada com sucesso! ID:", companyId);
+
+      // Criação das filiais (se houver)
+      if (filiais.length > 0) {
+        console.log("Enviando dados das filiais...");
+        const branchPromises = filiais.map((filial) =>
+          fetch("https://solaire-z8mw.onrender.com/branches", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${token}`,
+            },
+            body: JSON.stringify({
+              name: filial.nome,
+              address: filial.endereco,
+              companyId: companyId,
+            }),
+          })
+        );
+
+        const branchResponses = await Promise.all(branchPromises);
+
+        for (const res of branchResponses) {
+          if (!res.ok) {
+            const errorData = await res.json();
+            throw new Error(
+              errorData.error || "Falha ao cadastrar uma das filiais."
+            );
+          }
+        }
+        console.log("Filiais cadastradas com sucesso!");
+      }
+
+      Alert.alert("Sucesso", `Matriz "${matriz.nome}" cadastrada com sucesso!`, [
+        {
+          text: "OK",
+          onPress: () => router.replace("./home"),
+        },
+      ]);
+    } catch (error: any) {
+      console.error("Erro no processo de cadastro:", error);
+      Alert.alert(
+        "Erro",
+        error.message || "Não foi possível concluir o cadastro. Tente novamente."
+      );
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
+        {/* Indicador de progresso */}
+        <View style={styles.progressContainer}>
+          <View style={[styles.progressStep, step >= 1 && styles.activeStep]} />
+          <View style={[styles.progressStep, step >= 2 && styles.activeStep]} />
+          <View style={[styles.progressStep, step >= 3 && styles.activeStep]} />
+        </View>
+
+        {/* Etapa 1 */}
         {step === 1 && (
           <View style={styles.step}>
             <Text style={styles.title}>Bem-vindo à Solaire</Text>
             <Text style={styles.subtitle}>
-              Vamos configurar sua estrutura. Primeiro, cadastre a matriz e as filiais.
+              Vamos configurar sua estrutura. Primeiro, cadastre a matriz e as
+              filiais.
             </Text>
             <TouchableOpacity style={styles.button} onPress={handleNext}>
               <Text style={styles.buttonText}>Começar</Text>
@@ -80,6 +189,7 @@ export default function EmpresaSetupWizard() {
           </View>
         )}
 
+        {/* Etapa 2 */}
         {step === 2 && (
           <View style={styles.step}>
             <Text style={styles.title}>Cadastro da Matriz</Text>
@@ -109,6 +219,7 @@ export default function EmpresaSetupWizard() {
                 setMatriz({ ...matriz, responsavel: text })
               }
             />
+
             <View style={styles.navButtons}>
               <TouchableOpacity
                 style={styles.backButton}
@@ -123,10 +234,10 @@ export default function EmpresaSetupWizard() {
           </View>
         )}
 
+        {/* Etapa 3 */}
         {step === 3 && (
           <View style={styles.step}>
             <Text style={styles.title}>Cadastro de Filiais (opcional)</Text>
-
             <TextInput
               placeholder="Nome da Filial"
               style={styles.input}
@@ -151,7 +262,6 @@ export default function EmpresaSetupWizard() {
                 setNovaFilial({ ...novaFilial, endereco: text })
               }
             />
-
             <TouchableOpacity
               style={styles.secondaryButton}
               onPress={handleAddFilial}
@@ -174,11 +284,21 @@ export default function EmpresaSetupWizard() {
               <TouchableOpacity
                 style={styles.backButton}
                 onPress={() => setStep(step - 1)}
+                disabled={isLoading}
               >
                 <Text style={styles.buttonText}>Voltar</Text>
               </TouchableOpacity>
-              <TouchableOpacity style={styles.button} onPress={handleFinish}>
-                <Text style={styles.buttonText}>Finalizar</Text>
+
+              <TouchableOpacity
+                style={[styles.button, isLoading && styles.buttonDisabled]}
+                onPress={handleFinish}
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <Text style={styles.buttonText}>Finalizar</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
@@ -265,5 +385,23 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1,
     marginRight: 10,
+  },
+  buttonDisabled: {
+    backgroundColor: "#ccc",
+  },
+  progressContainer: {
+    flexDirection: "row",
+    justifyContent: "center",
+    marginBottom: 20,
+  },
+  progressStep: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    backgroundColor: "#ddd",
+    marginHorizontal: 5,
+  },
+  activeStep: {
+    backgroundColor: "#ffc125",
   },
 });

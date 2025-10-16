@@ -23,15 +23,25 @@ export default function CadastroScreen() {
 
   const [tab, setTab] = useState("residencial");
 
-  const [nome, setNome] = useState("");
+  // --- Estados para os campos ---
+  // Residencial
+  const [nomeResidencial, setNomeResidencial] = useState("");
+  const [cpf, setCpf] = useState("");
+
+  // Empresarial
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
+  const [cnpj, setCnpj] = useState("");
+  const [nomeAdmin, setNomeAdmin] = useState("");
+
+  // Comuns
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmaSenha, setConfirmaSenha] = useState("");
-
   const [mostrarSenha, setMostrarSenha] = useState(false);
   const [mostrarConfirmaSenha, setMostrarConfirmaSenha] = useState(false);
   const [loading, setLoading] = useState(false);
 
+  // Animações (mantidas como estavam)
   const scaleX = useRef(new Animated.Value(1)).current;
   const scaleY = useRef(new Animated.Value(1)).current;
   const translateX = useRef(new Animated.Value(0)).current;
@@ -64,132 +74,137 @@ export default function CadastroScreen() {
     ).start();
   }, []);
 
+  // --- LÓGICA DE CADASTRO CORRIGIDA ---
   const handleCadastro = async () => {
-    if (!nome || !email || !senha) {
-      Alert.alert("Erro", "Por favor, preencha todos os campos.");
-      return;
-    }
     if (senha !== confirmaSenha) {
       Alert.alert("Erro", "As senhas não coincidem.");
       return;
     }
 
     setLoading(true);
+
+    let url = "";
+    let body = {};
+
+    if (tab === "residencial") {
+      if (!nomeResidencial || !email || !senha || !cpf) {
+        Alert.alert("Erro", "Por favor, preencha todos os campos para o cadastro residencial.");
+        setLoading(false);
+        return;
+      }
+      url = `${API_URL}/users/register/residential`;
+      body = {
+        name: nomeResidencial,
+        email: email,
+        password: senha,
+        cpf: cpf,
+      };
+    } else { // Empresarial
+      if (!nomeEmpresa || !cnpj || !nomeAdmin || !email || !senha) {
+        Alert.alert("Erro", "Por favor, preencha todos os campos para o cadastro empresarial.");
+        setLoading(false);
+        return;
+      }
+      url = `${API_URL}/users/register/business`;
+      body = {
+        companyName: nomeEmpresa,
+        companyCnpj: cnpj,
+        userName: nomeAdmin,
+        userEmail: email,
+        password: senha,
+      };
+    }
+
     try {
-      const response = await fetch(`${API_URL}/users`, {
+      const response = await fetch(url, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name: nome,
-          email: email,
-          password: senha,
-          role: tab === "residencial" ? "RESIDENTIAL" : "BUSINESS",
-        }),
+        body: JSON.stringify(body),
       });
 
       const data = await response.json();
-      if (response.ok) {
-        Alert.alert("Sucesso", `Conta ${tab} criada com sucesso!`);
-        setTimeout(() => router.replace("/auth/login"), 1000);
+
+      if (response.ok && data.success) {
+        Alert.alert("Sucesso", "Conta criada com sucesso! Faça o login para continuar.");
+        router.replace("/auth/login");
       } else {
-        Alert.alert("Erro no Cadastro", data?.error || "Ocorreu um erro.");
+        Alert.alert("Erro no Cadastro", data?.error || data?.message || "Ocorreu um erro desconhecido.");
       }
     } catch (error) {
-      Alert.alert("Erro", "Não foi possível realizar o cadastro.");
+      console.error("Erro ao cadastrar:", error);
+      Alert.alert("Erro de Conexão", "Não foi possível se comunicar com o servidor. Tente novamente mais tarde.");
     } finally {
       setLoading(false);
     }
   };
 
+  const renderResidencialForm = () => (
+    <>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="user" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Nome completo" value={nomeResidencial} onChangeText={setNomeResidencial} />
+      </View>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="CPF" value={cpf} onChangeText={setCpf} keyboardType="numeric" />
+      </View>
+    </>
+  );
+
+  const renderEmpresarialForm = () => (
+    <>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="building" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Nome da Empresa" value={nomeEmpresa} onChangeText={setNomeEmpresa} />
+      </View>
+      <View style={styles.inputContainer}>
+        <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="CNPJ" value={cnpj} onChangeText={setCnpj} keyboardType="numeric"/>
+      </View>
+       <View style={styles.inputContainer}>
+        <FontAwesome5 name="user-tie" size={16} color="#333" style={styles.icon} />
+        <TextInput style={styles.input} placeholder="Seu nome (Administrador)" value={nomeAdmin} onChangeText={setNomeAdmin} />
+      </View>
+    </>
+  );
+
   return (
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
-      <Animated.View
-        style={[
-          styles.backgroundCircle,
-          { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] },
-        ]}
-      >
-        <LinearGradient
-          colors={["#fbf5deff", "#ffffffff"]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.gradientCircle}
-        />
+      <Animated.View style={[ styles.backgroundCircle, { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] } ]}>
+        <LinearGradient colors={["#fbf5deff", "#ffffffff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientCircle} />
       </Animated.View>
 
       <ScrollView contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>Crie sua conta {tab === "residencial" ? "residencial" : "empresarial"}</Text>
-        <Text style={styles.subtitle}>Preencha os campos abaixo</Text>
+        <Text style={styles.title}>Crie sua conta</Text>
+        <Text style={styles.subtitle}>Comece a monitorar sua energia hoje</Text>
 
-        {/* Tabs */}
         <View style={styles.tabs}>
-          <TouchableOpacity
-            style={[styles.tab, tab === "residencial" && styles.tabAtiva]}
-            onPress={() => setTab("residencial")}
-          >
+          <TouchableOpacity style={[styles.tab, tab === "residencial" && styles.tabAtiva]} onPress={() => setTab("residencial")}>
             <Text style={[styles.tabTexto, tab === "residencial" && styles.tabTextoAtivo]}>Residencial</Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[styles.tab, tab === "empresarial" && styles.tabAtiva]}
-            onPress={() => setTab("empresarial")}
-          >
+          <TouchableOpacity style={[styles.tab, tab === "empresarial" && styles.tabAtiva]} onPress={() => setTab("empresarial")}>
             <Text style={[styles.tabTexto, tab === "empresarial" && styles.tabTextoAtivo]}>Empresarial</Text>
           </TouchableOpacity>
         </View>
 
-        {/* Nome */}
-        <View style={styles.inputContainer}>
-          <FontAwesome5 name={tab === "residencial" ? "user" : "building"} size={16} color="#333" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder={tab === "residencial" ? "Nome completo" : "Nome da empresa"}
-            placeholderTextColor="#6c757d"
-            value={nome}
-            onChangeText={setNome}
-          />
-        </View>
+        {tab === "residencial" ? renderResidencialForm() : renderEmpresarialForm()}
 
-        {/* Email */}
+        {/* Campos Comuns */}
         <View style={styles.inputContainer}>
           <Ionicons name="mail" size={18} color="#333" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="E-mail"
-            placeholderTextColor="#6c757d"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-          />
+          <TextInput style={styles.input} placeholder="E-mail de acesso" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
         </View>
-
-        {/* Senha */}
         <View style={styles.inputContainer}>
           <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Senha"
-            placeholderTextColor="#6c757d"
-            secureTextEntry={!mostrarSenha}
-            value={senha}
-            onChangeText={setSenha}
-          />
+          <TextInput style={styles.input} placeholder="Senha" secureTextEntry={!mostrarSenha} value={senha} onChangeText={setSenha} />
           <TouchableOpacity onPress={() => setMostrarSenha(prev => !prev)}>
             <Ionicons name={mostrarSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
           </TouchableOpacity>
         </View>
-
-        {/* Confirmar senha */}
         <View style={styles.inputContainer}>
           <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
-          <TextInput
-            style={styles.input}
-            placeholder="Confirmar senha"
-            placeholderTextColor="#6c757d"
-            secureTextEntry={!mostrarConfirmaSenha}
-            value={confirmaSenha}
-            onChangeText={setConfirmaSenha}
-          />
+          <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry={!mostrarConfirmaSenha} value={confirmaSenha} onChangeText={setConfirmaSenha} />
           <TouchableOpacity onPress={() => setMostrarConfirmaSenha(prev => !prev)}>
             <Ionicons name={mostrarConfirmaSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
           </TouchableOpacity>
@@ -211,42 +226,15 @@ export default function CadastroScreen() {
   );
 }
 
+// OS ESTILOS PERMANECEM OS MESMOS
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#ffffff" },
-  backgroundCircle: {
-    position: "absolute",
-    top: -height * 0.2,
-    right: -width * 0.3,
-    width: width * 1.2,
-    height: width * 1.2,
-    borderRadius: width * 0.6,
-    overflow: "hidden",
-    opacity: 0.8,
-  },
+  backgroundCircle: { position: "absolute", top: -height * 0.2, right: -width * 0.3, width: width * 1.2, height: width * 1.2, borderRadius: width * 0.6, overflow: "hidden", opacity: 0.8, },
   gradientCircle: { flex: 1 },
-  contentContainer: {
-    flexGrow: 1,
-    justifyContent: "center",
-    alignItems: "center",
-    paddingHorizontal: width * 0.08,
-    paddingBottom: height * 0.1,
-  },
-  title: { 
-    fontSize: 28,
-     fontWeight: "bold",
-      color: "#000",
-       marginBottom: 10,
-        textAlign: "center" 
-      },
-  subtitle: { 
-    fontSize: 16,
-     color: "#6c757d", 
-     marginBottom: 20,
-      textAlign: "center"
-     },
-  tabs: {
-     flexDirection: "row",
-      marginBottom: 20, width: "100%" },
+  contentContainer: { flexGrow: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: width * 0.08, paddingBottom: height * 0.1, paddingTop: height * 0.1 },
+  title: { fontSize: 28, fontWeight: "bold", color: "#000", marginBottom: 10, textAlign: "center" },
+  subtitle: { fontSize: 16, color: "#6c757d", marginBottom: 20, textAlign: "center" },
+  tabs: { flexDirection: "row", marginBottom: 20, width: "100%" },
   tab: { flex: 1, paddingVertical: 10, alignItems: "center", borderBottomWidth: 2, borderBottomColor: "#ccc" },
   tabAtiva: { borderBottomColor: "#ffc125" },
   tabTexto: { fontSize: 16, color: "#6c757d" },
