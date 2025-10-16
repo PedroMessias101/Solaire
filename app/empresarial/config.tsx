@@ -1,10 +1,10 @@
 import React from "react";
-<<<<<<< HEAD
 import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from "react-native";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
-export default function ConfigEmpresarial() {
-  // Exemplo de função de logout
+// ==================== CONFIG EMPRESARIAL ====================
+export function ConfigEmpresarial() {
   const handleLogout = () => {
     Alert.alert("Sair", "Deseja realmente sair?", [
       { text: "Cancelar", style: "cancel" },
@@ -36,12 +36,11 @@ export default function ConfigEmpresarial() {
         <Text style={estilos.logoutTexto}>Sair</Text>
       </TouchableOpacity>
     </ScrollView>
-=======
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
-import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
+  );
+}
 
-export default function TelaConfig() {
+// ==================== TELA CONFIGURAÇÕES ====================
+export function TelaConfig() {
   const router = useRouter();
 
   return (
@@ -89,15 +88,22 @@ export default function TelaConfig() {
         </TouchableOpacity>
       </ScrollView>
     </View>
->>>>>>> 8632775e1d66510bb387a51aa4ca325f5e5e39bb
   );
 }
 
+// ==================== ESTILOS ====================
 const estilos = StyleSheet.create({
-<<<<<<< HEAD
-  container: { flex: 1, backgroundColor: "#f5f5f5", padding: 24 },
-  titulo: { fontSize: 22, fontWeight: "bold", marginBottom: 24, color: "#222" },
-=======
+  container: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    padding: 24,
+  },
+  titulo: {
+    fontSize: 22,
+    fontWeight: "bold",
+    marginBottom: 24,
+    color: "#222",
+  },
   tela: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -122,12 +128,10 @@ const estilos = StyleSheet.create({
     marginBottom: 8,
     color: "#444",
   },
->>>>>>> 8632775e1d66510bb387a51aa4ca325f5e5e39bb
   item: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-<<<<<<< HEAD
     padding: 18,
     borderRadius: 14,
     marginBottom: 16,
@@ -136,7 +140,11 @@ const estilos = StyleSheet.create({
     shadowRadius: 2,
     elevation: 1,
   },
-  itemTexto: { marginLeft: 14, fontSize: 16, color: "#333" },
+  itemTexto: {
+    marginLeft: 14,
+    fontSize: 16,
+    color: "#333",
+  },
   logoutBtn: {
     flexDirection: "row",
     alignItems: "center",
@@ -146,12 +154,11 @@ const estilos = StyleSheet.create({
     marginTop: 32,
     justifyContent: "center",
   },
-  logoutTexto: { color: "#fff", fontWeight: "bold", fontSize: 16, marginLeft: 10 },
-});
-=======
-    padding: 12,
-    borderRadius: 12,
-    marginBottom: 10,
+  logoutTexto: {
+    color: "#fff",
+    fontWeight: "bold",
+    fontSize: 16,
+    marginLeft: 10,
   },
   caixaIcone: {
     width: 40,
@@ -172,4 +179,3 @@ const estilos = StyleSheet.create({
     color: "#666",
   },
 });
->>>>>>> 8632775e1d66510bb387a51aa4ca325f5e5e39bb
