@@ -11,7 +11,7 @@ import {
   Animated,
   Easing,
 } from "react-native";
-import { MaterialIcons, Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { MaterialIcons, Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
@@ -27,12 +27,19 @@ interface Placa {
   energia_kWh: number;
 }
 
+interface Usuario {
+  name: string;
+  email: string;
+  bio?: string;
+  avatar?: string;
+}
+
 const VALOR_KWH = 0.12;
 const CO2_KWH = 0.001;
 const CHAVE_PRODUCAO_ACUMULADA = "@producao_acumulada";
 
 export default function TelaPerfil() {
-  const [usuario, setUsuario] = useState({ name: "", email: "", bio: "" });
+  const [usuario, setUsuario] = useState<Usuario>({ name: "", email: "", bio: "", avatar: "" });
   const [placas, setPlacas] = useState<Placa[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
@@ -53,7 +60,6 @@ export default function TelaPerfil() {
   }, []);
   const spin = spinValue.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "360deg"] });
 
-  // dicas animadas
   const dicas = [
     "Usar energia solar pode reduzir até 1,5 tonelada de CO₂ por ano — o equivalente a plantar 40 árvores",
     "Painéis solares podem cortar até 95% da sua conta de luz",
@@ -68,7 +74,7 @@ export default function TelaPerfil() {
     return () => clearInterval(interval);
   }, []);
 
-  // AsyncStorage: carregar e salvar produção acumulada
+  // Funções de AsyncStorage para produção acumulada
   const carregarProducaoAcumulada = async () => {
     try {
       const valor = await AsyncStorage.getItem(CHAVE_PRODUCAO_ACUMULADA);
@@ -95,6 +101,7 @@ export default function TelaPerfil() {
     return novoAcumulado;
   };
 
+  // Funções para buscar energia simulada
   const buscarEnergiaSimulada = async (placa: Placa) => {
     try {
       const res = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
@@ -107,11 +114,10 @@ export default function TelaPerfil() {
     }
   };
 
-  // NOVO: enviar energia para o backend
   const enviarEnergiaParaBackend = async (placa: Placa, energia: number) => {
-    const token = await AsyncStorage.getItem("userToken");
-    if (!token) return;
     try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) return;
       await fetch(`${API_USUARIO_URL}/panels/${placa.serial}/status`, {
         method: "PATCH",
         headers: {
@@ -129,9 +135,9 @@ export default function TelaPerfil() {
   };
 
   const salvarHistorico = async (placa: Placa) => {
-    const token = await AsyncStorage.getItem("userToken");
-    if (!token) return;
     try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) return;
       await fetch(`${API_USUARIO_URL}/historico`, {
         method: "POST",
         headers: {
@@ -149,45 +155,42 @@ export default function TelaPerfil() {
     }
   };
 
-  // Função central para carregar e atualizar dados
   const atualizarDados = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) return;
 
-      // usuário
+      // ===== Dados do usuário =====
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (resUser.ok) {
-        const dataUser = await resUser.json();
+        const userResponse = await resUser.json();
+        const u = userResponse.data; // <-- pegar o 'data' da API
         setUsuario({
-          name: dataUser.name,
-          email: dataUser.email,
-          bio: dataUser.bio || "Usuário Solar",
+          name: u?.name || "Usuário Solar",
+          email: u?.email || "",
+          bio: u?.bio || "",
+          avatar: u?.avatar || "",
         });
       }
 
-      // placas
+      // ===== Dados das placas =====
       const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (resPlacas.ok) {
-        const dataPlacas = await resPlacas.json();
-        const placasData: Placa[] = dataPlacas.data || [];
+        const placasResponse = await resPlacas.json();
+        const placasData: Placa[] = placasResponse.data || [];
 
         const placasAtualizadas = await Promise.all(
           placasData.map(async (placa) => {
             const energiaSimulada = placa.status === "Ativa" ? await buscarEnergiaSimulada(placa) : 0;
+            if (placa.status === "Ativa") await atualizarProducaoAcumulada(energiaSimulada);
 
-            if (placa.status === "Ativa") {
-              await atualizarProducaoAcumulada(energiaSimulada);
-            }
-
-            // 🔥 agora envia a energia simulada para o backend
             await enviarEnergiaParaBackend(placa, energiaSimulada);
-
             await salvarHistorico({ ...placa, energia_kWh: energiaSimulada });
+
             return { ...placa, energia_kWh: energiaSimulada };
           })
         );
@@ -196,7 +199,6 @@ export default function TelaPerfil() {
         setUltimaAtualizacao(new Date());
       }
 
-      // produção acumulada
       const acumulado = await carregarProducaoAcumulada();
       setProducaoAcumulada(acumulado);
     } catch (err) {
@@ -206,42 +208,34 @@ export default function TelaPerfil() {
     }
   };
 
-  // Atualiza dados ao carregar a tela e a cada 1 minuto
   useEffect(() => {
     atualizarDados();
-    const interval = setInterval(atualizarDados, 60000); // 1 minuto
+    const interval = setInterval(atualizarDados, 60000);
     return () => clearInterval(interval);
   }, []);
 
-  // Alternar status da placa
+  // Alternar status das placas
   const alternarStatus = async (id: number) => {
-    const token = await AsyncStorage.getItem("userToken");
-    if (!token) return alert("Usuário não logado.");
-
     const placa = placas.find((p) => p.id === id);
     if (!placa) return;
-
     const novoStatus = placa.status === "Ativa" ? "Desativada" : "Ativa";
-
     try {
+      const token = await AsyncStorage.getItem("userToken");
+      if (!token) return;
+
       const res = await fetch(`${API_USUARIO_URL}/panels/${placa.serial}/status`, {
         method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify({ status: novoStatus }),
       });
       if (!res.ok) throw new Error("Erro ao atualizar status");
 
       const energiaSimulada = novoStatus === "Ativa" ? await buscarEnergiaSimulada(placa) : 0;
       if (novoStatus === "Ativa") await atualizarProducaoAcumulada(energiaSimulada);
-
-      // também envia energia nova para backend
       await enviarEnergiaParaBackend({ ...placa, status: novoStatus }, energiaSimulada);
 
       const placaAtualizada = { ...placa, status: novoStatus, energia_kWh: energiaSimulada };
-      setPlacas((prev) => prev.map((p) => (p.id === placa.id ? placaAtualizada : p)));
+      setPlacas((prev) => prev.map((p) => (p.id === id ? placaAtualizada : p)));
       await salvarHistorico(placaAtualizada);
       setUltimaAtualizacao(new Date());
 
@@ -252,7 +246,6 @@ export default function TelaPerfil() {
     }
   };
 
-  // Calcular totais
   const calcularTotais = (placas?: Placa[]) => {
     const arr = placas || [];
     const total_kWh = arr.filter((p) => p.status === "Ativa").reduce((acc, p) => acc + (p.energia_kWh || 0), 0);
@@ -261,17 +254,11 @@ export default function TelaPerfil() {
     return { total_kWh, economia, co2 };
   };
 
-  // Tempo desde última atualização
   const tempoDesdeAtualizacao = () => {
     if (!ultimaAtualizacao) return "Nunca atualizado";
     const diffMs = new Date().getTime() - ultimaAtualizacao.getTime();
-    const diffSec = Math.floor(diffMs / 1000);
-    const diffMin = Math.floor(diffSec / 60);
-
-    if (diffMin === 0) {
-      if (diffSec < 10) return "Atualizado há alguns segundos";
-      return `Atualizado há ${diffSec} segundos`;
-    }
+    const diffMin = Math.floor(diffMs / 60000);
+    if (diffMin === 0) return "Atualizado há poucos segundos";
     if (diffMin === 1) return "Atualizado há 1 minuto";
     return `Atualizado há ${diffMin} minutos`;
   };
@@ -280,7 +267,7 @@ export default function TelaPerfil() {
     return (
       <View style={styles.loading}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <MaterialCommunityIcons name="white-balance-sunny" size={30} color="#ffc125" />
+          <MaterialIcons name="wb-sunny" size={30} color="#ffc125" />
         </Animated.View>
         <Text style={styles.loadingText}>Você sabia?</Text>
         <Text style={styles.loadingDica}>{dicas[loadingDicaIndex]}</Text>
@@ -361,7 +348,6 @@ export default function TelaPerfil() {
                   Produção: {item.energia_kWh?.toFixed(2) || "0.00"} kWh
                 </Text>
 
-                {/* AVISO DE DEFEITO / MANUTENÇÃO */}
                 {item.energia_kWh === 0 && item.status === "Ativa" && (
                   <View style={styles.avisoDefeito}>
                     <Feather name="alert-triangle" size={14} color="#B91C1C" />
@@ -402,9 +388,7 @@ export default function TelaPerfil() {
           <View style={styles.emptyState}>
             <Feather name="info" size={28} color="#ffc125" />
             <Text style={styles.emptyText}>Nenhuma placa cadastrada ainda</Text>
-            <Text style={styles.emptySubText}>
-              Adicione placas pelo botão na navegação inferior
-            </Text>
+            <Text style={styles.emptySubText}>Adicione placas pelo botão na navegação inferior</Text>
           </View>
         )}
       </ScrollView>
