@@ -1,29 +1,30 @@
-import React, { useState, useRef } from "react";
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  Animated,
-  Easing,
-  Dimensions,
-} from "react-native";
-import { MaterialCommunityIcons, Feather } from "@expo/vector-icons";
-import ExportarPDF from "../components/ExportarPDF";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBarEmpresarial";
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import Notificacoes from "../components/notific";
+import React, { useRef, useState, useEffect } from "react";
+import {
+  Animated,
+  Dimensions,
+  Easing,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
 import ChatBot from "../components/ChatBot";
+import ExportarPDF from "../components/ExportarPDF";
+import { NavBarEmpresarial } from "../components/NavBarEmpresarial";
+import Notificacoes from "../components/notific";
 
-const { width } = Dimensions.get('window');
+const { width } = Dimensions.get("window");
 
 export default function HomeScreen() {
   const router = useRouter();
   const [filialSelecionada, setFilialSelecionada] = useState("Matriz");
   const [modalVisivel, setModalVisivel] = useState(false);
   const [activeIndex, setActiveIndex] = useState(0);
+  const [placas, setPlacas] = useState([]);
 
   const slideAnim = useRef(new Animated.Value(0)).current;
   const fadeAnim = useRef(new Animated.Value(0)).current;
@@ -42,7 +43,7 @@ export default function HomeScreen() {
 
   // Animação do sol
   const spinValue = useRef(new Animated.Value(0)).current;
-  React.useEffect(() => {
+  useEffect(() => {
     Animated.loop(
       Animated.timing(spinValue, {
         toValue: 1,
@@ -70,7 +71,7 @@ export default function HomeScreen() {
         toValue: 1,
         duration: 300,
         useNativeDriver: true,
-      })
+      }),
     ]).start();
   };
 
@@ -86,7 +87,7 @@ export default function HomeScreen() {
         toValue: 0,
         duration: 250,
         useNativeDriver: true,
-      })
+      }),
     ]).start(() => {
       setModalVisivel(false);
     });
@@ -99,7 +100,7 @@ export default function HomeScreen() {
 
   const translateY = slideAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [-20, 0], // Animação mais curta
+    outputRange: [-20, 0],
   });
 
   const opacity = fadeAnim.interpolate({
@@ -109,14 +110,12 @@ export default function HomeScreen() {
 
   return (
     <View style={{ flex: 1 }}>
-      <ScrollView style={estilos.container} contentContainerStyle={{ paddingBottom: 120 }}>
-        {/* Header com avatar, usuário e configurações */}
+      <ScrollView style={estilos.container} contentContainerStyle={{ paddingBottom: 140 }}>
+        {/* Header */}
         <View style={estilos.header}>
           <TouchableOpacity onPress={abrirModal}>
             <Image
-              source={{
-                uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-              }}
+              source={{ uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
               style={estilos.avatar}
             />
           </TouchableOpacity>
@@ -135,17 +134,13 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* Seleção de filial e botão exportar */}
+        {/* Sub-header */}
         <View style={estilos.subHeader}>
-          <TouchableOpacity 
-            style={estilos.botaoFilial}
-            onPress={abrirModal}
-          >
+          <TouchableOpacity style={estilos.botaoFilial} onPress={abrirModal}>
             <Text style={estilos.filialTexto}>{filialSelecionada}</Text>
             <MaterialCommunityIcons name="chevron-down" size={20} color="#000" />
           </TouchableOpacity>
-          
-          {/* Botão Exportar PDF no canto superior direito */}
+
           <ExportarPDF
             filial={filialSelecionada}
             dados={dadosRelatorio}
@@ -156,38 +151,30 @@ export default function HomeScreen() {
 
         {/* Grid de métricas */}
         <View style={estilos.grid}>
-          <View style={estilos.card}>
-            <MaterialCommunityIcons name="weather-sunny" size={28} color="#FFA726" />
-            <Text style={estilos.cardLabel}>Irradiação</Text>
-            <Text style={estilos.cardValor}>{dadosRelatorio.irradiacao}</Text>
-          </View>
-          <View style={estilos.card}>
-            <MaterialCommunityIcons name="flash" size={28} color="#ffc125" />
-            <Text style={estilos.cardLabel}>Corrente</Text>
-            <Text style={estilos.cardValor}>{dadosRelatorio.corrente}</Text>
-          </View>
-          <View style={estilos.card}>
-            <MaterialCommunityIcons name="sine-wave" size={28} color="#ffc125" />
-            <Text style={estilos.cardLabel}>Tensão</Text>
-            <Text style={estilos.cardValor}>{dadosRelatorio.tensao}</Text>
-          </View>
-          <View style={estilos.card}>
-            <MaterialCommunityIcons name="chart-line" size={28} color="#ffc125" />
-            <Text style={estilos.cardLabel}>Potência</Text>
-            <Text style={estilos.cardValor}>{dadosRelatorio.potencia}</Text>
-          </View>
+          {[
+            { label: "Irradiação", value: dadosRelatorio.irradiacao, icon: "weather-sunny", color: "#FFA726" },
+            { label: "Corrente", value: dadosRelatorio.corrente, icon: "flash", color: "#FFC107" },
+            { label: "Tensão", value: dadosRelatorio.tensao, icon: "sine-wave", color: "#FFB300" },
+            { label: "Potência", value: dadosRelatorio.potencia, icon: "chart-line", color: "#FFB300" },
+          ].map((item, index) => (
+            <View key={index} style={estilos.card}>
+              <MaterialCommunityIcons name={item.icon} size={28} color={item.color} />
+              <Text style={estilos.cardLabel}>{item.label}</Text>
+              <Text style={estilos.cardValor}>{item.value}</Text>
+            </View>
+          ))}
         </View>
 
         {/* Cards empresariais */}
         <View style={{ marginTop: 20 }}>
           <View style={estilos.cardFull}>
-            <MaterialCommunityIcons name="leaf" size={28} color="#ffc125" />
+            <MaterialCommunityIcons name="leaf" size={28} color="#4CAF50" />
             <Text style={estilos.cardLabel}>CO₂ evitado</Text>
             <Text style={[estilos.cardValor, { color: "#333" }]}>{dadosRelatorio.co2}</Text>
           </View>
 
           <View style={estilos.cardFull}>
-            <MaterialCommunityIcons name="office-building" size={28} color="#FFC125" />
+            <MaterialCommunityIcons name="office-building" size={28} color="#3F51B5" />
             <Text style={estilos.cardLabel}>Ranking de Unidades</Text>
             {dadosRelatorio.ranking.map((item, i) => (
               <Text key={i} style={estilos.rankingItem}>{item}</Text>
@@ -195,42 +182,27 @@ export default function HomeScreen() {
           </View>
 
           <View style={estilos.cardFull}>
-            <MaterialCommunityIcons name="cash-multiple" size={28} color="#ffc125" />
+            <MaterialCommunityIcons name="cash-multiple" size={28} color="#FF9800" />
             <Text style={estilos.cardLabel}>Projeção Financeira</Text>
             <Text style={estilos.rankingItem}>{dadosRelatorio.projecao}</Text>
           </View>
         </View>
       </ScrollView>
 
-      {/* ChatBot posicionado acima da navbar */}
+      {/* ChatBot */}
       <View style={estilos.chatBotContainer}>
         <ChatBot />
       </View>
 
-      {/* Modal animado de seleção de filial - posicionado abaixo do header */}
+      {/* Modal */}
       {modalVisivel && (
         <View style={estilos.modalContainer}>
-          <Animated.View 
-            style={[
-              estilos.modalOverlay,
-              { opacity: opacity }
-            ]}
-          >
-            <TouchableOpacity 
-              style={estilos.modalBackground}
-              activeOpacity={1}
-              onPress={fecharModal}
-            />
+          <Animated.View style={[estilos.modalOverlay, { opacity }]}>
+            <TouchableOpacity style={estilos.modalBackground} activeOpacity={1} onPress={fecharModal} />
           </Animated.View>
-          
-          <Animated.View 
-            style={[
-              estilos.modalContent,
-              {
-                transform: [{ translateY }],
-                opacity: fadeAnim,
-              }
-            ]}
+
+          <Animated.View
+            style={[estilos.modalContent, { transform: [{ translateY }], opacity: fadeAnim }]}
           >
             <View style={estilos.modalHeader}>
               <Text style={estilos.modalTitulo}>Selecionar Filial</Text>
@@ -238,24 +210,26 @@ export default function HomeScreen() {
                 <MaterialCommunityIcons name="close" size={24} color="#666" />
               </TouchableOpacity>
             </View>
-            
+
             {filiais.map((filial, index) => (
               <TouchableOpacity
                 key={index}
                 style={[
                   estilos.modalItem,
-                  filial === filialSelecionada && estilos.modalItemSelecionado
+                  filial === filialSelecionada && estilos.modalItemSelecionado,
                 ]}
                 onPress={() => selecionarFilial(filial)}
               >
-                <Text style={[
-                  estilos.modalTexto,
-                  filial === filialSelecionada && estilos.modalTextoSelecionado
-                ]}>
+                <Text
+                  style={[
+                    estilos.modalTexto,
+                    filial === filialSelecionada && estilos.modalTextoSelecionado,
+                  ]}
+                >
                   {filial}
                 </Text>
                 {filial === filialSelecionada && (
-                  <MaterialCommunityIcons name="check" size={20} color="#ffc125" />
+                  <MaterialCommunityIcons name="check" size={20} color="#FFC107" />
                 )}
               </TouchableOpacity>
             ))}
@@ -263,112 +237,96 @@ export default function HomeScreen() {
         </View>
       )}
 
-      {/* NavBar animada */}
-      <AnimatedBottomNavBar activeIndex={activeIndex} onTabPress={setActiveIndex} />
+      <NavBarEmpresarial placas={placas} setPlacas={setPlacas} />
     </View>
   );
 }
 
-// Estilos
+// Estilos aprimorados
 const estilos = StyleSheet.create({
-  container: { 
-    flex: 1, 
-    backgroundColor: "#f5f5f5", 
-    paddingHorizontal: 16, 
-    paddingTop: 40 
+  container: {
+    flex: 1,
+    backgroundColor: "#f0f2f5",
+    paddingHorizontal: 16,
+    paddingTop: 40,
   },
-  // Header principal com avatar
-  header: { 
-    flexDirection: "row", 
-    alignItems: "center", 
-    marginBottom: 12 
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 16,
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 16,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 3,
   },
-  avatar: { 
-    width: 56, 
-    height: 56, 
-    borderRadius: 28, 
-    marginRight: 12, 
-    borderWidth: 2, 
-    borderColor: "#FFD700" 
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: "#FFC107",
   },
-  username: { 
-    fontWeight: "700", 
-    color: "#000000", 
-    fontSize: 18 
+  username: {
+    fontWeight: "700",
+    color: "#000",
+    fontSize: 18,
   },
-  email: { 
-    fontSize: 12, 
-    color: "#666", 
-    marginTop: 2 
+  email: {
+    fontSize: 12,
+    color: "#666",
+    marginTop: 2,
   },
-  settingsButton: { 
-    marginLeft: 12, 
-    justifyContent: "center", 
-    alignItems: "center" 
+  settingsButton: {
+    marginLeft: 12,
+    justifyContent: "center",
+    alignItems: "center",
   },
-  // Sub-header com filial e botão exportar
-  subHeader: { 
-    flexDirection: "row", 
-    justifyContent: "space-between", 
-    alignItems: "center", 
-    marginBottom: 15 
+  subHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 15,
   },
   botaoFilial: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
     paddingHorizontal: 16,
-    paddingVertical: 10,
-    borderRadius: 12,
+    paddingVertical: 12,
+    borderRadius: 14,
     shadowColor: "#000",
-    shadowOpacity: 0.1,
+    shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
   },
-  filialTexto: { 
-    fontSize: 16, 
-    fontWeight: "700", 
+  filialTexto: {
+    fontSize: 16,
+    fontWeight: "600",
     color: "#000",
     marginRight: 8,
   },
-  // Botão exportar menor no canto superior direito
   botaoExportar: {
-    backgroundColor: "#ffc125",
-    borderRadius: 10,
-    paddingVertical: 8,
-    paddingHorizontal: 12,
+    backgroundColor: "#FFC107",
+    borderRadius: 12,
+    paddingVertical: 10,
+    paddingHorizontal: 14,
     alignItems: "center",
     justifyContent: "center",
     minWidth: 100,
   },
-  botaoExportarTexto: { 
-    fontSize: 12, 
-    fontWeight: "600", 
-    color: "#000" 
-  },
-  grid: { 
-    flexDirection: "row", 
-    flexWrap: "wrap", 
-    justifyContent: "space-between" },
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    padding: 20
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 15
-  },
-  filialTexto: {
-    fontSize: 18,
-    fontWeight: "700",
+  botaoExportarTexto: {
+    fontSize: 12,
+    fontWeight: "600",
     color: "#000",
-    margin: 10,
   },
   grid: {
     flexDirection: "row",
     flexWrap: "wrap",
-    justifyContent: "space-between"
+    justifyContent: "space-between",
   },
   card: {
     backgroundColor: "#fff",
@@ -380,6 +338,7 @@ const estilos = StyleSheet.create({
     shadowOpacity: 0.05,
     shadowRadius: 4,
     elevation: 2,
+    alignItems: "center",
   },
   cardFull: {
     backgroundColor: "#fff",
@@ -392,93 +351,92 @@ const estilos = StyleSheet.create({
     shadowRadius: 4,
     elevation: 2,
   },
-  cardLabel: { 
-    fontSize: 14, 
-    color: "#777", 
-    marginTop: 8 
+  cardLabel: {
+    fontSize: 14,
+    color: "#777",
+    marginTop: 8,
+    textAlign: "center",
   },
-  cardValor: { 
-    fontSize: 18, 
-    fontWeight: "bold", 
-    color: "#222", 
-    marginTop: 4 
+  cardValor: {
+    fontSize: 18,
+    fontWeight: "bold",
+    color: "#222",
+    marginTop: 4,
+    textAlign: "center",
   },
-  rankingItem: { 
-    marginTop: 6, 
-    fontSize: 14, 
-    color: "#444" 
+  rankingItem: {
+    marginTop: 6,
+    fontSize: 14,
+    color: "#444",
   },
-  // Container do ChatBot
   chatBotContainer: {
     position: "absolute",
     bottom: 80,
-    right: 0,
+    right: 16,
     zIndex: 1000,
   },
-  // Estilos do modal animado - POSICIONAMENTO FIXO ABAIXO DO HEADER
   modalContainer: {
-    position: 'absolute',
-    top: 120, // Posição fixa abaixo do header
+    position: "absolute",
+    top: 120,
     left: 0,
     right: 0,
     bottom: 0,
     zIndex: 2000,
   },
   modalOverlay: {
-    position: 'absolute',
+    position: "absolute",
     top: 0,
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: 'rgba(0,0,0,0.4)',
+    backgroundColor: "rgba(0,0,0,0.3)",
   },
   modalBackground: {
     flex: 1,
   },
   modalContent: {
-    backgroundColor: '#fff',
+    backgroundColor: "#fff",
     marginHorizontal: 20,
     borderRadius: 16,
-    padding: 0,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
+    paddingVertical: 12,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 4,
     elevation: 5,
   },
   modalHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 16,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 16,
+    paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#eee",
   },
   modalTitulo: {
     fontSize: 16,
-    fontWeight: 'bold',
-    color: '#000',
+    fontWeight: "700",
+    color: "#000",
   },
   modalItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    padding: 12,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
     borderBottomWidth: 1,
-    borderBottomColor: '#f0f0f0',
+    borderBottomColor: "#f0f0f0",
   },
   modalItemSelecionado: {
-    backgroundColor: '#fff8e1',
+    backgroundColor: "#fff8e1",
   },
   modalTexto: {
     fontSize: 14,
-    color: '#333',
+    color: "#333",
   },
   modalTextoSelecionado: {
-    color: '#000',
-    fontWeight: '600',
+    color: "#000",
+    fontWeight: "600",
   },
 });
