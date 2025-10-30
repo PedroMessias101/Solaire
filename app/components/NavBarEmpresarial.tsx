@@ -22,7 +22,7 @@ interface Props {
 const API_USUARIO_URL = "https://solaireapp.onrender.com";
 const API_PLACAS_URL = "https://placa-api-eaho.onrender.com";
 
-export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => {
+export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
   const router = useRouter();
   const pathname = usePathname();
 

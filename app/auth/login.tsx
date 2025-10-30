@@ -22,39 +22,39 @@ const API_URL = "https://solaire-z8mw.onrender.com";
 export default function LoginScreen() {
   const router = useRouter();
   const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
+  const [senha, setSenha] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
-  // Animação de fundo
-  const scaleX = useRef(new Animated.Value(1)).current;
-  const scaleY = useRef(new Animated.Value(1)).current;
-  const translateX = useRef(new Animated.Value(0)).current;
-  const translateY = useRef(new Animated.Value(0)).current;
+  const escalaX = useRef(new Animated.Value(1)).current;
+  const escalaY = useRef(new Animated.Value(1)).current;
+  const moverX = useRef(new Animated.Value(0)).current;
+  const moverY = useRef(new Animated.Value(0)).current;
+  const opacidadeLink = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.loop(
       Animated.parallel([
         Animated.sequence([
           Animated.parallel([
-            Animated.timing(scaleX, {
+            Animated.timing(escalaX, {
               toValue: 1.2,
               duration: 4000,
               useNativeDriver: true,
             }),
-            Animated.timing(scaleY, {
+            Animated.timing(escalaY, {
               toValue: 0.9,
               duration: 4000,
               useNativeDriver: true,
             }),
           ]),
           Animated.parallel([
-            Animated.timing(scaleX, {
+            Animated.timing(escalaX, {
               toValue: 0.9,
               duration: 4000,
               useNativeDriver: true,
             }),
-            Animated.timing(scaleY, {
+            Animated.timing(escalaY, {
               toValue: 1.2,
               duration: 4000,
               useNativeDriver: true,
@@ -62,34 +62,34 @@ export default function LoginScreen() {
           ]),
         ]),
         Animated.sequence([
-          Animated.timing(translateX, {
+          Animated.timing(moverX, {
             toValue: 60,
             duration: 6000,
             useNativeDriver: true,
           }),
-          Animated.timing(translateX, {
+          Animated.timing(moverX, {
             toValue: -30,
             duration: 6000,
             useNativeDriver: true,
           }),
-          Animated.timing(translateX, {
+          Animated.timing(moverX, {
             toValue: 0,
             duration: 6000,
             useNativeDriver: true,
           }),
         ]),
         Animated.sequence([
-          Animated.timing(translateY, {
+          Animated.timing(moverY, {
             toValue: 40,
             duration: 5000,
             useNativeDriver: true,
           }),
-          Animated.timing(translateY, {
+          Animated.timing(moverY, {
             toValue: -20,
             duration: 5000,
             useNativeDriver: true,
           }),
-          Animated.timing(translateY, {
+          Animated.timing(moverY, {
             toValue: 0,
             duration: 5000,
             useNativeDriver: true,
@@ -99,85 +99,79 @@ export default function LoginScreen() {
     ).start();
   }, []);
 
-  
-  const handleLogin = async () => {
-    if (!email || !password) {
+  useEffect(() => {
+    Animated.timing(opacidadeLink, {
+      toValue: senha.length > 0 ? 1 : 0,
+      duration: 400,
+      useNativeDriver: true,
+    }).start();
+  }, [senha]);
+
+  const fazerLogin = async () => {
+    if (!email || !senha) {
       Alert.alert("Erro", "Preencha e-mail e senha!");
       return;
     }
 
-    setLoading(true);
-
+    setCarregando(true);
     try {
-      const response = await fetch(`${API_URL}/users/login`, {
+      const resposta = await fetch(`${API_URL}/users/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
+        body: JSON.stringify({ email, password: senha }),
       });
 
-      const data = await response.json();
+      const dados = await resposta.json();
 
-      if (response.ok && data.success) {
-
+      if (resposta.ok && dados.success) {
         await AsyncStorage.clear();
+        await AsyncStorage.setItem("userToken", dados.data.token);
+        await AsyncStorage.setItem("user", JSON.stringify(dados.data));
+        await AsyncStorage.setItem("userName", dados.data.name || email);
 
-        await AsyncStorage.setItem("userToken", data.data.token);
-        await AsyncStorage.setItem("user", JSON.stringify(data.data));
-        await AsyncStorage.setItem("userName", data.data.name || email);
-
-        const role = data.data.role?.toUpperCase();
-
-        // Redireciona de acordo com o role
-        if (role === "RESIDENTIAL") {
+        const papel = dados.data.role?.toUpperCase();
+        if (papel === "RESIDENTIAL") {
           router.replace("/tabs/slides");
-        } else if (role === "BUSINESS") {
-          router.replace("/empresarial/wizard");
         } else {
           router.replace("/empresarial/wizard");
         }
       } else {
-        Alert.alert("Erro", data.message || data.error || "Erro ao fazer login");
+        Alert.alert("Erro", dados.message || dados.error || "Erro ao fazer login");
       }
-    } catch (err) {
-      console.error("Erro no login:", err);
+    } catch (erro) {
+      console.error("Erro no login:", erro);
       Alert.alert("Erro", "Erro de conexão com a API");
     } finally {
-      setLoading(false);
+      setCarregando(false);
     }
   };
 
-
   return (
-    <View style={styles.container}>
+    <View style={estilos.container}>
       <StatusBar barStyle="dark-content" />
-
-      {/* Fundo animado */}
       <Animated.View
         style={[
-          styles.backgroundCircle,
-          { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] },
+          estilos.fundoAnimado,
+          { transform: [{ scaleX: escalaX }, { scaleY: escalaY }, { translateX: moverX }, { translateY: moverY }] },
         ]}
       >
         <LinearGradient
           colors={["#fbf5deff", "#ffffffff"]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
-          style={styles.gradientCircle}
+          style={estilos.gradiente}
         />
       </Animated.View>
 
-      <ScrollView
-        contentContainerStyle={styles.contentContainer}
-        showsVerticalScrollIndicator={false}
-      >
-        <Text style={styles.title}>Bem-vindo de volta!</Text>
-        <Text style={styles.subtitle}>Acesse sua conta abaixo</Text>
+      <ScrollView contentContainerStyle={estilos.scroll}>
+        <Text style={estilos.titulo}>Bem-vindo de volta!</Text>
+        <Text style={estilos.subtitulo}>Acesse sua conta abaixo</Text>
 
-        {/* E-mail */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail" size={18} color="#333" style={styles.icon} />
+        {/* Campo de e-mail */}
+        <View style={estilos.campo}>
+          <Ionicons name="mail" size={18} color="#333" style={estilos.icone} />
           <TextInput
-            style={styles.input}
+            style={estilos.input}
             placeholder="E-mail"
             placeholderTextColor="#6c757d"
             value={email}
@@ -187,49 +181,48 @@ export default function LoginScreen() {
           />
         </View>
 
-        {/* Senha */}
-        <View style={styles.inputContainer}>
-          <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
+        {/* Campo de senha */}
+        <View style={estilos.campo}>
+          <FontAwesome5 name="lock" size={16} color="#333" style={estilos.icone} />
           <TextInput
-            style={styles.input}
+            style={estilos.input}
             placeholder="Senha"
             placeholderTextColor="#6c757d"
-            secureTextEntry={!showPassword}
-            value={password}
-            onChangeText={setPassword}
+            secureTextEntry={!mostrarSenha}
+            value={senha}
+            onChangeText={setSenha}
           />
-          <TouchableOpacity onPress={() => setShowPassword((prev) => !prev)}>
+          <TouchableOpacity onPress={() => setMostrarSenha((prev) => !prev)}>
             <Ionicons
-              name={showPassword ? "eye-off" : "eye"}
+              name={mostrarSenha ? "eye-off" : "eye"}
               size={20}
               color="#333"
-              style={styles.iconRight}
+              style={estilos.iconeDireita}
             />
           </TouchableOpacity>
         </View>
         
 
+        {/* Esqueceu a senha? */}
+        <Animated.View style={[{ opacity: opacidadeLink, alignSelf: "flex-end", marginBottom: 2 }]}>
+          {senha.length > 0 && (
+            <TouchableOpacity onPress={() => router.push("/auth/esqueciSenha")}>
+              <Text style={estilos.linkEsqueceu}>Esqueceu a senha?</Text>
+            </TouchableOpacity>
+          )}
+        </Animated.View>
+
         {/* Botão de login */}
-        <TouchableOpacity
-          style={styles.button}
-          onPress={handleLogin}
-          disabled={loading}
-        >
-          <LinearGradient
-            colors={["#ffc125", "#ffc125"]}
-            style={styles.buttonGradient}
-          >
-            <Text style={styles.buttonText}>
-              {loading ? "Entrando..." : "Entrar"}
-            </Text>
+        <TouchableOpacity style={estilos.botao} onPress={fazerLogin} disabled={carregando}>
+          <LinearGradient colors={["#ffc125", "#ffc125"]} style={estilos.gradienteBotao}>
+            <Text style={estilos.textoBotao}>{carregando ? "Entrando..." : "Entrar"}</Text>
           </LinearGradient>
         </TouchableOpacity>
 
         {/* Link para cadastro */}
         <TouchableOpacity onPress={() => router.push("/auth/cadastro")}>
-          <Text style={styles.linkText}>
-            Não tem conta?{" "}
-            <Text style={styles.linkHighlight}>Cadastre-se</Text>
+          <Text style={estilos.textoLink}>
+            Não tem conta? <Text style={estilos.linkDestaque}>Cadastre-se</Text>
           </Text>
         </TouchableOpacity>
       </ScrollView>
@@ -237,13 +230,9 @@ export default function LoginScreen() {
   );
 }
 
-// --- ESTILOS ---
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#ffffff",
-  },
-  backgroundCircle: {
+const estilos = StyleSheet.create({
+  container: { flex: 1, backgroundColor: "#fff" },
+  fundoAnimado: {
     position: "absolute",
     top: -height * 0.2,
     right: -width * 0.3,
@@ -253,30 +242,28 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     opacity: 0.8,
   },
-  gradientCircle: {
-    flex: 1,
-  },
-  contentContainer: {
+  gradiente: { flex: 1 },
+  scroll: {
     flexGrow: 1,
     justifyContent: "center",
     alignItems: "center",
     paddingHorizontal: width * 0.08,
     paddingBottom: height * 0.1,
   },
-  title: {
+  titulo: {
     fontSize: 28,
     fontWeight: "bold",
     color: "#000",
     marginBottom: 10,
     textAlign: "center",
   },
-  subtitle: {
+  subtitulo: {
     fontSize: 16,
     color: "#6c757d",
     marginBottom: 30,
     textAlign: "center",
   },
-  inputContainer: {
+  campo: {
     flexDirection: "row",
     alignItems: "center",
     borderBottomWidth: 2,
@@ -285,39 +272,33 @@ const styles = StyleSheet.create({
     width: "100%",
     paddingVertical: 5,
   },
-  input: {
-    flex: 1,
-    height: 40,
-    color: "#000",
-    paddingLeft: 10,
+  input: { flex: 1, height: 40, color: "#000", paddingLeft: 10 },
+  icone: { marginRight: 10 },
+  iconeDireita: { marginLeft: 10 },
+  linkEsqueceu: {
+    color: "#ffc125",
+    fontWeight: "600",
+    textDecorationLine: "underline",
+    fontSize: width * 0.038,
   },
-  icon: {
-    marginRight: 10,
-  },
-  iconRight: {
-    marginLeft: 10,
-  },
-  button: {
-    width: "100%",
-    marginBottom: 20,
-  },
-  buttonGradient: {
+  botao: { width: "100%", marginBottom: 20 },
+  gradienteBotao: {
     paddingVertical: height * 0.02,
     borderRadius: 50,
     alignItems: "center",
   },
-  buttonText: {
+  textoBotao: {
     color: "#000",
     fontWeight: "600",
     fontSize: width * 0.045,
     textAlign: "center",
   },
-  linkText: {
+  textoLink: {
     color: "#6c757d",
     fontSize: width * 0.038,
     fontWeight: "500",
   },
-  linkHighlight: {
+  linkDestaque: {
     color: "#ffc125",
     fontWeight: "600",
     textDecorationLine: "underline",
