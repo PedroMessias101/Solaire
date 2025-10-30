@@ -28,7 +28,7 @@ export default function TelaGestaoDeConta() {
             </View>
             <View>
               <Text style={estilos.tituloCard}>Informações empresarial</Text>
-              <Text style={estilos.subtituloCard}>Altere nome, e-mail e telefone</Text>
+              <Text style={estilos.subtituloCard}>Altere nome, CNPJ, e-mail e telefone</Text>
             </View>
           </TouchableOpacity>
         </View>

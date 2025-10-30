@@ -207,6 +207,7 @@ export default function LoginScreen() {
             />
           </TouchableOpacity>
         </View>
+        
 
         {/* Botão de login */}
         <TouchableOpacity
