@@ -3,7 +3,6 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from "rea
 import { Feather, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 
-// ==================== CONFIG EMPRESARIAL ====================
 export function ConfigEmpresarial() {
   const handleLogout = () => {
     Alert.alert("Sair", "Deseja realmente sair?", [
@@ -39,7 +38,6 @@ export function ConfigEmpresarial() {
   );
 }
 
-// ==================== TELA CONFIGURAÇÕES ====================
 export function TelaConfig() {
   const router = useRouter();
 
@@ -91,7 +89,6 @@ export function TelaConfig() {
   );
 }
 
-// ==================== ESTILOS ====================
 const estilos = StyleSheet.create({
   container: {
     flex: 1,

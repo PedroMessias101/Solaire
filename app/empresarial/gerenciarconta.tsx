@@ -17,9 +17,9 @@ export default function TelaGestaoDeConta() {
         <Text style={estilos.titulo}>Gerenciar Conta</Text>
       </View>
 
-      {/* Conteúdo principal */}
+
       <ScrollView style={estilos.conteudo} contentContainerStyle={{ paddingBottom: 80 }}>
-        {/* Seção: Conta */}
+        
         <View style={estilos.secao}>
           <Text style={estilos.tituloSecao}>Conta</Text>
           <TouchableOpacity style={estilos.card} onPress={() => router.push("/tabs/conta")}>

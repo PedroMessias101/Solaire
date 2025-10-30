@@ -149,7 +149,7 @@ export default function HomeScreen() {
           />
         </View>
 
-        {/* Grid de métricas */}
+    
         <View style={estilos.grid}>
           {[
             { label: "Irradiação", value: dadosRelatorio.irradiacao, icon: "weather-sunny", color: "#FFA726" },
@@ -165,7 +165,6 @@ export default function HomeScreen() {
           ))}
         </View>
 
-        {/* Cards empresariais */}
         <View style={{ marginTop: 20 }}>
           <View style={estilos.cardFull}>
             <MaterialCommunityIcons name="leaf" size={28} color="#4CAF50" />
@@ -189,12 +188,12 @@ export default function HomeScreen() {
         </View>
       </ScrollView>
 
-      {/* ChatBot */}
+
       <View style={estilos.chatBotContainer}>
         <ChatBot />
       </View>
 
-      {/* Modal */}
+
       {modalVisivel && (
         <View style={estilos.modalContainer}>
           <Animated.View style={[estilos.modalOverlay, { opacity }]}>
@@ -242,7 +241,6 @@ export default function HomeScreen() {
   );
 }
 
-// Estilos aprimorados
 const estilos = StyleSheet.create({
   container: {
     flex: 1,
