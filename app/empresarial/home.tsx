@@ -13,7 +13,6 @@ import {
   View,
 } from "react-native";
 import ChatBot from "../components/ChatBot";
-import ExportarPDF from "../components/ExportarPDF";
 import { NavBarEmpresarial } from "../components/NavBarEmpresarial";
 import Notificacoes from "../components/notific";
 
@@ -127,7 +126,7 @@ export default function HomeScreen() {
             <Notificacoes />
             <TouchableOpacity
               style={estilos.settingsButton}
-              onPress={() => router.push("./config")}
+              onPress={() => router.push("/empresarial/config")}
             >
               <Feather name="settings" size={25} color="#000" />
             </TouchableOpacity>
@@ -141,12 +140,6 @@ export default function HomeScreen() {
             <MaterialCommunityIcons name="chevron-down" size={20} color="#000" />
           </TouchableOpacity>
 
-          <ExportarPDF
-            filial={filialSelecionada}
-            dados={dadosRelatorio}
-            styleBotao={estilos.botaoExportar}
-            styleTexto={estilos.botaoExportarTexto}
-          />
         </View>
 
         {/* Grid de métricas */}

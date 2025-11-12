@@ -7,6 +7,10 @@ import {
   Modal,
   Text,
   TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
@@ -15,27 +19,27 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const { width } = Dimensions.get("window");
 
 interface Props {
-  placas: any[];
+  placas?: any[];
   setPlacas: (placas: any[]) => void;
 }
 
-const API_USUARIO_URL = "https://solaireapp.onrender.com";
+const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 const API_PLACAS_URL = "https://placa-api-eaho.onrender.com";
 
-export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => {
+export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }) => {
   const router = useRouter();
   const pathname = usePathname();
 
   const [modalVisible, setModalVisible] = useState(false);
   const [codigoPlaca, setCodigoPlaca] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const [etapaAtual, setEtapaAtual] = useState("");
 
-  // Ícones e rotas
   const tabs = [
     { icon: "home", route: "/tabs/home" },
-    { icon: "add-circle", route: "modal" }, // abre modal
+    { icon: "add-circle", route: "modal" },
     { icon: "person", route: "/tabs/perfil" },
   ];
-
 
   const activeIndex = tabs.findIndex((tab) =>
     tab.route !== "modal" ? pathname.includes(tab.route) : false
@@ -50,67 +54,144 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => 
   };
 
   const handleAdicionar = async () => {
-    if (codigoPlaca.trim() === "") return;
+    if (!codigoPlaca.trim() || carregando) {
+      Alert.alert("Erro", "Digite um código válido para a placa.");
+      return;
+    }
+
+    setCarregando(true);
+    setEtapaAtual("Iniciando...");
 
     try {
-      // Buscar dados da placa na API pública
-      const res = await fetch(`${API_PLACAS_URL}/${codigoPlaca.trim().toUpperCase()}`);
-      if (!res.ok) {
-        alert("Placa não encontrada na API.");
+      const codigoFormatado = codigoPlaca.trim().toUpperCase();
+      
+      // 1️⃣ Buscar placa na API pública
+      setEtapaAtual("Buscando placa...");
+      console.log("🔍 Buscando placa:", codigoFormatado);
+      
+      const resPlaca = await fetch(`${API_PLACAS_URL}/${codigoFormatado}`);
+      
+      if (!resPlaca.ok) {
+        if (resPlaca.status === 404) {
+          Alert.alert("Placa Não Encontrada", "Verifique o código e tente novamente.");
+          return;
+        }
+        throw new Error(`API Placas retornou status ${resPlaca.status}`);
+      }
+
+      const dataPlaca = await resPlaca.json();
+      console.log("📊 Dados da placa:", dataPlaca);
+      
+      if (!dataPlaca?.code) {
+        Alert.alert("Erro", "Dados da placa incompletos.");
         return;
       }
-      const data = await res.json();
 
-      if (placas.find((p) => p.serial === data.code)) {
-        alert("Placa já adicionada.");
-        return;
-      }
-
-      // Pegar token do usuário
+      // 2️⃣ Verificar autenticação
+      setEtapaAtual("Verificando login...");
       const token = await AsyncStorage.getItem("userToken");
+      
       if (!token) {
-        alert("Usuário não logado.");
+        Alert.alert("Sessão Expirada", "Faça login novamente.");
         return;
       }
 
-      // Salvar no back-end (provisionamento)
-      const resBackend = await fetch(`${API_USUARIO_URL}/panels/provision`, {
+      // 3️⃣ Registrar no backend
+      setEtapaAtual("Registrando placa...");
+      
+      const dadosParaEnviar = {
+        serial: dataPlaca.code,
+        location: `Placa ${dataPlaca.id || dataPlaca.code}`,
+        // ✅ MODEL É OPCIONAL - backend vai usar "Genérico" como padrão
+      };
+
+      console.log("📤 Enviando para backend:", dadosParaEnviar);
+
+      const resBackend = await fetch(`${API_USUARIO_URL}/panels`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
-        body: JSON.stringify({
-          serial: data.code,
-          location: `Placa ${data.id}`,
-          model: "Genérico",
-        }),
+        body: JSON.stringify(dadosParaEnviar),
       });
 
+      console.log("📡 Resposta do backend:", resBackend.status);
+
       if (!resBackend.ok) {
-        alert("Erro ao salvar a placa no servidor.");
-        return;
+        let errorMessage = "Erro ao registrar placa";
+        
+        try {
+          const errorData = await resBackend.json();
+          errorMessage = errorData.message || errorMessage;
+          console.log("❌ Erro do backend:", errorData);
+        } catch (e) {
+          const errorText = await resBackend.text();
+          errorMessage = errorText || errorMessage;
+        }
+
+        // Tratamento de erros específicos
+        if (resBackend.status === 401) {
+          Alert.alert("Sessão Expirada", "Faça login novamente.");
+          return;
+        } else if (resBackend.status === 409) {
+          Alert.alert("Placa Já Existe", "Esta placa já está no seu sistema.");
+          return;
+        } else {
+          Alert.alert("Erro", errorMessage);
+          return;
+        }
       }
 
       const savedData = await resBackend.json();
+      console.log("✅ Placa registrada:", savedData);
 
-      // Construir objeto da placa com status e energia atualizados
+      // 4️⃣ Atualizar lista local
+      setEtapaAtual("Finalizando...");
+      
       const novaPlaca = {
-        serial: savedData.panel.serial,
-        location: savedData.panel.location,
-        model: savedData.panel.model,
-        status: savedData.panel.status ?? "Ativa",
-        energia_kWh: savedData.panel.energia_kWh ?? 0,
+        id: savedData.panel?.id,
+        serial: savedData.panel?.serial || dataPlaca.code,
+        location: savedData.panel?.location || `Placa ${dataPlaca.id || dataPlaca.code}`,
+        model: savedData.panel?.model || "Genérico",
+        status: savedData.panel?.status || "Ativa",
+        energia_kWh: savedData.panel?.energia_kWh || 0,
+        tensao: savedData.panel?.tensao || 0,
+        temperatura: savedData.panel?.temperatura || 0,
       };
 
-      // Atualizar estado local
       setPlacas([...placas, novaPlaca]);
-
+      
+      Alert.alert(
+        "✅ Sucesso!",
+        "Placa adicionada com sucesso!",
+        [
+          { 
+            text: "Ver Placas", 
+            onPress: () => {
+              setModalVisible(false);
+              router.push("/tabs/home");
+            }
+          }
+        ]
+      );
+      
+    } catch (err: any) {
+      console.error("❌ Erro geral:", err);
+      
+      let mensagemErro = "Erro de conexão. Tente novamente.";
+      
+      if (err.message?.includes('Network request failed')) {
+        mensagemErro = "Sem conexão com a internet.";
+      } else if (err.message?.includes('timeout')) {
+        mensagemErro = "Tempo limite excedido.";
+      }
+      
+      Alert.alert("Erro", mensagemErro);
+    } finally {
+      setCarregando(false);
+      setEtapaAtual("");
       setCodigoPlaca("");
-      setModalVisible(false);
-    } catch (err) {
-      console.log(err);
-      alert("Erro ao adicionar placa.");
     }
   };
 
@@ -121,6 +202,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => 
           key={index}
           style={styles.tab}
           onPress={() => handlePress(tab)}
+          disabled={carregando}
         >
           <Ionicons
             name={tab.icon as any}
@@ -130,45 +212,85 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas, setPlacas }) => 
         </TouchableOpacity>
       ))}
 
-      {/* Modal */}
       <Modal
         visible={modalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => !carregando && setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Adicionar Placa</Text>
-            <TextInput
-              placeholder="Digite o código da placa (ex: ABCDE-F)"
-              value={codigoPlaca}
-              onChangeText={setCodigoPlaca}
-              style={styles.input}
-              autoCapitalize="characters"
-            />
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>Adicionar Placa Solar</Text>
+              <Text style={styles.modalSubtitle}>
+                Digite o código da placa
+              </Text>
+            </View>
+
+            <View style={styles.inputContainer}>
+              <TextInput
+                placeholder="Ex: PLACA-001"
+                value={codigoPlaca}
+                onChangeText={setCodigoPlaca}
+                style={[
+                  styles.input,
+                  carregando && styles.inputDisabled
+                ]}
+                autoCapitalize="characters"
+                editable={!carregando}
+                placeholderTextColor="#999"
+                onSubmitEditing={handleAdicionar}
+                returnKeyType="done"
+              />
+            </View>
+
+            {carregando && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FFC125" />
+                <Text style={styles.loadingText}>{etapaAtual}</Text>
+              </View>
+            )}
+
             <View style={styles.buttonRow}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#d6d6d6ff" }]}
+                style={[
+                  styles.modalButton, 
+                  styles.cancelButton,
+                  carregando && styles.buttonDisabled
+                ]}
                 onPress={() => setModalVisible(false)}
+                disabled={carregando}
               >
-                <Text style={styles.modalButtonText}>Cancelar</Text>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#FFC125" }]}
+                style={[
+                  styles.modalButton,
+                  styles.confirmButton,
+                  (carregando || !codigoPlaca.trim()) && styles.buttonDisabled
+                ]}
                 onPress={handleAdicionar}
+                disabled={carregando || !codigoPlaca.trim()}
               >
-                <Text style={styles.modalButtonText}>Adicionar</Text>
+                {carregando ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>Adicionar</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
 };
-0
+
+// ======== STYLES ========
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
@@ -195,30 +317,95 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "85%",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
     alignItems: "center",
+    elevation: 10,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
   },
-  modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },
+  modalHeader: {
+    alignItems: "center",
+    marginBottom: 20,
+  },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+  },
+  inputContainer: {
+    width: "100%",
+    marginBottom: 16,
+  },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#ddd",
     width: "100%",
-    padding: 10,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: "#f8f8f8",
+    fontSize: 16,
+    color: "#111",
+  },
+  inputDisabled: {
+    backgroundColor: "#f0f0f0",
+    color: "#999",
+  },
+  loadingContainer: {
+    width: "100%",
+    padding: 16,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+    textAlign: "center",
+    marginTop: 8,
   },
   buttonRow: {
     flexDirection: "row",
-    marginTop: 12,
+    marginTop: 8,
     width: "100%",
     justifyContent: "space-between",
+    gap: 12,
   },
   modalButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
     alignItems: "center",
-    marginHorizontal: 5,
+    justifyContent: "center",
+    minHeight: 50,
   },
-  modalButtonText: { color: "#000", fontWeight: "700", fontSize: 16 },
+  cancelButton: {
+    backgroundColor: "#f0f0f0",
+  },
+  confirmButton: {
+    backgroundColor: "#FFC125",
+  },
+  buttonDisabled: {
+    backgroundColor: "#e0e0e0",
+    opacity: 0.6,
+  },
+  cancelButtonText: {
+    color: "#666",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  confirmButtonText: {
+    color: "#000",
+    fontWeight: "600",
+    fontSize: 16,
+  },
 });

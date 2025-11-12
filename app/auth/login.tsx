@@ -10,6 +10,8 @@ import {
   StatusBar,
   Alert,
   ScrollView,
+  KeyboardAvoidingView,
+  Platform,
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
@@ -149,10 +151,18 @@ export default function LoginScreen() {
   return (
     <View style={estilos.container}>
       <StatusBar barStyle="dark-content" />
+
       <Animated.View
         style={[
           estilos.fundoAnimado,
-          { transform: [{ scaleX: escalaX }, { scaleY: escalaY }, { translateX: moverX }, { translateY: moverY }] },
+          {
+            transform: [
+              { scaleX: escalaX },
+              { scaleY: escalaY },
+              { translateX: moverX },
+              { translateY: moverY },
+            ],
+          },
         ]}
       >
         <LinearGradient
@@ -163,68 +173,79 @@ export default function LoginScreen() {
         />
       </Animated.View>
 
-      <ScrollView contentContainerStyle={estilos.scroll}>
-        <Text style={estilos.titulo}>Bem-vindo de volta!</Text>
-        <Text style={estilos.subtitulo}>Acesse sua conta abaixo</Text>
+      {/* ⚡️ Este bloco faz o teclado empurrar a tela */}
+      <KeyboardAvoidingView
+        style={{ flex: 1 }}
+        behavior={Platform.OS === "ios" ? "padding" : "height"}
+      >
+        <ScrollView
+          contentContainerStyle={estilos.scroll}
+          keyboardShouldPersistTaps="handled"
+        >
+          <Text style={estilos.titulo}>Bem-vindo de volta!</Text>
+          <Text style={estilos.subtitulo}>Acesse sua conta abaixo</Text>
 
-        {/* Campo de e-mail */}
-        <View style={estilos.campo}>
-          <Ionicons name="mail" size={18} color="#333" style={estilos.icone} />
-          <TextInput
-            style={estilos.input}
-            placeholder="E-mail"
-            placeholderTextColor="#6c757d"
-            value={email}
-            onChangeText={setEmail}
-            keyboardType="email-address"
-            autoCapitalize="none"
-          />
-        </View>
-
-        {/* Campo de senha */}
-        <View style={estilos.campo}>
-          <FontAwesome5 name="lock" size={16} color="#333" style={estilos.icone} />
-          <TextInput
-            style={estilos.input}
-            placeholder="Senha"
-            placeholderTextColor="#6c757d"
-            secureTextEntry={!mostrarSenha}
-            value={senha}
-            onChangeText={setSenha}
-          />
-          <TouchableOpacity onPress={() => setMostrarSenha((prev) => !prev)}>
-            <Ionicons
-              name={mostrarSenha ? "eye-off" : "eye"}
-              size={20}
-              color="#333"
-              style={estilos.iconeDireita}
+          {/* Campo de e-mail */}
+          <View style={estilos.campo}>
+            <Ionicons name="mail" size={18} color="#333" style={estilos.icone} />
+            <TextInput
+              style={estilos.input}
+              placeholder="E-mail"
+              placeholderTextColor="#6c757d"
+              value={email}
+              onChangeText={setEmail}
+              keyboardType="email-address"
+              autoCapitalize="none"
             />
-          </TouchableOpacity>
-        </View>
+          </View>
 
-        {/* Esqueceu a senha? */}
-        <Animated.View style={[{ opacity: opacidadeLink, alignSelf: "flex-end", marginBottom: 2 }]}>
-          {senha.length > 0 && (
-            <TouchableOpacity onPress={() => router.push("/auth/esqueciSenha")}>
-              <Text style={estilos.linkEsqueceu}>Esqueceu a senha?</Text>
+          {/* Campo de senha */}
+          <View style={estilos.campo}>
+            <FontAwesome5 name="lock" size={16} color="#333" style={estilos.icone} />
+            <TextInput
+              style={estilos.input}
+              placeholder="Senha"
+              placeholderTextColor="#6c757d"
+              secureTextEntry={!mostrarSenha}
+              value={senha}
+              onChangeText={setSenha}
+            />
+            <TouchableOpacity onPress={() => setMostrarSenha((prev) => !prev)}>
+              <Ionicons
+                name={mostrarSenha ? "eye-off" : "eye"}
+                size={20}
+                color="#333"
+                style={estilos.iconeDireita}
+              />
             </TouchableOpacity>
-          )}
-        </Animated.View>
+          </View>
 
-        {/* Botão de login */}
-        <TouchableOpacity style={estilos.botao} onPress={fazerLogin} disabled={carregando}>
-          <LinearGradient colors={["#ffc125", "#ffc125"]} style={estilos.gradienteBotao}>
-            <Text style={estilos.textoBotao}>{carregando ? "Entrando..." : "Entrar"}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
+          {/* Esqueceu a senha */}
+          <Animated.View
+            style={[{ opacity: opacidadeLink, alignSelf: "flex-end", marginBottom: 2 }]}
+          >
+            {senha.length > 0 && (
+              <TouchableOpacity onPress={() => router.push("/auth/EsqueceuSenha")}>
+                <Text style={estilos.linkEsqueceu}>Esqueceu a senha?</Text>
+              </TouchableOpacity>
+            )}
+          </Animated.View>
 
-        {/* Link para cadastro */}
-        <TouchableOpacity onPress={() => router.push("/auth/cadastro")}>
-          <Text style={estilos.textoLink}>
-            Não tem conta? <Text style={estilos.linkDestaque}>Cadastre-se</Text>
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
+          {/* Botão de login */}
+          <TouchableOpacity style={estilos.botao} onPress={fazerLogin} disabled={carregando}>
+            <LinearGradient colors={["#ffc125", "#ffc125"]} style={estilos.gradienteBotao}>
+              <Text style={estilos.textoBotao}>{carregando ? "Entrando..." : "Entrar"}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+
+          {/* Link para cadastro */}
+          <TouchableOpacity onPress={() => router.push("/auth/cadastro")}>
+            <Text style={estilos.textoLink}>
+              Não tem conta? <Text style={estilos.linkDestaque}>Cadastre-se</Text>
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </KeyboardAvoidingView>
     </View>
   );
 }

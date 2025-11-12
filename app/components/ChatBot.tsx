@@ -131,7 +131,7 @@ export default function ChatAssistenteModal(): JSX.Element {
     <View style={{ flex: 1 }}>
       {/* Botão flutuante */}
       <TouchableOpacity style={estilos.botaoChat} onPress={() => setVisivel(true)}>
-        <Ionicons name="chatbubble-ellipses" size={26} color="#ffc125" />
+        <Ionicons name="chatbubble-ellipses" size={26} color="#ffff" />
       </TouchableOpacity>
 
       {/* Modal */}

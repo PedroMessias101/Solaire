@@ -78,57 +78,57 @@ export default function HomeScreen() {
   }, [tokenChecked, token]);
 
   const fetchUserAndPanels = async () => {
-  setLoading(true);
-  setError(null);
+    setLoading(true);
+    setError(null);
 
-  try {
-    // ====================== DADOS DO USUÁRIO ======================
-    const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    try {
+      // ====================== DADOS DO USUÁRIO ======================
+      const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
 
-    if (resUser.status === 401) {
-      // Token inválido/expirado
-      Alert.alert("Sessão expirada", "Faça login novamente.");
-      await AsyncStorage.clear();
-      router.replace("/auth/login");
-      return;
+      if (resUser.status === 401) {
+        // Token inválido/expirado
+        Alert.alert("Sessão expirada", "Faça login novamente.");
+        await AsyncStorage.clear();
+        router.replace("/auth/login");
+        return;
+      }
+
+      const userResponse = await resUser.json();
+
+      if (userResponse.success) {
+        setUser(userResponse.data); // <-- só o objeto 'data'
+      } else {
+        setError(userResponse.error || "Erro ao carregar usuário");
+      }
+
+      // ====================== DADOS DAS PLACAS ======================
+      const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (resPlacas.status === 401) {
+        Alert.alert("Sessão expirada", "Faça login novamente.");
+        await AsyncStorage.clear();
+        router.replace("/auth/login");
+        return;
+      }
+
+      const placasResponse = await resPlacas.json();
+
+      if (placasResponse.success) {
+        setPlacas(placasResponse.data || []);
+      } else {
+        setError(placasResponse.error || "Erro ao carregar placas");
+      }
+    } catch (err: any) {
+      console.error("Erro ao carregar dados:", err);
+      setError(err.message || "Erro inesperado");
+    } finally {
+      setLoading(false);
     }
-
-    const userResponse = await resUser.json();
-
-    if (userResponse.success) {
-      setUser(userResponse.data); // <-- só o objeto 'data'
-    } else {
-      setError(userResponse.error || "Erro ao carregar usuário");
-    }
-
-    // ====================== DADOS DAS PLACAS ======================
-    const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-
-    if (resPlacas.status === 401) {
-      Alert.alert("Sessão expirada", "Faça login novamente.");
-      await AsyncStorage.clear();
-      router.replace("/auth/login");
-      return;
-    }
-
-    const placasResponse = await resPlacas.json();
-
-    if (placasResponse.success) {
-      setPlacas(placasResponse.data || []);
-    } else {
-      setError(placasResponse.error || "Erro ao carregar placas");
-    }
-  } catch (err: any) {
-    console.error("Erro ao carregar dados:", err);
-    setError(err.message || "Erro inesperado");
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
 
   // Alterna dicas
@@ -155,7 +155,7 @@ export default function HomeScreen() {
 
     return { totalEnergia, eficiencia, economia, co2 };
   };
-  
+
 
   if (!tokenChecked || loading) {
     return (
@@ -244,8 +244,10 @@ export default function HomeScreen() {
       <View style={{ position: "absolute", bottom: 80, right: 0 }}>
         <ChatBot />
       </View>
-
-      <AnimatedBottomNavBar activeIndex={activeIndex} onTabPress={setActiveIndex} />
+      <AnimatedBottomNavBar
+        placas={placas}
+        setPlacas={setPlacas}
+      />
     </View>
   );
 }

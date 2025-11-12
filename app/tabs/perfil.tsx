@@ -14,10 +14,12 @@ import {
 import { MaterialIcons, Feather } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
+import { useRouter } from "expo-router";
 
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
 
+// ===== Interfaces =====
 interface Placa {
   id: number;
   serial: string;
@@ -25,6 +27,8 @@ interface Placa {
   model: string;
   status?: "Ativa" | "Desativada";
   energia_kWh: number;
+  tensao?: number;
+  temperatura?: number;
 }
 
 interface Usuario {
@@ -45,8 +49,9 @@ export default function TelaPerfil() {
   const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
   const [producaoAcumulada, setProducaoAcumulada] = useState(0);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
+  const router = useRouter();
 
-  // animação do sol
+  // ===== Animação do sol =====
   const spinValue = useState(new Animated.Value(0))[0];
   useEffect(() => {
     Animated.loop(
@@ -74,7 +79,7 @@ export default function TelaPerfil() {
     return () => clearInterval(interval);
   }, []);
 
-  // Funções de AsyncStorage para produção acumulada
+  // ===== AsyncStorage =====
   const carregarProducaoAcumulada = async () => {
     try {
       const valor = await AsyncStorage.getItem(CHAVE_PRODUCAO_ACUMULADA);
@@ -101,16 +106,37 @@ export default function TelaPerfil() {
     return novoAcumulado;
   };
 
-  // Funções para buscar energia simulada
+  // ===== Buscar energia simulada (placas e grupos) =====
   const buscarEnergiaSimulada = async (placa: Placa) => {
     try {
       const res = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
-      if (!res.ok) throw new Error("Erro ao buscar energia simulada");
+      if (!res.ok) throw new Error("Erro ao buscar dados simulados");
       const data = await res.json();
-      return data.energia_kWh || 0;
+
+      // Caso venha grupo de placas
+      if (Array.isArray(data)) {
+        const totalEnergia = data.reduce((acc, p) => acc + (p.energia_kWh || 0), 0);
+        const mediaTensao =
+          data.reduce((acc, p) => acc + (p.tensao || 0), 0) / data.length || 0;
+        const mediaTemp =
+          data.reduce((acc, p) => acc + (p.temperatura || 0), 0) / data.length || 0;
+
+        return {
+          energia_kWh: totalEnergia,
+          tensao: mediaTensao,
+          temperatura: mediaTemp,
+        };
+      }
+
+      // Caso venha uma única placa
+      return {
+        energia_kWh: data.energia_kWh || 0,
+        tensao: data.tensao || 0,
+        temperatura: data.temperatura || 0,
+      };
     } catch (err) {
       console.log("Erro simulação:", err);
-      return placa.energia_kWh || 0;
+      return { energia_kWh: 0, tensao: 0, temperatura: 0 };
     }
   };
 
@@ -155,18 +181,18 @@ export default function TelaPerfil() {
     }
   };
 
+  // ===== Atualizar dados =====
   const atualizarDados = async () => {
     try {
       const token = await AsyncStorage.getItem("userToken");
       if (!token) return;
 
-      // ===== Dados do usuário =====
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (resUser.ok) {
         const userResponse = await resUser.json();
-        const u = userResponse.data; // <-- pegar o 'data' da API
+        const u = userResponse.data;
         setUsuario({
           name: u?.name || "Usuário Solar",
           email: u?.email || "",
@@ -175,7 +201,6 @@ export default function TelaPerfil() {
         });
       }
 
-      // ===== Dados das placas =====
       const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -185,13 +210,13 @@ export default function TelaPerfil() {
 
         const placasAtualizadas = await Promise.all(
           placasData.map(async (placa) => {
-            const energiaSimulada = placa.status === "Ativa" ? await buscarEnergiaSimulada(placa) : 0;
-            if (placa.status === "Ativa") await atualizarProducaoAcumulada(energiaSimulada);
+            const simulacao = placa.status === "Ativa" ? await buscarEnergiaSimulada(placa) : { energia_kWh: 0, tensao: 0, temperatura: 0 };
+            if (placa.status === "Ativa") await atualizarProducaoAcumulada(simulacao.energia_kWh);
 
-            await enviarEnergiaParaBackend(placa, energiaSimulada);
-            await salvarHistorico({ ...placa, energia_kWh: energiaSimulada });
+            await enviarEnergiaParaBackend(placa, simulacao.energia_kWh);
+            await salvarHistorico({ ...placa, energia_kWh: simulacao.energia_kWh });
 
-            return { ...placa, energia_kWh: energiaSimulada };
+            return { ...placa, ...simulacao };
           })
         );
 
@@ -214,7 +239,7 @@ export default function TelaPerfil() {
     return () => clearInterval(interval);
   }, []);
 
-  // Alternar status das placas
+  // ===== Alternar status =====
   const alternarStatus = async (id: number) => {
     const placa = placas.find((p) => p.id === id);
     if (!placa) return;
@@ -230,11 +255,11 @@ export default function TelaPerfil() {
       });
       if (!res.ok) throw new Error("Erro ao atualizar status");
 
-      const energiaSimulada = novoStatus === "Ativa" ? await buscarEnergiaSimulada(placa) : 0;
-      if (novoStatus === "Ativa") await atualizarProducaoAcumulada(energiaSimulada);
-      await enviarEnergiaParaBackend({ ...placa, status: novoStatus }, energiaSimulada);
+      const simulacao = novoStatus === "Ativa" ? await buscarEnergiaSimulada(placa) : { energia_kWh: 0, tensao: 0, temperatura: 0 };
+      if (novoStatus === "Ativa") await atualizarProducaoAcumulada(simulacao.energia_kWh);
+      await enviarEnergiaParaBackend({ ...placa, status: novoStatus }, simulacao.energia_kWh);
 
-      const placaAtualizada = { ...placa, status: novoStatus, energia_kWh: energiaSimulada };
+      const placaAtualizada = { ...placa, status: novoStatus, ...simulacao };
       setPlacas((prev) => prev.map((p) => (p.id === id ? placaAtualizada : p)));
       await salvarHistorico(placaAtualizada);
       setUltimaAtualizacao(new Date());
@@ -263,6 +288,7 @@ export default function TelaPerfil() {
     return `Atualizado há ${diffMin} minutos`;
   };
 
+  // ===== Render =====
   if (loading) {
     return (
       <View style={styles.loading}>
@@ -284,16 +310,14 @@ export default function TelaPerfil() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <View style={styles.avatarContainer}>
-              <Image source={require("../../assets/perfil-avatar.png")} style={styles.avatar} />
-            </View>
+            <Image source={require("../../assets/perfil-avatar.png")} style={styles.avatar} />
             <View style={styles.userInfo}>
               <Text style={styles.nome}>{usuario.name || "Usuário Solar"}</Text>
               <Text style={styles.email}>{usuario.email}</Text>
               <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>{tempoDesdeAtualizacao()}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.editButton} activeOpacity={0.7}>
+          <TouchableOpacity style={styles.editButton} activeOpacity={0.7} onPress={() => router.push("./config")}>
             <Feather name="settings" size={20} color="#333" />
           </TouchableOpacity>
         </View>
@@ -347,6 +371,12 @@ export default function TelaPerfil() {
                 <Text style={styles.energiaPlaca}>
                   Produção: {item.energia_kWh?.toFixed(2) || "0.00"} kWh
                 </Text>
+                <Text style={styles.energiaPlaca}>
+                  Tensão: {item.tensao?.toFixed(1) || "0.0"} V
+                </Text>
+                <Text style={styles.energiaPlaca}>
+                  Temperatura: {item.temperatura?.toFixed(1) || "0.0"} °C
+                </Text>
 
                 {item.energia_kWh === 0 && item.status === "Ativa" && (
                   <View style={styles.avisoDefeito}>
@@ -362,6 +392,7 @@ export default function TelaPerfil() {
                 )}
               </View>
             </View>
+
             <View style={styles.cardRight}>
               <TouchableOpacity
                 style={[
@@ -392,12 +423,10 @@ export default function TelaPerfil() {
           </View>
         )}
       </ScrollView>
-
-      <AnimatedBottomNavBar placas={placas} setPlacas={setPlacas} />
+      <AnimatedBottomNavBar />
     </SafeAreaView>
   );
 }
-
 
 const styles = StyleSheet.create({
   container: {
@@ -440,25 +469,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     flex: 1
   },
-  avatarContainer: {
-    width: 78,
-    height: 78,
-    borderRadius: 20,
-    overflow: "hidden",
-    backgroundColor: "#FFF",
-    justifyContent: "center",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#Ffc125",
-    shadowColor: "#ffc744ff",
-    shadowOpacity: 0.06,
-    shadowRadius: 10,
-    elevation: 2
-  },
   avatar: {
-    width: 70,
-    height: 70,
-    borderRadius: 16
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: "#FFC107",
   },
   userInfo:
   {

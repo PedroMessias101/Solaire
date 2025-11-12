@@ -134,10 +134,6 @@ export default function TelaPerfil() {
           <Text style={styles.tituloSecao}>Painel Administrativo</Text>
           <View style={styles.actionGrid}>
             <TouchableOpacity style={styles.actionButton}>
-              <MaterialCommunityIcons name="account-group" size={26} color="#ffc125" />
-              <Text style={styles.actionLabel}>Usuários</Text>
-            </TouchableOpacity>
-            <TouchableOpacity style={styles.actionButton}>
               <Feather name="bar-chart-2" size={26} color="#ffc125" />
               <Text style={styles.actionLabel}>Relatórios</Text>
             </TouchableOpacity>
@@ -168,8 +164,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 12,
   },
-  headerLeft: { flexDirection: "row", alignItems: "center" },
-  avatar: { width: 70, height: 70, borderRadius: 16, borderWidth: 1, borderColor: "#ffc125" },
+  headerLeft: {
+     flexDirection: "row",
+      alignItems: "center" 
+    },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: "#FFC107",
+  },
   nomeEmpresa: { fontSize: 18, fontWeight: "700", color: "#111827" },
   cnpj: { fontSize: 12, color: "#6B7280" },
   email: { fontSize: 13, color: "#9CA3AF" },
