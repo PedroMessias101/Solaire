@@ -293,7 +293,7 @@ export default function CadastroPlaca(): JSX.Element {
             keyExtractor={(item) => String(item.id ?? item.serial ?? Math.random())}
             renderItem={renderarItemPlaca}
             contentContainerStyle={{ paddingTop: 8 }}
-            scrollEnabled={false} // controlado pelo ScrollView
+            scrollEnabled={false} 
           />
         )}
       </ScrollView>

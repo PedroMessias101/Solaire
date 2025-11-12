@@ -197,7 +197,13 @@ export default function LoginScreen() {
               keyboardType="email-address"
               autoCapitalize="none"
             />
+<<<<<<< HEAD
           </View>
+=======
+          </TouchableOpacity>
+        </View>
+        
+>>>>>>> 41677f0573bb0ab90bbb58f97388362b8dc55af8
 
           {/* Campo de senha */}
           <View style={estilos.campo}>
