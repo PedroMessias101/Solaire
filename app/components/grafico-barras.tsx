@@ -1,6 +1,6 @@
 import React, { useEffect, useRef } from "react";
-import { View, Text, StyleSheet, Dimensions, Animated } from "react-native";
-import { Svg, Rect } from "react-native-svg";
+import { Animated, Dimensions, StyleSheet, Text, View } from "react-native";
+import { Rect, Svg } from "react-native-svg";
 
 const screenWidth = Dimensions.get("window").width;
 
@@ -26,7 +26,11 @@ const todayIndex = (() => {
   return jsDay === 0 ? 6 : jsDay - 1;
 })();
 
-const GraficoBarras: React.FC = () => {
+interface GraficoBarrasProps {
+  placas: any[];
+}
+
+const GraficoBarras: React.FC<GraficoBarrasProps> = (placas) => {
   const barWidth = (screenWidth - 40) / data.length - 5;
   const animatedValues = useRef(data.map(() => new Animated.Value(0))).current;
 

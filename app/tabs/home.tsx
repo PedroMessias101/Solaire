@@ -1,22 +1,24 @@
-import React, { useEffect, useState } from "react";
-import {
-  View,
-  Text,
-  Image,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Animated,
-  Easing,
-  Alert,
-} from "react-native";
+/* eslint-disable no-alert */
+
+import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { LinearGradient } from "expo-linear-gradient";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
-import GraficoBarras from "../components/grafico-barras";
+import React, { useEffect, useState } from "react";
+import {
+  Alert,
+  Animated,
+  Easing,
+  Image,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import ChatBot from "../components/ChatBot";
+import GraficoBarras from "../components/grafico-barras";
 import Notificacoes from "../components/notific";
 
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
