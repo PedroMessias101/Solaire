@@ -12,7 +12,6 @@ import { Ionicons } from "@expo/vector-icons";
 
 const CHAVE_NOTIFICACOES = "@notificacoes";
 
-// Funções auxiliares
 const carregarNotificacoes = async () => {
   try {
     const valor = await AsyncStorage.getItem(CHAVE_NOTIFICACOES);
@@ -53,12 +52,10 @@ export const adicionarNotificacao = async (
   await salvarNotificacoes(atualizadas);
 };
 
-// === COMPONENTE ===
 const Notificacoes = () => {
   const [visible, setVisible] = useState(false);
   const [notificacoes, setNotificacoes] = useState<any[]>([]);
 
-  // Carrega notificações quando o componente monta
   useEffect(() => {
     atualizarLista();
   }, []);
@@ -75,7 +72,7 @@ const Notificacoes = () => {
 
   const fecharModal = () => {
     setVisible(false);
-    atualizarLista(); // Atualiza depois de fechar (caso tenha limpado)
+    atualizarLista();
   };
 
   const limparNotificacoes = async () => {
@@ -85,9 +82,8 @@ const Notificacoes = () => {
 
   return (
     <View>
-      {/* Ícone do sino */}
       <TouchableOpacity style={styles.sino} onPress={abrirModal}>
-        <Ionicons name="notifications-outline" size={28} color="#000" />
+        <Ionicons name="notifications-outline" size={28} color="#333" />
         {notificacoes.length > 0 && (
           <View style={styles.badge}>
             <Text style={styles.badgeText}>
@@ -97,14 +93,13 @@ const Notificacoes = () => {
         )}
       </TouchableOpacity>
 
-      {/* Modal popover */}
       <Modal visible={visible} animationType="fade" transparent>
-        <View style={styles.modalContainer}>
+        <View style={styles.overlay}>
           <View style={styles.popover}>
             <View style={styles.modalHeader}>
               <Text style={styles.modalTitle}>Notificações</Text>
               <TouchableOpacity onPress={fecharModal}>
-                <Ionicons name="close" size={25} color="#000" />
+                <Ionicons name="close" size={25} color="#555" />
               </TouchableOpacity>
             </View>
 
@@ -116,7 +111,10 @@ const Notificacoes = () => {
                 keyExtractor={(item) => item.id}
                 renderItem={({ item }) => (
                   <View style={styles.card}>
-                    <Text style={styles.hora}>{item.hora}</Text>
+                    <View style={styles.cardHeader}>
+                      <Ionicons name="time-outline" size={14} color="#888" />
+                      <Text style={styles.hora}>{item.hora}</Text>
+                    </View>
                     <Text style={styles.titulo}>{item.titulo}</Text>
                     <Text style={styles.msg}>{item.mensagem}</Text>
                   </View>
@@ -129,6 +127,7 @@ const Notificacoes = () => {
                 style={styles.limparBtn}
                 onPress={limparNotificacoes}
               >
+                <Ionicons name="trash-outline" size={18} color="#fff" />
                 <Text style={styles.limparTxt}>Limpar todas</Text>
               </TouchableOpacity>
             )}
@@ -141,7 +140,6 @@ const Notificacoes = () => {
 
 export default Notificacoes;
 
-// === ESTILOS ===
 const styles = StyleSheet.create({
   sino: {
     marginRight: 15,
@@ -151,22 +149,27 @@ const styles = StyleSheet.create({
     position: "absolute",
     top: -4,
     right: -6,
-    backgroundColor: "red",
-    borderRadius: 10,
-    minWidth: 18,
-    height: 18,
+    backgroundColor: "#ff3b30",
+    borderRadius: 12,
+    minWidth: 20,
+    height: 20,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 3,
+    paddingHorizontal: 4,
+    shadowColor: "#000",
+    shadowOpacity: 0.2,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 3,
   },
   badgeText: {
     color: "#fff",
     fontSize: 11,
     fontWeight: "bold",
   },
-  modalContainer: {
+  overlay: {
     flex: 1,
-    backgroundColor: "transparent",
+    backgroundColor: "rgba(0,0,0,0.3)",
     justifyContent: "flex-start",
     alignItems: "flex-end",
     paddingTop: 60,
@@ -174,58 +177,79 @@ const styles = StyleSheet.create({
   },
   popover: {
     backgroundColor: "#fff",
-    borderRadius: 10,
-    width: 280,
-    maxHeight: 400,
-    padding: 10,
+    borderRadius: 12,
+    width: 300,
+    maxHeight: 420,
+    padding: 12,
     shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 5,
+    shadowOpacity: 0.25,
+    shadowOffset: { width: 0, height: 3 },
+    shadowRadius: 6,
+    elevation: 6,
   },
   modalHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: "#eee",
+    paddingBottom: 6,
   },
   modalTitle: {
-    fontSize: 16,
+    fontSize: 17,
     fontWeight: "bold",
+    color: "#333",
   },
   semNotif: {
     textAlign: "center",
     color: "#777",
     marginTop: 20,
+    fontStyle: "italic",
   },
   card: {
-    paddingVertical: 8,
-    borderBottomWidth: 1,
-    borderBottomColor: "#eee",
+    backgroundColor: "#fafafa",
+    borderRadius: 8,
+    padding: 10,
+    marginBottom: 8,
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowOffset: { width: 0, height: 1 },
+    shadowRadius: 2,
+    elevation: 2,
+  },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    marginBottom: 4,
   },
   hora: {
     fontSize: 12,
-    color: "#666",
+    color: "#888",
+    marginLeft: 4,
   },
   titulo: {
     fontSize: 15,
-    fontWeight: "bold",
-    marginTop: 3,
+    fontWeight: "600",
+    color: "#222",
+    marginBottom: 2,
   },
   msg: {
     fontSize: 14,
     color: "#444",
   },
   limparBtn: {
-    backgroundColor: "#e53935",
-    padding: 8,
-    borderRadius: 6,
+    flexDirection: "row",
+    backgroundColor: "#ff3b30",
+    paddingVertical: 10,
+    borderRadius: 8,
     alignItems: "center",
-    marginTop: 10,
+    justifyContent: "center",
+    marginTop: 12,
   },
   limparTxt: {
     color: "#fff",
     fontWeight: "bold",
+    marginLeft: 6,
   },
 });

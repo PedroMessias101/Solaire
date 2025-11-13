@@ -64,13 +64,13 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
 
     try {
       const codigoFormatado = codigoPlaca.trim().toUpperCase();
-      
+
       // 1️⃣ Buscar placa na API pública
       setEtapaAtual("Buscando placa...");
       console.log("🔍 Buscando placa:", codigoFormatado);
-      
+
       const resPlaca = await fetch(`${API_PLACAS_URL}/${codigoFormatado}`);
-      
+
       if (!resPlaca.ok) {
         if (resPlaca.status === 404) {
           Alert.alert("Placa Não Encontrada", "Verifique o código e tente novamente.");
@@ -81,7 +81,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
 
       const dataPlaca = await resPlaca.json();
       console.log("📊 Dados da placa:", dataPlaca);
-      
+
       if (!dataPlaca?.code) {
         Alert.alert("Erro", "Dados da placa incompletos.");
         return;
@@ -90,7 +90,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
       // 2️⃣ Verificar autenticação
       setEtapaAtual("Verificando login...");
       const token = await AsyncStorage.getItem("userToken");
-      
+
       if (!token) {
         Alert.alert("Sessão Expirada", "Faça login novamente.");
         return;
@@ -98,12 +98,14 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
 
       // 3️⃣ Registrar no backend
       setEtapaAtual("Registrando placa...");
-      
+
       const dadosParaEnviar = {
         serial: dataPlaca.code,
         location: `Placa ${dataPlaca.id || dataPlaca.code}`,
-        // ✅ MODEL É OPCIONAL - backend vai usar "Genérico" como padrão
+        model: dataPlaca.model || "Genérico",
+        status: "Ativa"
       };
+
 
       console.log("📤 Enviando para backend:", dadosParaEnviar);
 
@@ -120,7 +122,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
 
       if (!resBackend.ok) {
         let errorMessage = "Erro ao registrar placa";
-        
+
         try {
           const errorData = await resBackend.json();
           errorMessage = errorData.message || errorMessage;
@@ -148,7 +150,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
 
       // 4️⃣ Atualizar lista local
       setEtapaAtual("Finalizando...");
-      
+
       const novaPlaca = {
         id: savedData.panel?.id,
         serial: savedData.panel?.serial || dataPlaca.code,
@@ -161,13 +163,13 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
       };
 
       setPlacas([...placas, novaPlaca]);
-      
+
       Alert.alert(
         "✅ Sucesso!",
         "Placa adicionada com sucesso!",
         [
-          { 
-            text: "Ver Placas", 
+          {
+            text: "Ver Placas",
             onPress: () => {
               setModalVisible(false);
               router.push("/tabs/home");
@@ -175,18 +177,18 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
           }
         ]
       );
-      
+
     } catch (err: any) {
       console.error("❌ Erro geral:", err);
-      
+
       let mensagemErro = "Erro de conexão. Tente novamente.";
-      
+
       if (err.message?.includes('Network request failed')) {
         mensagemErro = "Sem conexão com a internet.";
       } else if (err.message?.includes('timeout')) {
         mensagemErro = "Tempo limite excedido.";
       }
-      
+
       Alert.alert("Erro", mensagemErro);
     } finally {
       setCarregando(false);
@@ -257,7 +259,7 @@ export const AnimatedBottomNavBar: React.FC<Props> = ({ placas = [], setPlacas }
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[
-                  styles.modalButton, 
+                  styles.modalButton,
                   styles.cancelButton,
                   carregando && styles.buttonDisabled
                 ]}

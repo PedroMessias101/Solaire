@@ -49,6 +49,7 @@ export default function TelaPerfil() {
   const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
   const [producaoAcumulada, setProducaoAcumulada] = useState(0);
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
+  const [tempoDecorrido, setTempoDecorrido] = useState<string>("Nunca atualizado");
   const router = useRouter();
 
   // ===== Animação do sol =====
@@ -78,6 +79,45 @@ export default function TelaPerfil() {
     }, 5000);
     return () => clearInterval(interval);
   }, []);
+
+  // ===== Função para calcular tempo decorrido com precisão =====
+  const calcularTempoDecorrido = (data: Date | null): string => {
+    if (!data) return "Nunca atualizado";
+    
+    const agora = new Date();
+    const diffMs = agora.getTime() - data.getTime();
+    const diffSegundos = Math.floor(diffMs / 1000);
+    const diffMinutos = Math.floor(diffSegundos / 60);
+    const diffHoras = Math.floor(diffMinutos / 60);
+
+    if (diffSegundos < 10) return "Agora mesmo";
+    if (diffSegundos < 60) return `Atualizado há ${diffSegundos} segundos`;
+    if (diffMinutos === 1) return "Atualizado há 1 minuto";
+    if (diffMinutos < 60) return `Atualizado há ${diffMinutos} minutos`;
+    if (diffHoras === 1) return "Atualizado há 1 hora";
+    if (diffHoras < 24) return `Atualizado há ${diffHoras} horas`;
+    
+    // Para mais de 24 horas, mostrar a data completa
+    return `Atualizado em ${data.toLocaleDateString('pt-BR')} às ${data.toLocaleTimeString('pt-BR', { 
+      hour: '2-digit', 
+      minute: '2-digit' 
+    })}`;
+  };
+
+  // ===== Atualizar tempo decorrido em tempo real =====
+  useEffect(() => {
+    if (!ultimaAtualizacao) return;
+
+    // Atualizar imediatamente
+    setTempoDecorrido(calcularTempoDecorrido(ultimaAtualizacao));
+
+    // Atualizar a cada 10 segundos para manter a precisão
+    const interval = setInterval(() => {
+      setTempoDecorrido(calcularTempoDecorrido(ultimaAtualizacao));
+    }, 10000);
+
+    return () => clearInterval(interval);
+  }, [ultimaAtualizacao]);
 
   // ===== AsyncStorage =====
   const carregarProducaoAcumulada = async () => {
@@ -221,7 +261,9 @@ export default function TelaPerfil() {
         );
 
         setPlacas(placasAtualizadas);
-        setUltimaAtualizacao(new Date());
+        const agora = new Date();
+        setUltimaAtualizacao(agora);
+        setTempoDecorrido(calcularTempoDecorrido(agora));
       }
 
       const acumulado = await carregarProducaoAcumulada();
@@ -262,7 +304,9 @@ export default function TelaPerfil() {
       const placaAtualizada = { ...placa, status: novoStatus, ...simulacao };
       setPlacas((prev) => prev.map((p) => (p.id === id ? placaAtualizada : p)));
       await salvarHistorico(placaAtualizada);
-      setUltimaAtualizacao(new Date());
+      const agora = new Date();
+      setUltimaAtualizacao(agora);
+      setTempoDecorrido(calcularTempoDecorrido(agora));
 
       Alert.alert("Status da Placa", novoStatus === "Ativa" ? "Placa ligada!" : "Placa desligada!");
     } catch (err) {
@@ -277,15 +321,6 @@ export default function TelaPerfil() {
     const economia = total_kWh * VALOR_KWH;
     const co2 = total_kWh * CO2_KWH;
     return { total_kWh, economia, co2 };
-  };
-
-  const tempoDesdeAtualizacao = () => {
-    if (!ultimaAtualizacao) return "Nunca atualizado";
-    const diffMs = new Date().getTime() - ultimaAtualizacao.getTime();
-    const diffMin = Math.floor(diffMs / 60000);
-    if (diffMin === 0) return "Atualizado há poucos segundos";
-    if (diffMin === 1) return "Atualizado há 1 minuto";
-    return `Atualizado há ${diffMin} minutos`;
   };
 
   // ===== Render =====
@@ -314,7 +349,7 @@ export default function TelaPerfil() {
             <View style={styles.userInfo}>
               <Text style={styles.nome}>{usuario.name || "Usuário Solar"}</Text>
               <Text style={styles.email}>{usuario.email}</Text>
-              <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>{tempoDesdeAtualizacao()}</Text>
+              <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>{tempoDecorrido}</Text>
             </View>
           </View>
           <TouchableOpacity style={styles.editButton} activeOpacity={0.7} onPress={() => router.push("./config")}>
@@ -322,6 +357,7 @@ export default function TelaPerfil() {
           </TouchableOpacity>
         </View>
 
+        {/* Resto do código permanece igual... */}
         {/* Resumo Geral */}
         <View style={styles.resumoGeral}>
           <View style={styles.resumoHeader}>
@@ -428,6 +464,7 @@ export default function TelaPerfil() {
   );
 }
 
+// Os estilos permanecem exatamente iguais
 const styles = StyleSheet.create({
   container: {
     flex: 1,
@@ -661,5 +698,4 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontWeight: "600",
   },
-
 });
