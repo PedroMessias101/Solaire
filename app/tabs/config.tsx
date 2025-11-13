@@ -41,7 +41,7 @@ export default function TelaConfig() {
         </TouchableOpacity>
 
         <Text style={estilos.tituloSecao}>Ajuda e Suporte</Text>
-        <TouchableOpacity style={estilos.item}>
+        <TouchableOpacity style={estilos.item} onPress={() => router.push("/tabs/suporte")}>
           <View style={estilos.caixaIcone}>
             <Ionicons name="help-circle-outline" size={22} color="#ffc125" />
           </View>

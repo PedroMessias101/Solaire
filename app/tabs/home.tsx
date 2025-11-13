@@ -176,12 +176,7 @@ export default function HomeScreen() {
       <ScrollView style={estilos.tela} contentContainerStyle={{ paddingBottom: 120 }}>
         {/* Header */}
         <View style={estilos.header}>
-          <Image
-            source={{
-              uri: user?.avatar || "https://cdn-icons-png.flaticon.com/512/149/149071.png",
-            }}
-            style={estilos.avatar}
-          />
+          <Image source={require("../../assets/logo_residencial.png")} style={estilos.avatar} />
           <View style={{ flex: 1 }}>
             <Text style={estilos.username}>{user?.name || "Bem-vindo!"}</Text>
 
@@ -253,10 +248,31 @@ export default function HomeScreen() {
 }
 
 const estilos = StyleSheet.create({
-  tela: { flex: 1, backgroundColor: "#f5f5f5", paddingHorizontal: 16, paddingTop: 40 },
-  loading: { flex: 1, justifyContent: "center", alignItems: "center", paddingHorizontal: 20 },
-  loadingText: { marginTop: 20, fontSize: 18, fontWeight: "600", color: "#333" },
-  loadingDica: { marginTop: 8, fontSize: 14, color: "#555", textAlign: "center", paddingHorizontal: 20 },
+  tela: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 16,
+    paddingTop: 40
+  },
+  loading: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+    paddingHorizontal: 20
+  },
+  loadingText: {
+    marginTop: 20,
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#333"
+  },
+  loadingDica: {
+    marginTop: 8,
+    fontSize: 14,
+    color: "#555",
+    textAlign: "center",
+    paddingHorizontal: 20
+  },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   saudacao: { fontSize: 20, fontWeight: "600", color: "#000" },
   username: { fontWeight: "700", color: "#000000ff" },

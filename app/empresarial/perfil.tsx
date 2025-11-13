@@ -57,7 +57,7 @@ export default function TelaPerfil() {
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image
-              source={require("../../assets/perfil-avatar.png")}
+              source={require("../../assets/logo_empresarial.png")}
               style={styles.avatar}
             />
             <View style={{ marginLeft: 14 }}>

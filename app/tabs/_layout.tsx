@@ -60,6 +60,14 @@ export default function TabsLayout() {
               tabBarStyle: { display: "none" }, 
         }}
       />
+             <Tabs.Screen
+        name="manutecao"
+        options={{
+          title: "manuntecao",
+              tabBarStyle: { display: "none" }, 
+        }}
+      />
+      
     </Tabs>
   );
 }

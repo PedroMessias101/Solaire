@@ -74,7 +74,7 @@ export default function CadastroScreen() {
     ).start();
   }, []);
 
-  // --- LÓGICA DE CADASTRO CORRIGIDA ---
+
   const handleCadastro = async () => {
     if (senha !== confirmaSenha) {
       Alert.alert("Erro", "As senhas não coincidem.");
@@ -142,11 +142,11 @@ export default function CadastroScreen() {
     <>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="user" size={16} color="#333" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Nome completo" value={nomeResidencial} onChangeText={setNomeResidencial} />
+        <TextInput style={styles.input} placeholder="Nome completo" value={nomeResidencial} onChangeText={setNomeResidencial} placeholderTextColor="#333"/>
       </View>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="CPF" value={cpf} onChangeText={setCpf} keyboardType="numeric" />
+        <TextInput style={styles.input} placeholder="CPF" value={cpf} onChangeText={setCpf} keyboardType="numeric" placeholderTextColor="#333" />
       </View>
     </>
   );
@@ -155,15 +155,15 @@ export default function CadastroScreen() {
     <>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="building" size={16} color="#333" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Nome da Empresa" value={nomeEmpresa} onChangeText={setNomeEmpresa} />
+        <TextInput style={styles.input} placeholder="Nome da Empresa" value={nomeEmpresa} onChangeText={setNomeEmpresa}  placeholderTextColor="#333"/>
       </View>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="CNPJ" value={cnpj} onChangeText={setCnpj} keyboardType="numeric"/>
+        <TextInput style={styles.input} placeholder="CNPJ" value={cnpj} onChangeText={setCnpj} keyboardType="numeric" placeholderTextColor="#333"/>
       </View>
        <View style={styles.inputContainer}>
         <FontAwesome5 name="user-tie" size={16} color="#333" style={styles.icon} />
-        <TextInput style={styles.input} placeholder="Seu nome (Administrador)" value={nomeAdmin} onChangeText={setNomeAdmin} />
+        <TextInput style={styles.input} placeholder="Seu nome (Administrador)" value={nomeAdmin} onChangeText={setNomeAdmin} placeholderTextColor="#333" />
       </View>
     </>
   );
@@ -193,18 +193,18 @@ export default function CadastroScreen() {
         {/* Campos Comuns */}
         <View style={styles.inputContainer}>
           <Ionicons name="mail" size={18} color="#333" style={styles.icon} />
-          <TextInput style={styles.input} placeholder="E-mail de acesso" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" />
+          <TextInput style={styles.input} placeholder="E-mail de acesso" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#333" />
         </View>
         <View style={styles.inputContainer}>
           <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
-          <TextInput style={styles.input} placeholder="Senha" secureTextEntry={!mostrarSenha} value={senha} onChangeText={setSenha} />
+          <TextInput style={styles.input} placeholder="Senha" secureTextEntry={!mostrarSenha} value={senha} onChangeText={setSenha} placeholderTextColor="#333" />
           <TouchableOpacity onPress={() => setMostrarSenha(prev => !prev)}>
             <Ionicons name={mostrarSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
           </TouchableOpacity>
         </View>
         <View style={styles.inputContainer}>
           <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
-          <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry={!mostrarConfirmaSenha} value={confirmaSenha} onChangeText={setConfirmaSenha} />
+          <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry={!mostrarConfirmaSenha} value={confirmaSenha} onChangeText={setConfirmaSenha} placeholderTextColor="#333"/>
           <TouchableOpacity onPress={() => setMostrarConfirmaSenha(prev => !prev)}>
             <Ionicons name={mostrarConfirmaSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
           </TouchableOpacity>

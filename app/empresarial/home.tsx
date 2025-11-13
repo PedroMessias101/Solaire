@@ -114,7 +114,7 @@ export default function HomeScreen() {
         <View style={estilos.header}>
           <TouchableOpacity onPress={abrirModal}>
             <Image
-              source={{ uri: "https://cdn-icons-png.flaticon.com/512/149/149071.png" }}
+              source={require("../../assets/logo_empresarial.png")}
               style={estilos.avatar}
             />
           </TouchableOpacity>

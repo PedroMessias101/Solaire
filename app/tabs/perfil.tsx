@@ -83,7 +83,7 @@ export default function TelaPerfil() {
   // ===== Função para calcular tempo decorrido com precisão =====
   const calcularTempoDecorrido = (data: Date | null): string => {
     if (!data) return "Nunca atualizado";
-    
+
     const agora = new Date();
     const diffMs = agora.getTime() - data.getTime();
     const diffSegundos = Math.floor(diffMs / 1000);
@@ -96,11 +96,11 @@ export default function TelaPerfil() {
     if (diffMinutos < 60) return `Atualizado há ${diffMinutos} minutos`;
     if (diffHoras === 1) return "Atualizado há 1 hora";
     if (diffHoras < 24) return `Atualizado há ${diffHoras} horas`;
-    
+
     // Para mais de 24 horas, mostrar a data completa
-    return `Atualizado em ${data.toLocaleDateString('pt-BR')} às ${data.toLocaleTimeString('pt-BR', { 
-      hour: '2-digit', 
-      minute: '2-digit' 
+    return `Atualizado em ${data.toLocaleDateString('pt-BR')} às ${data.toLocaleTimeString('pt-BR', {
+      hour: '2-digit',
+      minute: '2-digit'
     })}`;
   };
 
@@ -323,7 +323,57 @@ export default function TelaPerfil() {
     return { total_kWh, economia, co2 };
   };
 
-  // ===== Render =====
+  const excluirPlaca = async (id: number) => {
+    const placa = placas.find((p) => p.id === id);
+    if (!placa) return;
+
+    Alert.alert(
+      "Confirmar exclusão",
+      `Deseja realmente excluir a placa ${placa.location}?`,
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              // Pega token do usuário logado
+              const token = await AsyncStorage.getItem("userToken");
+              if (!token) {
+                Alert.alert("Erro", "Usuário não autenticado.");
+                return;
+              }
+
+              // Chamada DELETE para backend
+              const response = await fetch(`${API_USUARIO_URL}/panels/${placa.id}`, {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+              });
+
+              if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.message || "Erro ao excluir placa");
+              }
+
+              // Atualiza estado local removendo a placa
+              setPlacas((prev) => prev.filter((p) => p.id !== id));
+              Alert.alert("Sucesso", "Placa removida e desvinculada da sua conta!");
+            } catch (err: any) {
+              console.error("Erro ao excluir placa:", err);
+              Alert.alert("Erro", err.message || "Não foi possível excluir a placa.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
+
+
+
   if (loading) {
     return (
       <View style={styles.loading}>
@@ -345,7 +395,7 @@ export default function TelaPerfil() {
         {/* Header */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
-            <Image source={require("../../assets/perfil-avatar.png")} style={styles.avatar} />
+            <Image source={require("../../assets/logo_residencial.png")} style={styles.avatar} />
             <View style={styles.userInfo}>
               <Text style={styles.nome}>{usuario.name || "Usuário Solar"}</Text>
               <Text style={styles.email}>{usuario.email}</Text>
@@ -353,12 +403,11 @@ export default function TelaPerfil() {
             </View>
           </View>
           <TouchableOpacity style={styles.editButton} activeOpacity={0.7} onPress={() => router.push("./config")}>
-            <Feather name="settings" size={20} color="#333" />
+            <Feather name="settings" size={25} color="#333" />
           </TouchableOpacity>
         </View>
 
-        {/* Resto do código permanece igual... */}
-        {/* Resumo Geral */}
+
         <View style={styles.resumoGeral}>
           <View style={styles.resumoHeader}>
             <Text style={styles.tituloSecao}>Resumo Geral</Text>
@@ -431,23 +480,15 @@ export default function TelaPerfil() {
 
             <View style={styles.cardRight}>
               <TouchableOpacity
-                style={[
-                  styles.acaoPlaca,
-                  { backgroundColor: item.status === "Ativa" ? "#000" : "#F3F4F6" },
-                ]}
-                onPress={() => alternarStatus(item.id)}
+                style={[styles.acaoPlaca, { backgroundColor: "#f1f1f1ff" }]}
+                onPress={() => excluirPlaca(item.id)}
                 activeOpacity={0.8}
               >
-                <MaterialIcons
-                  name="power-settings-new"
-                  size={22}
-                  color={item.status === "Ativa" ? "#ffc125" : "#6B7280"}
-                />
-              </TouchableOpacity>
-              <TouchableOpacity style={styles.moreButton} activeOpacity={0.7}>
-                <Feather name="chevrons-right" size={18} color="#777a7eff" />
+                <Feather name="trash-2" size={22} color="#909090ff" />
               </TouchableOpacity>
             </View>
+
+
           </View>
         ))}
 

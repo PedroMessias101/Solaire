@@ -11,6 +11,7 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 import { Ionicons } from "@expo/vector-icons";
 
 const CHAVE_NOTIFICACOES = "@notificacoes";
+const CHAVE_BOAS_VINDAS = "@notificacao_boas_vindas"; // flag para boas-vindas
 
 const carregarNotificacoes = async () => {
   try {
@@ -30,15 +31,8 @@ const salvarNotificacoes = async (lista: any[]) => {
   }
 };
 
-export const adicionarNotificacao = async (
-  titulo: string,
-  mensagem: string
-) => {
-  const hora = new Date().toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-  });
-
+export const adicionarNotificacao = async (titulo: string, mensagem: string) => {
+  const hora = new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
   const notificacoes = await carregarNotificacoes();
 
   const nova = {
@@ -57,12 +51,36 @@ const Notificacoes = () => {
   const [notificacoes, setNotificacoes] = useState<any[]>([]);
 
   useEffect(() => {
-    atualizarLista();
+    const initNotificacoes = async () => {
+      // Verifica se a notificação de boas-vindas já foi exibida
+      const jaExibida = await AsyncStorage.getItem(CHAVE_BOAS_VINDAS);
+      if (!jaExibida) {
+        await adicionarNotificacao("Bem-vindo!", "Obrigado por instalar nosso app.");
+        await AsyncStorage.setItem(CHAVE_BOAS_VINDAS, "true"); // marca como exibida
+      }
+
+      // Atualiza lista e agenda futuras notificações
+      atualizarLista();
+      agendarNotificacoes();
+    };
+
+    initNotificacoes();
   }, []);
 
   const atualizarLista = async () => {
     const lista = await carregarNotificacoes();
     setNotificacoes(lista);
+  };
+  const agendarNotificacoes = () => {
+    setTimeout(async () => {
+      await adicionarNotificacao("Você sabia?", "Placas limpas podem gerar até 15% mais energia.");
+      atualizarLista();
+    }, 10000);
+
+    setTimeout(async () => {
+      await adicionarNotificacao("Continue monitorando!", "Cada dia de cuidado aumenta a vida útil das placas.");
+      atualizarLista();
+    }, 30000);
   };
 
   const abrirModal = async () => {
@@ -123,10 +141,7 @@ const Notificacoes = () => {
             )}
 
             {notificacoes.length > 0 && (
-              <TouchableOpacity
-                style={styles.limparBtn}
-                onPress={limparNotificacoes}
-              >
+              <TouchableOpacity style={styles.limparBtn} onPress={limparNotificacoes}>
                 <Ionicons name="trash-outline" size={18} color="#fff" />
                 <Text style={styles.limparTxt}>Limpar todas</Text>
               </TouchableOpacity>
