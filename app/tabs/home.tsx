@@ -22,6 +22,7 @@ import GraficoBarras from "../components/grafico-barras";
 import Notificacoes from "../components/notific";
 
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
+const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
 
 export default function HomeScreen() {
   const router = useRouter();
@@ -61,6 +62,7 @@ export default function HomeScreen() {
     outputRange: ["0deg", "360deg"],
   });
 
+  // checar token
   useEffect(() => {
     const checkToken = async () => {
       const storedToken = await AsyncStorage.getItem("userToken");
@@ -73,57 +75,71 @@ export default function HomeScreen() {
     };
     checkToken();
   }, []);
+
+  // buscar dados quando token estiver ok
   useEffect(() => {
     if (tokenChecked && token) {
       fetchUserAndPanels();
     }
   }, [tokenChecked, token]);
 
+  // ====================== FUNÇÃO PARA PEGAR USUÁRIO E PLACAS ======================
   const fetchUserAndPanels = async () => {
     setLoading(true);
     setError(null);
 
     try {
-      // ====================== DADOS DO USUÁRIO ======================
+      // --- DADOS DO USUÁRIO ---
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       if (resUser.status === 401) {
-        // Token inválido/expirado
         Alert.alert("Sessão expirada", "Faça login novamente.");
         await AsyncStorage.clear();
         router.replace("/auth/login");
         return;
       }
-
       const userResponse = await resUser.json();
+      if (userResponse.success) setUser(userResponse.data);
+      else setError(userResponse.error || "Erro ao carregar usuário");
 
-      if (userResponse.success) {
-        setUser(userResponse.data); // <-- só o objeto 'data'
-      } else {
-        setError(userResponse.error || "Erro ao carregar usuário");
-      }
-
-      // ====================== DADOS DAS PLACAS ======================
+      // --- DADOS DAS PLACAS ---
       const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
-      if (resPlacas.status === 401) {
-        Alert.alert("Sessão expirada", "Faça login novamente.");
-        await AsyncStorage.clear();
-        router.replace("/auth/login");
+      const placasResponse = await resPlacas.json();
+      if (!placasResponse.success) {
+        setError(placasResponse.error || "Erro ao carregar placas");
         return;
       }
 
-      const placasResponse = await resPlacas.json();
+      const placasDoUsuario = placasResponse.data || [];
 
-      if (placasResponse.success) {
-        setPlacas(placasResponse.data || []);
-      } else {
-        setError(placasResponse.error || "Erro ao carregar placas");
-      }
+      // --- PEGAR DADOS DA API DE SIMULAÇÃO ---
+      const placasComDados = await Promise.all(
+        placasDoUsuario.map(async (placa: any) => {
+          if (placa.status !== "Ativa")
+            return { ...placa, energia_kWh: 0, tensao: 0, temperatura: 0, corrente: 0 };
+
+          try {
+            const resSim = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
+            const dadosSim = await resSim.json();
+
+            return {
+              ...placa,
+              energia_kWh: dadosSim.energia_kWh || 0,
+              tensao: dadosSim.tensao || 0,
+              temperatura: dadosSim.temperatura || 0,
+              corrente: dadosSim.corrente || 0,
+            };
+          } catch (err) {
+            console.log("Erro ao buscar simulação da placa", placa.serial, err);
+            return { ...placa, energia_kWh: 0, tensao: 0, temperatura: 0, corrente: 0 };
+          }
+        })
+      );
+
+      setPlacas(placasComDados);
     } catch (err: any) {
       console.error("Erro ao carregar dados:", err);
       setError(err.message || "Erro inesperado");
@@ -131,7 +147,6 @@ export default function HomeScreen() {
       setLoading(false);
     }
   };
-
 
   // Alterna dicas
   useEffect(() => {
@@ -142,6 +157,7 @@ export default function HomeScreen() {
     return () => clearInterval(interval);
   }, []);
 
+  // ====================== CÁLCULOS ======================
   const calcularTotais = () => {
     const totalEnergia = placas
       .filter((p) => p.status === "Ativa")
@@ -155,9 +171,23 @@ export default function HomeScreen() {
     const economia = totalEnergia * VALOR_KWH;
     const co2 = totalEnergia * CO2_KWH;
 
-    return { totalEnergia, eficiencia, economia, co2 };
+    const mediaTemperatura =
+      placas.length > 0
+        ? placas.reduce((acc, p) => acc + (p.temperatura || 0), 0) / placas.length
+        : 0;
+    const mediaTensao =
+      placas.length > 0
+        ? placas.reduce((acc, p) => acc + (p.tensao || 0), 0) / placas.length
+        : 0;
+    const mediaCorrente =
+      placas.length > 0
+        ? placas.reduce((acc, p) => acc + (p.corrente || 0), 0) / placas.length
+        : 0;
+
+    return { totalEnergia, eficiencia, economia, co2, mediaTemperatura, mediaTensao, mediaCorrente };
   };
 
+  const { totalEnergia, eficiencia, mediaTemperatura, mediaTensao, mediaCorrente } = calcularTotais();
 
   if (!tokenChecked || loading) {
     return (
@@ -171,8 +201,6 @@ export default function HomeScreen() {
     );
   }
 
-  const { totalEnergia, eficiencia } = calcularTotais();
-
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={estilos.tela} contentContainerStyle={{ paddingBottom: 120 }}>
@@ -181,7 +209,6 @@ export default function HomeScreen() {
           <Image source={require("../../assets/logo_residencial.png")} style={estilos.avatar} />
           <View style={{ flex: 1 }}>
             <Text style={estilos.username}>{user?.name || "Bem-vindo!"}</Text>
-
             {user?.email && <Text style={estilos.email}>{user.email}</Text>}
           </View>
           <View style={{ flexDirection: "row", alignItems: "center" }}>
@@ -212,23 +239,17 @@ export default function HomeScreen() {
           <View style={estilos.card}>
             <Feather name="thermometer" size={28} color="#FFC125" />
             <Text style={estilos.cardLabel}>Temperatura</Text>
-            <Text style={estilos.cardVvalor}>
-              {placas.length > 0 ? `${placas[0].temperature || 0}°C` : "0°C"}
-            </Text>
+            <Text style={estilos.cardVvalor}>{mediaTemperatura.toFixed(1)}°C</Text>
           </View>
           <View style={estilos.card}>
             <MaterialCommunityIcons name="flash" size={28} color="#FFC125" />
             <Text style={estilos.cardLabel}>Tensão</Text>
-            <Text style={estilos.cardVvalor}>
-              {placas.length > 0 ? `${placas[0].voltage || 0}V` : "0V"}
-            </Text>
+            <Text style={estilos.cardVvalor}>{mediaTensao.toFixed(1)}V</Text>
           </View>
           <View style={estilos.card}>
             <MaterialCommunityIcons name="current-ac" size={28} color="#FFC125" />
             <Text style={estilos.cardLabel}>Corrente</Text>
-            <Text style={estilos.cardVvalor}>
-              {placas.length > 0 ? `${placas[0].current || 0}A` : "0A"}
-            </Text>
+            <Text style={estilos.cardVvalor}>{mediaCorrente.toFixed(1)}A</Text>
           </View>
           <View style={estilos.card}>
             <MaterialCommunityIcons name="percent" size={28} color="#FFC125" />
@@ -241,10 +262,7 @@ export default function HomeScreen() {
       <View style={{ position: "absolute", bottom: 80, right: 0 }}>
         <ChatBot />
       </View>
-      <AnimatedBottomNavBar
-        placas={placas}
-        setPlacas={setPlacas}
-      />
+      <AnimatedBottomNavBar placas={placas} setPlacas={setPlacas} />
     </View>
   );
 }
@@ -254,32 +272,39 @@ const estilos = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f5f5f5",
     paddingHorizontal: 16,
-    paddingTop: 40
+    paddingTop: 40,
   },
   loading: {
     flex: 1,
     justifyContent: "center",
     alignItems: "center",
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
   },
   loadingText: {
     marginTop: 20,
     fontSize: 18,
     fontWeight: "600",
-    color: "#333"
+    color: "#333",
   },
   loadingDica: {
     marginTop: 8,
     fontSize: 14,
     color: "#555",
     textAlign: "center",
-    paddingHorizontal: 20
+    paddingHorizontal: 20,
   },
   header: { flexDirection: "row", alignItems: "center", marginBottom: 12 },
   saudacao: { fontSize: 20, fontWeight: "600", color: "#000" },
   username: { fontWeight: "700", color: "#000000ff" },
   email: { fontSize: 12, color: "#666", marginTop: 2 },
-  avatar: { width: 56, height: 56, borderRadius: 28, marginRight: 12, borderWidth: 2, borderColor: "#FFD700" },
+  avatar: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    marginRight: 12,
+    borderWidth: 2,
+    borderColor: "#FFD700",
+  },
   settingsButton: { marginLeft: 12, justifyContent: "center", alignItems: "center" },
   cardPrincipal: { borderRadius: 20, padding: 24, marginBottom: 20 },
   cardTitulo: { fontSize: 16, color: "#fff", marginBottom: 6 },
@@ -287,7 +312,18 @@ const estilos = StyleSheet.create({
   cardVvalor: { fontSize: 22, fontWeight: "bold", color: "#333" },
   cardLegenda: { fontSize: 14, color: "#fff", marginTop: 4 },
   grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  card: { backgroundColor: "#fff", borderRadius: 20, padding: 18, marginBottom: 16, width: "47%", alignItems: "center", shadowColor: "#000", shadowOpacity: 0.05, shadowRadius: 4, elevation: 2 },
+  card: {
+    backgroundColor: "#fff",
+    borderRadius: 20,
+    padding: 18,
+    marginBottom: 16,
+    width: "47%",
+    alignItems: "center",
+    shadowColor: "#000",
+    shadowOpacity: 0.05,
+    shadowRadius: 4,
+    elevation: 2,
+  },
   cardLabel: { fontSize: 14, color: "#333", marginTop: 8, fontWeight: "500" },
   errorBox: { backgroundColor: "#ffece6", padding: 12, borderRadius: 10, marginBottom: 12 },
   errorText: { color: "#b00020", marginBottom: 8 },
