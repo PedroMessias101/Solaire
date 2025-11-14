@@ -11,9 +11,19 @@ export default function TelaConfig() {
     <View style={{ flex: 1 }}>
       <ScrollView style={estilos.tela}>
         <View style={estilos.cabecalho}>
+          <TouchableOpacity
+            onPress={() => router.push("/tabs/home")}
+            style={estilos.botaoVoltar}
+          >
+            <Ionicons name="arrow-back" size={22} color="#000" />
+          </TouchableOpacity>
+
           <Text style={estilos.tituloCabecalho}>Configurações</Text>
+
+          {/* Espaço para alinhar */}
           <View style={{ width: 22 }} />
         </View>
+
 
         <Text style={estilos.tituloSecao}>Conta</Text>
         <TouchableOpacity
@@ -29,16 +39,6 @@ export default function TelaConfig() {
           </View>
         </TouchableOpacity>
 
-        <Text style={estilos.tituloSecao}>Notificação</Text>
-        <TouchableOpacity style={estilos.item}>
-          <View style={estilos.caixaIcone}>
-            <Ionicons name="alert-circle-outline" size={22} color="#ffc125" />
-          </View>
-          <View>
-            <Text style={estilos.tituloItem}>Alertas de Produção Baixa</Text>
-            <Text style={estilos.subtituloItem}>Seja avisado quando a produção cai</Text>
-          </View>
-        </TouchableOpacity>
 
         <Text style={estilos.tituloSecao}>Ajuda e Suporte</Text>
         <TouchableOpacity style={estilos.item} onPress={() => router.push("/tabs/suporte")}>
@@ -69,7 +69,16 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
+    marginTop: 10,
   },
+  botaoVoltar: {
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  justifyContent: "center",
+  alignItems: "center",
+},
+
   tituloCabecalho: {
     fontSize: 18,
     fontWeight: "600",

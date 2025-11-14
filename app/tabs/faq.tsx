@@ -41,7 +41,15 @@ export default function FAQScreen() {
       <ScrollView style={styles.tela}>
         {/* Cabeçalho */}
         <View style={styles.cabecalho}>
+          <TouchableOpacity
+            onPress={() => router.push("/tabs/suporte")}
+            style={styles.botaoVoltar}
+          >
+            <Ionicons name="arrow-back" size={22} color="#000" />
+          </TouchableOpacity>
+
           <Text style={styles.tituloCabecalho}>FAQ</Text>
+
           <View style={{ width: 22 }} />
         </View>
 
@@ -61,6 +69,7 @@ export default function FAQScreen() {
                 color="#ffc125"
               />
             </View>
+
             {expandedIndex === index && (
               <Text style={styles.subtituloItemResposta}>{faq.answer}</Text>
             )}
@@ -85,23 +94,36 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
+    marginTop: 30,
   },
+
+  botaoVoltar: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+
   tituloCabecalho: {
     fontSize: 18,
     fontWeight: "600",
     color: "#000",
   },
+
   item: {
     backgroundColor: "#fff",
     padding: 12,
     borderRadius: 12,
     marginBottom: 10,
   },
+
   tituloItem: {
     fontSize: 15,
     fontWeight: "600",
     color: "#000",
   },
+
   subtituloItemResposta: {
     fontSize: 13,
     color: "#666",

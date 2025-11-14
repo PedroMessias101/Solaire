@@ -7,6 +7,10 @@ import {
   Modal,
   Text,
   TextInput,
+  ActivityIndicator,
+  KeyboardAvoidingView,
+  Platform,
+  Alert,
 } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
@@ -28,14 +32,14 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
 
   const [modalVisible, setModalVisible] = useState(false);
   const [codigoPlaca, setCodigoPlaca] = useState("");
+  const [carregando, setCarregando] = useState(false);
+  const [etapaAtual, setEtapaAtual] = useState("");
 
-  // Ícones e rotas
   const tabs = [
     { icon: "home", route: "/empresarial/home" },
-    { icon: "add-circle", route: "modal" }, // abre modal
+    { icon: "add-circle", route: "modal" },
     { icon: "person", route: "/empresarial/perfil" },
   ];
-
 
   const activeIndex = tabs.findIndex((tab) =>
     tab.route !== "modal" ? pathname.includes(tab.route) : false
@@ -50,30 +54,46 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
   };
 
   const handleAdicionar = async () => {
-    if (codigoPlaca.trim() === "") return;
+    if (!codigoPlaca.trim() || carregando) {
+      Alert.alert("Erro", "Digite um código válido.");
+      return;
+    }
 
     try {
-      // Buscar dados da placa na API pública
-      const res = await fetch(`${API_PLACAS_URL}/${codigoPlaca.trim().toUpperCase()}`);
+      setCarregando(true);
+      setEtapaAtual("Buscando placa...");
+
+      const codigoFormatado = codigoPlaca.trim().toUpperCase();
+
+      const res = await fetch(`${API_PLACAS_URL}/${codigoFormatado}`);
       if (!res.ok) {
-        alert("Placa não encontrada na API.");
+        Alert.alert("Placa não encontrada", "Verifique o código.");
         return;
       }
+
       const data = await res.json();
 
-      if (placas.find((p) => p.serial === data.code)) {
-        alert("Placa já adicionada.");
+      if (!data?.code) {
+        Alert.alert("Erro", "Dados da placa incompletos.");
         return;
       }
 
-      // Pegar token do usuário
+      // Evita duplicadas
+      if (placas.some((p) => p.serial === data.code)) {
+        Alert.alert("Placa já adicionada", "Esta placa já está no sistema.");
+        return;
+      }
+
+      setEtapaAtual("Verificando login...");
       const token = await AsyncStorage.getItem("userToken");
+
       if (!token) {
-        alert("Usuário não logado.");
+        Alert.alert("Sessão expirada", "Faça login novamente.");
         return;
       }
 
-      // Salvar no back-end (provisionamento)
+      setEtapaAtual("Registrando placa...");
+
       const resBackend = await fetch(`${API_USUARIO_URL}/panels/provision`, {
         method: "POST",
         headers: {
@@ -82,19 +102,18 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
         },
         body: JSON.stringify({
           serial: data.code,
-          location: `Placa ${data.id}`,
+          location: `Placa ${data.id || data.code}`,
           model: "Genérico",
         }),
       });
 
       if (!resBackend.ok) {
-        alert("Erro ao salvar a placa no servidor.");
+        Alert.alert("Erro", "Erro ao registrar placa.");
         return;
       }
 
       const savedData = await resBackend.json();
 
-      // Construir objeto da placa com status e energia atualizados
       const novaPlaca = {
         serial: savedData.panel.serial,
         location: savedData.panel.location,
@@ -103,25 +122,28 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
         energia_kWh: savedData.panel.energia_kWh ?? 0,
       };
 
-      // Atualizar estado local
       setPlacas([...placas, novaPlaca]);
 
-      setCodigoPlaca("");
-      setModalVisible(false);
+      Alert.alert(
+        "Sucesso!",
+        "Placa adicionada com sucesso!",
+        [{ text: "OK", onPress: () => setModalVisible(false) }]
+      );
+
     } catch (err) {
       console.log(err);
-      alert("Erro ao adicionar placa.");
+      Alert.alert("Erro", "Erro inesperado. Tente novamente.");
+    } finally {
+      setCarregando(false);
+      setEtapaAtual("");
+      setCodigoPlaca("");
     }
   };
 
   return (
     <View style={styles.container}>
       {tabs.map((tab, index) => (
-        <TouchableOpacity
-          key={index}
-          style={styles.tab}
-          onPress={() => handlePress(tab)}
-        >
+        <TouchableOpacity key={index} style={styles.tab} onPress={() => handlePress(tab)}>
           <Ionicons
             name={tab.icon as any}
             size={28}
@@ -130,45 +152,77 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
         </TouchableOpacity>
       ))}
 
-      {/* Modal */}
+      {/* MODAL */}
       <Modal
         visible={modalVisible}
         animationType="slide"
         transparent
-        onRequestClose={() => setModalVisible(false)}
+        onRequestClose={() => !carregando && setModalVisible(false)}
       >
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView
+          style={styles.modalOverlay}
+          behavior={Platform.OS === "ios" ? "padding" : undefined}
+        >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Adicionar Placa</Text>
+            <Text style={styles.modalTitle}>Adicionar Placa Solar</Text>
+            <Text style={styles.modalSubtitle}>
+              Digite o código da placa empresarial
+            </Text>
+
             <TextInput
-              placeholder="Digite o código da placa (ex: ABCDE-F)"
+              placeholder="Ex: PLACA-001"
               value={codigoPlaca}
               onChangeText={setCodigoPlaca}
-              style={styles.input}
+              style={[
+                styles.input,
+                carregando && styles.inputDisabled,
+              ]}
               autoCapitalize="characters"
+              editable={!carregando}
+              placeholderTextColor="#999"
+              onSubmitEditing={handleAdicionar}
             />
+
+            {carregando && (
+              <View style={styles.loadingContainer}>
+                <ActivityIndicator size="large" color="#FFC125" />
+                <Text style={styles.loadingText}>{etapaAtual}</Text>
+              </View>
+            )}
+
             <View style={styles.buttonRow}>
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#d6d6d6ff" }]}
+                style={[styles.modalButton, styles.cancelButton, carregando && styles.buttonDisabled]}
                 onPress={() => setModalVisible(false)}
+                disabled={carregando}
               >
-                <Text style={styles.modalButtonText}>Cancelar</Text>
+                <Text style={styles.cancelButtonText}>Cancelar</Text>
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, { backgroundColor: "#FFC125" }]}
+                style={[
+                  styles.modalButton,
+                  styles.confirmButton,
+                  (carregando || !codigoPlaca.trim()) && styles.buttonDisabled,
+                ]}
                 onPress={handleAdicionar}
+                disabled={carregando || !codigoPlaca.trim()}
               >
-                <Text style={styles.modalButtonText}>Adicionar</Text>
+                {carregando ? (
+                  <ActivityIndicator size="small" color="#000" />
+                ) : (
+                  <Text style={styles.confirmButtonText}>Adicionar</Text>
+                )}
               </TouchableOpacity>
             </View>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
     </View>
   );
 };
-0
+
+/* ======== ESTILOS (COPIADOS DA NAV RESIDENCIAL) ======== */
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
@@ -181,11 +235,14 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    shadowColor: "#000",
-    shadowOpacity: 0.2,
-    shadowRadius: 10,
   },
-  tab: { flex: 1, alignItems: "center", justifyContent: "center" },
+
+  tab: {
+    flex: 1,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+
   modalOverlay: {
     flex: 1,
     backgroundColor: "rgba(0,0,0,0.5)",
@@ -195,30 +252,79 @@ const styles = StyleSheet.create({
   modalContent: {
     width: "85%",
     backgroundColor: "#fff",
-    borderRadius: 12,
-    padding: 20,
+    borderRadius: 16,
+    padding: 24,
     alignItems: "center",
   },
-  modalTitle: { fontSize: 18, fontWeight: "700", marginBottom: 15 },
+  modalTitle: {
+    fontSize: 22,
+    fontWeight: "700",
+    color: "#111",
+    marginBottom: 4,
+  },
+  modalSubtitle: {
+    fontSize: 14,
+    color: "#666",
+    marginBottom: 10,
+  },
   input: {
     borderWidth: 1,
-    borderColor: "#ccc",
+    borderColor: "#ddd",
     width: "100%",
-    padding: 10,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
+    backgroundColor: "#f8f8f8",
+    fontSize: 16,
+    color: "#111",
+    marginBottom: 10,
+  },
+  inputDisabled: {
+    backgroundColor: "#f0f0f0",
+    color: "#999",
+  },
+  loadingContainer: {
+    width: "100%",
+    padding: 16,
+    backgroundColor: "#f8f9fa",
+    borderRadius: 12,
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  loadingText: {
+    fontSize: 14,
+    color: "#666",
+    marginTop: 8,
   },
   buttonRow: {
     flexDirection: "row",
-    marginTop: 12,
+    marginTop: 8,
     width: "100%",
     justifyContent: "space-between",
+    gap: 12,
   },
   modalButton: {
     flex: 1,
-    padding: 12,
-    borderRadius: 8,
+    padding: 16,
+    borderRadius: 12,
     alignItems: "center",
-    marginHorizontal: 5,
   },
-  modalButtonText: { color: "#000", fontWeight: "700", fontSize: 16 },
+  cancelButton: {
+    backgroundColor: "#f0f0f0",
+  },
+  confirmButton: {
+    backgroundColor: "#FFC125",
+  },
+  buttonDisabled: {
+    opacity: 0.5,
+  },
+  cancelButtonText: {
+    color: "#666",
+    fontWeight: "600",
+    fontSize: 16,
+  },
+  confirmButtonText: {
+    color: "#000",
+    fontWeight: "600",
+    fontSize: 16,
+  },
 });

@@ -21,6 +21,7 @@ export default function TelaPerfil() {
     endereco: "Av. das Energias, 123 - São Paulo/SP",
   });
 
+
   const [filiais, setFiliais] = useState([
     { id: 1, nome: "Filial Nordeste", cidade: "Recife", status: "Ativa", energia: 1280 },
     { id: 2, nome: "Filial Sul", cidade: "Curitiba", status: "Ativa", energia: 980 },
@@ -53,7 +54,6 @@ export default function TelaPerfil() {
     <SafeAreaView style={styles.container}>
       <ScrollView style={styles.scroll} contentContainerStyle={{ paddingBottom: 140 }}>
 
-        {/* --- Header com identidade empresarial --- */}
         <View style={styles.header}>
           <View style={styles.headerLeft}>
             <Image

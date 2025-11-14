@@ -89,7 +89,6 @@ export default function HomeScreen() {
     setError(null);
 
     try {
-      // --- DADOS DO USUÁRIO ---
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });

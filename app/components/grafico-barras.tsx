@@ -4,138 +4,194 @@ import { Rect, Svg } from "react-native-svg";
 
 const screenWidth = Dimensions.get("window").width;
 
-interface DataItem {
-  day: string;
-  value: number;
-}
-
-const data: DataItem[] = [
-  { day: "Seg", value: 5000 },
-  { day: "Ter", value: 7000 },
-  { day: "Qua", value: 4000 },
-  { day: "Qui", value: 9000 },
-  { day: "Sex", value: 6000 },
-  { day: "Sáb", value: 3000 },
-  { day: "Dom", value: 8000 },
-];
-
-const maxValue = Math.max(...data.map(d => d.value));
-
-const todayIndex = (() => {
-  const jsDay = new Date().getDay();
-  return jsDay === 0 ? 6 : jsDay - 1;
-})();
-
 interface GraficoBarrasProps {
   placas: any[];
 }
 
-const GraficoBarras: React.FC<GraficoBarrasProps> = (placas) => {
-  const barWidth = (screenWidth - 40) / data.length - 5;
+const GraficoBarras: React.FC<GraficoBarrasProps> = ({ placas }) => {
+  // Dados do gráfico: cada placa vira uma barra
+  const data = placas.map(p => ({
+    name: p.name || p.serial,
+    value: p.energia_kWh || 0,
+    status: p.status
+  }));
+
+  // Garante que valores zero tenham altura mínima e evita divisão por zero
+  const maxValue = Math.max(...data.map(d => d.value), 1);
+  const minBarHeight = 8; // Altura mínima para barras zeradas
+
+  const barWidth = Math.min(60, (screenWidth - 60) / Math.max(data.length, 1)); // Largura máxima de 60px
   const animatedValues = useRef(data.map(() => new Animated.Value(0))).current;
 
   useEffect(() => {
-    Animated.stagger(100, animatedValues.map(anim =>
+    Animated.stagger(150, animatedValues.map(anim =>
       Animated.timing(anim, {
         toValue: 1,
-        duration: 800,
+        duration: 1000,
         useNativeDriver: false,
       })
     )).start();
-  }, []);
+  }, [placas]);
 
   return (
     <View style={styles.container}>
+      {/* Linha de base */}
+      <View style={styles.baseLine} />
+      
       <View style={styles.svgWrapper}>
         {data.map((item, index) => {
-          const barHeight = (item.value / maxValue) * 150;
-          const isToday = index === todayIndex;
+          // Calcula altura da barra garantindo altura mínima para valores zero
+          const rawHeight = (item.value / maxValue) * 130;
+          const barHeight = item.value === 0 ? minBarHeight : Math.max(rawHeight, minBarHeight);
 
           return (
-            <Animated.View
-              key={index}
-              style={{
-                position: "absolute",
-                left: index * (barWidth + 5),
-                bottom: 10,
-                width: barWidth,
-                height: animatedValues[index].interpolate({
-                  inputRange: [0, 1],
-                  outputRange: [0, barHeight],
-                }),
-              }}
-            >
-              <Svg height={barHeight} width={barWidth}>
-                <Rect
-                  x={0}
-                  y={0}
-                  width={barWidth}
-                  height={barHeight}
-                  rx={6}
-                  fill={isToday ? "#ffc125" : "#ffc125"}
-                  opacity={isToday ? 1 : 0.5}
-                />
-              </Svg>
-              <Text style={[styles.value, isToday && styles.todayValue]}>
-                {item.value}
+            <View key={index} style={styles.barColumn}>
+              <Animated.View
+                style={{
+                  height: animatedValues[index].interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0, barHeight],
+                  }),
+                  marginBottom: 8,
+                }}
+              >
+                <Svg height={barHeight} width={barWidth}>
+                  <Rect
+                    x={0}
+                    y={0}
+                    width={barWidth}
+                    height={barHeight}
+                    rx={6}
+                    fill={item.status === "Ativa" ? 
+                      (item.value > 0 ? "#fcc335ff" : "#FFD166") : 
+                      "#95A5A6"}
+                    opacity={item.status === "Ativa" ? 1 : 0.6}
+                  />
+                  
+                  {/* Efeito de gradiente símulado para barras ativas */}
+                  {item.status === "Ativa" && item.value > 0 && (
+                    <Rect
+                      x={0}
+                      y={0}
+                      width={barWidth}
+                      height={Math.max(4, barHeight * 0.3)}
+                      rx={6}
+                      fill="white"
+                      opacity={0.3}
+                    />
+                  )}
+                </Svg>
+                
+                {/* Valor acima da barra */}
+                <Text style={[
+                  styles.value,
+                  item.value === 0 && styles.zeroValue
+                ]}>
+                  {item.value.toFixed(1)} kWh
+                </Text>
+              </Animated.View>
+              
+              {/* Label da placa */}
+              <Text 
+                style={[
+                  styles.label, 
+                  { width: barWidth }
+                ]}
+                numberOfLines={2}
+                ellipsizeMode="tail"
+              >
+                {item.name}
               </Text>
-            </Animated.View>
+              
+              <View style={[
+                styles.statusBadge,
+                { backgroundColor: item.status === "Ativa" ? "#ffc125" : "#7F8C8D" }
+              ]}>
+                <Text style={styles.statusText}>
+                  {item.status === "Ativa" ? "✓" : "●"}
+                </Text>
+              </View>
+            </View>
           );
         })}
-      </View>
-      <View style={styles.labels}>
-        {data.map((item, index) => (
-          <Text
-            key={index}
-            style={[
-              styles.label,
-              { width: barWidth },
-              index === todayIndex && styles.todayLabel,
-            ]}
-          >
-            {item.day}
-          </Text>
-        ))}
       </View>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
-  container: { padding: 10 },
-  svgWrapper: {
-    height: 160,
-    width: "100%",
-    position: "relative",
+  container: { 
+    padding: 20, 
+    backgroundColor: "#FFFFFF",
+    borderRadius: 16,
+    margin: 10,
+    shadowColor: "#000",
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 5,
   },
-  labels: {
-    flexDirection: "row",
+  baseLine: {
+    position: 'absolute',
+    bottom: 50,
+    left: 20,
+    right: 20,
+    height: 1,
+    backgroundColor: '#E0E0E0',
+    zIndex: -1,
+  },
+  svgWrapper: { 
+    height: 180, 
+    flexDirection: "row", 
     justifyContent: "space-between",
-    marginTop: 0,
+    alignItems: "flex-end",
+    paddingHorizontal: 5,
   },
-  label: {
-    textAlign: "center",
-    fontWeight: "600",
-    color: "#444",
+  barColumn: {
+    alignItems: "center",
+    justifyContent: "flex-end",
+    flex: 1,
+    marginHorizontal: 4,
   },
-  todayLabel: {
-    color: "#ffc125",
-    fontWeight: "bold",
-    fontSize: 14,
+  label: { 
+    textAlign: "center", 
+    fontWeight: "600", 
+    color: "#2C3E50", 
+    fontSize: 11,
+    marginTop: 8,
+    lineHeight: 14,
   },
   value: {
     position: "absolute",
-    top: -20,
+    top: -22,
     width: "100%",
     textAlign: "center",
-    fontSize: 12,
-    color: "#333",
+    fontSize: 11,
+    color: "#2C3E50",
+    fontWeight: "700",
+    backgroundColor: "rgba(255,255,255,0.9)",
+    paddingVertical: 2,
+    borderRadius: 4,
+  },
+  zeroValue: {
+    color: "#7F8C8D",
     fontWeight: "500",
   },
-  todayValue: {
-    color: "#ffc125",
-    fontWeight: "bold",
-    fontSize: 13,
+  statusBadge: {
+    width: 16,
+    height: 16,
+    borderRadius: 8,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 4,
+  },
+  statusText: {
+    color: 'white',
+    fontSize: 8,
+    fontWeight: 'bold',
   },
 });
 

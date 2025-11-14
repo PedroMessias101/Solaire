@@ -9,7 +9,8 @@ import {
   TouchableOpacity,
   Alert,
 } from "react-native";
-import { MaterialIcons, FontAwesome5, Entypo } from "@expo/vector-icons";
+import { MaterialIcons, FontAwesome5, Entypo, Ionicons } from "@expo/vector-icons";
+import { useRouter } from "expo-router";
 
 type TriState = "sim" | "nao" | null;
 
@@ -23,12 +24,12 @@ export default function DiagnosticoPlaca(): JSX.Element {
   const [ultimaManutencao, setUltimaManutencao] = useState<string>("");
   const [chuvasFortes, setChuvasFortes] = useState<TriState>(null);
   const [quedaEnergia, setQuedaEnergia] = useState<TriState>(null);
-
-  // Novas perguntas
   const [painelSujo, setPainelSujo] = useState<TriState>(null);
   const [quedaSignificativa, setQuedaSignificativa] = useState<TriState>(null);
   const [ruidoInversor, setRuidoInversor] = useState<TriState>(null);
   const [corrosaoConectores, setCorrosaoConectores] = useState<TriState>(null);
+
+  const router = useRouter();
 
   const [resultado, setResultado] = useState<string>("");
   const [guia, setGuia] = useState<GuiaStep[]>([]);
@@ -46,7 +47,6 @@ export default function DiagnosticoPlaca(): JSX.Element {
   };
 
   const analisar = () => {
-    // validação básica
     if (
       ultimaManutencao.trim() !== "" &&
       isNaN(Number(ultimaManutencao.trim()))
@@ -58,7 +58,7 @@ export default function DiagnosticoPlaca(): JSX.Element {
     const causas: string[] = [];
     const passos: GuiaStep[] = [];
 
-    // manutenção atrasada
+
     if (ultimaManutencao && parseInt(ultimaManutencao) > 6) {
       causas.push("Manutenção atrasada pode reduzir a eficiência da geração.");
       passos.push(
@@ -202,6 +202,15 @@ export default function DiagnosticoPlaca(): JSX.Element {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
+      {/* BOTÃO VOLTAR */}
+      <TouchableOpacity
+        onPress={() => router.push("/tabs/perfil")}  // <-- página específica
+        style={styles.botaoVoltar}
+      >
+        <Ionicons name="arrow-back" size={22} color="#000" />
+      </TouchableOpacity>
+
       <Text style={styles.titulo}>Diagnóstico de Manutenção</Text>
       <Text style={styles.subtitulo}>
         Responda às perguntas abaixo para identificar possíveis causas e obter um guia passo a passo.
@@ -266,6 +275,7 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#F8FAFC",
     padding: 20,
+    marginTop: 40,
   },
   titulo: {
     fontSize: 22,
@@ -274,6 +284,14 @@ const styles = StyleSheet.create({
     marginBottom: 6,
     textAlign: "center",
   },
+  botaoVoltar: {
+    width: 40,
+    height: 40,
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 10,
+  },
+
   subtitulo: {
     fontSize: 14,
     color: "#475569",

@@ -14,17 +14,25 @@ export default function SupportScreen() {
   };
 
   const handleChatPress = () => {
-    router.push("/tabs/chatSuporte"); // Exemplo de tela de chat
+    router.push("../tabs/chatSuporte"); // Exemplo de tela de chat
   };
 
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.tela}>
-        {/* Cabeçalho */}
         <View style={styles.cabecalho}>
+          <TouchableOpacity
+            onPress={() => router.push("/tabs/config")}
+            style={styles.botaoVoltar}
+          >
+            <Ionicons name="arrow-back" size={22} color="#000" />
+          </TouchableOpacity>
+
+
           <Text style={styles.tituloCabecalho}>Suporte</Text>
           <View style={{ width: 22 }} />
         </View>
+
 
         {/* FAQ */}
         <Text style={styles.tituloSecao}>Ajuda</Text>
@@ -90,6 +98,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
+  },
+  botaoVoltar: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
+    justifyContent: "center",
+    alignItems: "center",
   },
   tituloCabecalho: {
     fontSize: 18,

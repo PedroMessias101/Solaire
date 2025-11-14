@@ -51,6 +51,7 @@ export default function TelaPerfil() {
   const [ultimaAtualizacao, setUltimaAtualizacao] = useState<Date | null>(null);
   const [tempoDecorrido, setTempoDecorrido] = useState<string>("Nunca atualizado");
   const router = useRouter();
+  const [atualizandoManual, setAtualizandoManual] = useState(false);
 
   // ===== Animação do sol =====
   const spinValue = useState(new Animated.Value(0))[0];
@@ -274,6 +275,18 @@ export default function TelaPerfil() {
       setLoading(false);
     }
   };
+  const atualizarManual = async () => {
+    try {
+      setAtualizandoManual(true);
+      await atualizarDados();
+    } catch (err) {
+      console.log("Erro ao atualizar manualmente:", err);
+      Alert.alert("Erro", "Não foi possível atualizar os dados.");
+    } finally {
+      setAtualizandoManual(false);
+    }
+  };
+
 
   useEffect(() => {
     atualizarDados();
@@ -402,9 +415,31 @@ export default function TelaPerfil() {
               <Text style={{ fontSize: 12, color: "#6B7280", marginTop: 4 }}>{tempoDecorrido}</Text>
             </View>
           </View>
-          <TouchableOpacity style={styles.editButton} activeOpacity={0.7} onPress={() => router.push("./config")}>
-            <Feather name="settings" size={25} color="#333" />
-          </TouchableOpacity>
+
+          <View style={{ flexDirection: "row", alignItems: "center" }}>
+            {/* Botão atualizar manualmente */}
+            <TouchableOpacity
+              style={{ padding: 10, marginRight: 6 }}
+              activeOpacity={0.7}
+              onPress={atualizarManual}
+              disabled={atualizandoManual}
+            >
+              {atualizandoManual ? (
+                <Feather name="rotate-cw" size={22} color="#999" style={{ transform: [{ rotate: "180deg" }] }} />
+              ) : (
+                <Feather name="rotate-cw" size={22} color="#333" />
+              )}
+            </TouchableOpacity>
+
+            {/* Botão de configurações */}
+            <TouchableOpacity
+              style={styles.editButton}
+              activeOpacity={0.7}
+              onPress={() => router.push("./config")}
+            >
+              <Feather name="settings" size={25} color="#333" />
+            </TouchableOpacity>
+          </View>
         </View>
 
 
@@ -467,8 +502,24 @@ export default function TelaPerfil() {
                   <View style={styles.avisoDefeito}>
                     <Feather name="alert-triangle" size={14} color="#B91C1C" />
                     <Text style={styles.avisoText}>Alerta: manutenção necessária</Text>
+
+                    <TouchableOpacity
+                      style={{
+                        marginLeft: 10,
+                        backgroundColor: "#B91C1C",
+                        paddingVertical: 4,
+                        paddingHorizontal: 8,
+                        borderRadius: 6,
+                      }}
+                      onPress={() => router.push(`./manuntecao`)}
+                    >
+                      <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "700" }}>
+                        Ir para manutenção
+                      </Text>
+                    </TouchableOpacity>
                   </View>
                 )}
+
                 {item.status !== "Ativa" && (
                   <View style={styles.avisoDesativada}>
                     <Feather name="alert-triangle" size={14} color="#D97706" />
@@ -487,10 +538,9 @@ export default function TelaPerfil() {
                 <Feather name="trash-2" size={22} color="#909090ff" />
               </TouchableOpacity>
             </View>
-
-
           </View>
         ))}
+
 
         {placas.length === 0 && (
           <View style={styles.emptyState}>
@@ -509,7 +559,8 @@ export default function TelaPerfil() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#FBFBFF"
+    backgroundColor: "#FBFBFF",
+    padding: 10
   },
   tela: {
     flex: 1,
