@@ -15,8 +15,6 @@ import { useRouter } from "expo-router";
 type MatrizData = {
   nome: string;
   cnpj: string;
-  endereco: string;
-  responsavel: string;
 };
 
 type FilialData = {
@@ -31,8 +29,6 @@ export default function EmpresaSetupWizard() {
   const [matriz, setMatriz] = useState<MatrizData>({
     nome: "",
     cnpj: "",
-    endereco: "",
-    responsavel: "",
   });
   const [filiais, setFiliais] = useState<FilialData[]>([]);
   const [novaFilial, setNovaFilial] = useState<FilialData>({
@@ -56,7 +52,7 @@ export default function EmpresaSetupWizard() {
   const handleNext = () => {
     if (step === 2) {
       if (!matriz.nome || !matriz.cnpj) {
-        Alert.alert("Atenção", "Preencha pelo menos nome e CNPJ da matriz.");
+        Alert.alert("Atenção", "Preencha nome e CNPJ da matriz.");
         return;
       }
       if (!isValidCNPJ(matriz.cnpj)) {
@@ -82,44 +78,37 @@ export default function EmpresaSetupWizard() {
 
   const handleFinish = async () => {
     if (!token) {
-      Alert.alert(
-        "Erro de Autenticação",
-        "Não foi possível encontrar o token de usuário. Faça login novamente."
-      );
+      Alert.alert("Erro", "Token inválido. Faça login novamente.");
       return;
     }
 
     setIsLoading(true);
 
     try {
-      // Criação da matriz
-      const companyResponse = await fetch(
-        "https://solaire-z8mw.onrender.com/companies",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-          },
-          body: JSON.stringify({
-            name: matriz.nome,
-            cnpj: matriz.cnpj,
-          }),
-        }
-      );
+      // ===== CADASTRAR MATRIZ =====
+      const companyResponse = await fetch("https://solaire-z8mw.onrender.com/companies", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          name: matriz.nome,
+          cnpj: matriz.cnpj,
+        }),
+      });
+
+      const companyJson = await companyResponse.json();
 
       if (!companyResponse.ok) {
-        const errorData = await companyResponse.json();
-        throw new Error(errorData.error || "Falha ao cadastrar a matriz.");
+        throw new Error(companyJson.message || companyJson.error || "Erro ao criar matriz.");
       }
 
-      const createdCompany = await companyResponse.json();
-      const companyId = createdCompany.data.id;
-      console.log("Matriz criada com sucesso! ID:", companyId);
+      const companyId = companyJson.data.id;
+      console.log("Matriz criada:", companyId);
 
-      // Criação das filiais (se houver)
+      // ===== CADASTRAR FILIAIS =====
       if (filiais.length > 0) {
-        console.log("Enviando dados das filiais...");
         const branchPromises = filiais.map((filial) =>
           fetch("https://solaire-z8mw.onrender.com/branches", {
             method: "POST",
@@ -129,8 +118,9 @@ export default function EmpresaSetupWizard() {
             },
             body: JSON.stringify({
               name: filial.nome,
+              cnpj: filial.cnpj,
               address: filial.endereco,
-              companyId: companyId,
+              companyId,
             }),
           })
         );
@@ -138,28 +128,18 @@ export default function EmpresaSetupWizard() {
         const branchResponses = await Promise.all(branchPromises);
 
         for (const res of branchResponses) {
+          const json = await res.json();
           if (!res.ok) {
-            const errorData = await res.json();
-            throw new Error(
-              errorData.error || "Falha ao cadastrar uma das filiais."
-            );
+            throw new Error(json.message || "Erro ao cadastrar filial.");
           }
         }
-        console.log("Filiais cadastradas com sucesso!");
       }
 
-      Alert.alert("Sucesso", `Matriz "${matriz.nome}" cadastrada com sucesso!`, [
-        {
-          text: "OK",
-          onPress: () => router.replace("./home"),
-        },
+      Alert.alert("Sucesso", "Empresa cadastrada com sucesso!", [
+        { text: "OK", onPress: () => router.replace("./home") },
       ]);
-    } catch (error: any) {
-      console.error("Erro no processo de cadastro:", error);
-      Alert.alert(
-        "Erro",
-        error.message || "Não foi possível concluir o cadastro. Tente novamente."
-      );
+    } catch (err: any) {
+      Alert.alert("Erro", err.message || "Falha ao comunicar com o servidor.");
     } finally {
       setIsLoading(false);
     }
@@ -168,20 +148,18 @@ export default function EmpresaSetupWizard() {
   return (
     <View style={styles.container}>
       <ScrollView contentContainerStyle={styles.scroll}>
-        {/* Indicador de progresso */}
         <View style={styles.progressContainer}>
           <View style={[styles.progressStep, step >= 1 && styles.activeStep]} />
           <View style={[styles.progressStep, step >= 2 && styles.activeStep]} />
           <View style={[styles.progressStep, step >= 3 && styles.activeStep]} />
         </View>
 
-        {/* Etapa 1 */}
+        {/* ETAPA 1 */}
         {step === 1 && (
           <View style={styles.step}>
             <Text style={styles.title}>Bem-vindo à Solaire</Text>
             <Text style={styles.subtitle}>
-              Vamos configurar sua estrutura. Primeiro, cadastre a matriz e as
-              filiais.
+              Vamos configurar sua empresa. Primeiro, cadastre a matriz.
             </Text>
             <TouchableOpacity style={styles.button} onPress={handleNext}>
               <Text style={styles.buttonText}>Começar</Text>
@@ -189,44 +167,30 @@ export default function EmpresaSetupWizard() {
           </View>
         )}
 
-        {/* Etapa 2 */}
+        {/* ETAPA 2 - MATRIZ */}
         {step === 2 && (
           <View style={styles.step}>
             <Text style={styles.title}>Cadastro da Matriz</Text>
+
             <TextInput
               placeholder="Nome da Matriz"
               style={styles.input}
               value={matriz.nome}
               onChangeText={(text) => setMatriz({ ...matriz, nome: text })}
             />
+
             <TextInput
               placeholder="CNPJ"
               style={styles.input}
               value={matriz.cnpj}
               onChangeText={(text) => setMatriz({ ...matriz, cnpj: text })}
             />
-            <TextInput
-              placeholder="Endereço"
-              style={styles.input}
-              value={matriz.endereco}
-              onChangeText={(text) => setMatriz({ ...matriz, endereco: text })}
-            />
-            <TextInput
-              placeholder="Responsável"
-              style={styles.input}
-              value={matriz.responsavel}
-              onChangeText={(text) =>
-                setMatriz({ ...matriz, responsavel: text })
-              }
-            />
 
             <View style={styles.navButtons}>
-              <TouchableOpacity
-                style={styles.backButton}
-                onPress={() => setStep(step - 1)}
-              >
+              <TouchableOpacity style={styles.backButton} onPress={() => setStep(step - 1)}>
                 <Text style={styles.buttonText}>Voltar</Text>
               </TouchableOpacity>
+
               <TouchableOpacity style={styles.button} onPress={handleNext}>
                 <Text style={styles.buttonText}>Próximo</Text>
               </TouchableOpacity>
@@ -234,10 +198,11 @@ export default function EmpresaSetupWizard() {
           </View>
         )}
 
-        {/* Etapa 3 */}
+        {/* ETAPA 3 - FILIAIS */}
         {step === 3 && (
           <View style={styles.step}>
             <Text style={styles.title}>Cadastro de Filiais (opcional)</Text>
+
             <TextInput
               placeholder="Nome da Filial"
               style={styles.input}
@@ -246,6 +211,7 @@ export default function EmpresaSetupWizard() {
                 setNovaFilial({ ...novaFilial, nome: text })
               }
             />
+
             <TextInput
               placeholder="CNPJ"
               style={styles.input}
@@ -254,6 +220,7 @@ export default function EmpresaSetupWizard() {
                 setNovaFilial({ ...novaFilial, cnpj: text })
               }
             />
+
             <TextInput
               placeholder="Endereço"
               style={styles.input}
@@ -262,10 +229,8 @@ export default function EmpresaSetupWizard() {
                 setNovaFilial({ ...novaFilial, endereco: text })
               }
             />
-            <TouchableOpacity
-              style={styles.secondaryButton}
-              onPress={handleAddFilial}
-            >
+
+            <TouchableOpacity style={styles.secondaryButton} onPress={handleAddFilial}>
               <Text style={styles.secondaryText}>Adicionar Filial</Text>
             </TouchableOpacity>
 
@@ -311,101 +276,98 @@ export default function EmpresaSetupWizard() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: "#fafafa",
-    paddingHorizontal: 20,
+    backgroundColor: "#fdfdfd",
     paddingTop: 60,
-  },
-  scroll: {
-    flexGrow: 1,
-    justifyContent: "center",
-  },
-  step: {
-    marginBottom: 30,
-  },
-  title: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 15,
-    textAlign: "center",
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#555",
-    marginBottom: 20,
-    textAlign: "center",
-  },
-  input: {
-    borderWidth: 1,
-    borderColor: "#ccc",
-    borderRadius: 10,
-    padding: 10,
-    marginBottom: 12,
-    backgroundColor: "#fff",
-  },
-  navButtons: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 20,
-  },
-  button: {
-    backgroundColor: "#ffc125",
-    paddingVertical: 12,
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-    marginLeft: 10,
-  },
-  backButton: {
-    backgroundColor: "#ebe7e7ff",
-    paddingVertical: 12, 
-    borderRadius: 10,
-    alignItems: "center",
-    justifyContent: "center",
-    flex: 1,
-    marginRight: 10,
-  },
-  buttonText: {
-    color: "#000",
-    fontWeight: "600",
-    textAlignVertical: "center",
-  },
-  secondaryButton: {
-    borderWidth: 1,
-    borderColor: "#ffc125",
-    padding: 10,
-    borderRadius: 10,
-    alignItems: "center",
-    marginVertical: 10,
-  },
-  secondaryText: {
-    color: "#ffc125",
-    fontWeight: "600",
-  },
-  filialList: {
-    marginTop: 10,
-  },
-  item: {
-    color: "#444",
-    fontSize: 14,
-  },
-  buttonDisabled: {
-    backgroundColor: "#ccc",
+    paddingHorizontal: 20,
   },
   progressContainer: {
     flexDirection: "row",
-    justifyContent: "center",
-    marginBottom: 20,
+    justifyContent: "space-between",
+    marginBottom: 40,
   },
   progressStep: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: "#ddd",
-    marginHorizontal: 5,
+    flex: 1,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#e0e0e0",
+    marginHorizontal: 4,
   },
   activeStep: {
-    backgroundColor: "#ffc125",
+    backgroundColor: "#fcbb30",
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "800",
+    textAlign: "center",
+    marginBottom: 23,
+    color: "#222",
+  },
+  subtitle: {
+    fontSize: 16,
+    color: "#666",
+    textAlign: "center",
+    marginBottom: 20,
+  },
+  input: {
+    width: "100%",
+    backgroundColor: "#fff",
+    paddingVertical: 14,
+    paddingHorizontal: 16,
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: "#ddd",
+    fontSize: 15,
+    marginBottom: 14,
+  },
+  button: {
+    backgroundColor: "#fcbb30",
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 20,
+  },
+  buttonText: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#000",
+  },
+  backButton: {
+    backgroundColor: "#ccc",
+    paddingVertical: 16,
+    borderRadius: 30,
+    alignItems: "center",
+    marginTop: 20,
+    flex: 1,
+    marginRight: 10,
+  },
+  navButtons: {
+    flexDirection: "row",
+    width: "100%",
+    marginTop: 20,
+  },
+  secondaryButton: {
+    borderWidth: 1,
+    borderColor: "#fcbb30",
+    borderRadius: 25,
+    paddingVertical: 12,
+    marginTop: 10,
+    alignItems: "center",
+  },
+  secondaryText: {
+    color: "#fcbb30",
+    fontWeight: "600",
+  },
+  filialList: {
+    marginTop: 20,
+    backgroundColor: "#fff",
+    padding: 12,
+    borderRadius: 12,
+  },
+  item: {
+    fontSize: 14,
+    marginVertical: 4,
+  },
+  buttonDisabled: {
+    opacity: 0.6,
   },
 });

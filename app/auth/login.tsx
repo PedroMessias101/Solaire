@@ -135,7 +135,7 @@ export default function LoginScreen() {
         if (papel === "RESIDENTIAL") {
           router.replace("/tabs/slides");
         } else {
-          router.replace("/empresarial/wizard");
+          router.replace("/empresarial/slidesEmpresarial");
         }
       } else {
         Alert.alert("Erro", dados.message || dados.error || "Erro ao fazer login");

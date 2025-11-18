@@ -1,178 +1,138 @@
-import React, { useState } from "react";
+import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Feather, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
 import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
-export default function TelaGestaoDeConta() {
+export default function ManageAccountScreen() {
   const router = useRouter();
-  const [indiceAtivo, setIndiceAtivo] = useState(0);
 
   return (
     <View style={{ flex: 1 }}>
-      <View style={estilos.cabecalho}>
-        <TouchableOpacity onPress={() => router.back()} style={estilos.botaoVoltar}>
-          <Ionicons name="chevron-back" size={28} color="#333" />
-        </TouchableOpacity>
-        <Text style={estilos.titulo}>Gerenciar Conta</Text>
-      </View>
-
-
-      <ScrollView style={estilos.conteudo} contentContainerStyle={{ paddingBottom: 80 }}>
+      <ScrollView style={styles.screen}>
         
-        <View style={estilos.secao}>
-          <Text style={estilos.tituloSecao}>Conta</Text>
-          <TouchableOpacity style={estilos.card} onPress={() => router.push("/tabs/conta")}>
-            <View style={estilos.iconeCard}>
-              <Feather name="user" size={22} color="#ffc125" />
-            </View>
-            <View>
-              <Text style={estilos.tituloCard}>Informações empresarial</Text>
-              <Text style={estilos.subtituloCard}>Altere nome, CNPJ, e-mail e telefone</Text>
-            </View>
+        <View style={styles.header}>
+          <TouchableOpacity
+            onPress={() => router.push("/empresarial/config")}
+            style={styles.backButton}
+          >
+            <Ionicons name="arrow-back" size={22} color="#000" />
           </TouchableOpacity>
+
+          <Text style={styles.headerTitle}>Gerenciar Conta</Text>
+          <View style={{ width: 22 }} />
         </View>
 
-        <View style={estilos.secao}>
-          <Text style={estilos.tituloSecao}>Preferências</Text>
-          <TouchableOpacity style={estilos.card}>
-            <View style={estilos.iconeCard}>
-              <Ionicons name="notifications-outline" size={22} color="#ffc125" />
-            </View>
-            <View>
-              <Text style={estilos.tituloCard}>Notificações</Text>
-              <Text style={estilos.subtituloCard}>Gerencie seus alertas e avisos</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
+        {/* Seção Conta */}
+        <Text style={styles.sectionTitle}>Conta</Text>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={() => router.push("/tabs/conta")}
+        >
+          <View style={styles.iconBox}>
+            <Feather name="user" size={22} color="#ffc125" />
+          </View>
+          <View>
+            <Text style={styles.itemTitle}>Informações Pessoais</Text>
+            <Text style={styles.itemSubtitle}>Altere nome, e-mail e telefone</Text>
+          </View>
+        </TouchableOpacity>
 
-        <View style={estilos.secao}>
-          <Text style={estilos.tituloSecao}>Dados e Conta</Text>
-          <TouchableOpacity style={estilos.card}>
-            <View style={estilos.iconeCard}>
-              <MaterialIcons name="delete-outline" size={22} color="#ffc125" />
-            </View>
-            <View>
-              <Text style={estilos.tituloCard}>Excluir Conta</Text>
-              <Text style={estilos.subtituloCard}>Remova permanentemente sua conta</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-        <View style={estilos.secao}>
-          <Text style={estilos.tituloSecao}>Configurações Empresariais</Text>
+        {/* Preferências */}
+        <Text style={styles.sectionTitle}>Preferências</Text>
+        <TouchableOpacity style={styles.item}>
+          <View style={styles.iconBox}>
+            <Ionicons name="notifications-outline" size={22} color="#ffc125" />
+          </View>
+          <View>
+            <Text style={styles.itemTitle}>Notificações</Text>
+            <Text style={styles.itemSubtitle}>Gerencie seus alertas e avisos</Text>
+          </View>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={estilos.card}>
-            <View style={estilos.iconeCard}>
-              <Feather name="briefcase" size={22} color="#ffc125" />
-            </View>
-            <View>
-              <Text style={estilos.tituloCard}>Dados da Empresa</Text>
-              <Text style={estilos.subtituloCard}>Atualize razão social, CNPJ e endereço</Text>
-            </View>
-          </TouchableOpacity>
+        {/* Dados e Conta */}
+        <Text style={styles.sectionTitle}>Dados e Conta</Text>
+        <TouchableOpacity style={styles.item}>
+          <View style={styles.iconBox}>
+            <MaterialIcons name="delete-outline" size={22} color="#ffc125" />
+          </View>
+          <View>
+            <Text style={styles.itemTitle}>Excluir Conta</Text>
+            <Text style={styles.itemSubtitle}>Remova permanentemente sua conta</Text>
+          </View>
+        </TouchableOpacity>
 
-          <TouchableOpacity style={estilos.card}>
-            <View style={estilos.iconeCard}>
-              <Ionicons name="people-outline" size={22} color="#ffc125" />
-            </View>
-            <View>
-              <Text style={estilos.tituloCard}>Usuários e Permissões</Text>
-              <Text style={estilos.subtituloCard}>Gerencie acesso de colaboradores</Text>
-            </View>
-          </TouchableOpacity>
-
-          <TouchableOpacity style={estilos.card}>
-            <View style={estilos.iconeCard}>
-              <MaterialIcons name="credit-card" size={22} color="#ffc125" />
-            </View>
-            <View>
-              <Text style={estilos.tituloCard}>Faturamento</Text>
-              <Text style={estilos.subtituloCard}>Visualize cobranças e métodos de pagamento</Text>
-            </View>
-          </TouchableOpacity>
-
-
-          <TouchableOpacity style={estilos.card}>
-            <View style={estilos.iconeCard}>
-              <Feather name="file-text" size={22} color="#ffc125" />
-            </View>
-            <View>
-              <Text style={estilos.tituloCard}>Exportar Relatório</Text>
-              <Text style={estilos.subtituloCard}>Gere e baixe relatórios em PDF ou Excel</Text>
-            </View>
-          </TouchableOpacity>
-        </View>
       </ScrollView>
 
-      <AnimatedBottomNavBar
-        activeIndex={indiceAtivo}
-        onTabPress={setIndiceAtivo}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
-      />
+      <AnimatedBottomNavBar />
     </View>
   );
 }
 
-const estilos = StyleSheet.create({
-  cabecalho: {
-    height: 80,
+const styles = StyleSheet.create({
+  screen: {
+    flex: 1,
+    backgroundColor: "#f5f5f5",
+    paddingHorizontal: 16,
+    paddingTop: 40,
+  },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    marginBottom: 20,
+    marginTop: 10,
+  },
+
+  backButton: {
+    width: 32,
+    height: 32,
+    borderRadius: 8,
     justifyContent: "center",
     alignItems: "center",
-    position: "relative",
-    backgroundColor: "#f2f2f2",
-    paddingTop: 40,
-    paddingHorizontal: 16,
   },
-  botaoVoltar: {
-    position: "absolute",
-    left: 16,
-    top: 40,
-  },
-  titulo: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#222",
-    textAlign: "center",
-  },
-  conteudo: {
-    flex: 1,
-    backgroundColor: "#f2f2f2",
-    paddingHorizontal: 16,
-  },
-  secao: {
-    marginBottom: 24,
-  },
-  tituloSecao: {
-    fontSize: 16,
+
+  headerTitle: {
+    fontSize: 18,
     fontWeight: "600",
-    marginBottom: 12,
-    color: "#333",
+    color: "#000",
   },
-  card: {
+
+  sectionTitle: {
+    fontSize: 14,
+    fontWeight: "600",
+    marginTop: 20,
+    marginBottom: 8,
+    color: "#444",
+  },
+
+  item: {
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 14,
+    padding: 12,
     borderRadius: 12,
     marginBottom: 10,
-    elevation: 2,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
   },
-  iconeCard: {
-    backgroundColor: "#000",
-    padding: 10,
+
+  iconBox: {
+    width: 40,
+    height: 40,
     borderRadius: 10,
+    backgroundColor: "#000",
+    justifyContent: "center",
+    alignItems: "center",
     marginRight: 12,
   },
-  tituloCard: {
+
+  itemTitle: {
     fontSize: 15,
     fontWeight: "600",
-    color: "#222",
+    color: "#000",
   },
-  subtituloCard: {
+
+  itemSubtitle: {
     fontSize: 13,
     color: "#666",
   },

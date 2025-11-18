@@ -14,10 +14,23 @@ import { useRouter } from "expo-router";
 const { width } = Dimensions.get("window");
 
 const slides = [
-    { id: '1', title: 'Bem-vindo à Solaire', description: 'A Solaire é sua parceira em energia solar inteligente. Monitore produção e consumo em tempo real' },
-    { id: '2', title: 'Monitoramento Inteligente', description: 'Acompanhe sua geração, economia mensal, desempenho das placas e picos de consumo' },
-    { id: '3', title: 'Sustentabilidade na prática', description: 'Produza sua própria energia, reduza sua conta e faça parte de um futuro mais limpo' },
+    { 
+        id: '1', 
+        title: 'Gestão Inteligente de Energia', 
+        description: 'A plataforma corporativa para monitoramento, análise e eficiência em sistemas fotovoltaicos.' 
+    },
+    { 
+        id: '2', 
+        title: 'Visão Estratégica em Tempo Real', 
+        description: 'Acompanhe geração, desempenho dos módulos, consumo e indicadores essenciais para tomada de decisão.' 
+    },
+    { 
+        id: '3', 
+        title: 'Resultados Sustentáveis', 
+        description: 'Reduza custos operacionais, maximize produtividade e fortaleça o compromisso ambiental da sua empresa.' 
+    },
 ];
+
 
 export default function Onboarding() {
     const [currentIndex, setCurrentIndex] = useState(0);
@@ -29,7 +42,7 @@ export default function Onboarding() {
         const checkOnboarding = async () => {
             const seen = await AsyncStorage.getItem("hasSeenOnboarding");
             if (seen) {
-                router.replace("/tabs/home");
+                router.replace("/empresarial/home");
             } else {
                 setLoading(false);
             }
@@ -48,7 +61,7 @@ export default function Onboarding() {
         } else {
             // marca como visto
             await AsyncStorage.setItem("hasSeenOnboarding", "true");
-            router.replace("/tabs/home");
+            router.replace("/empresarial/home");
         }
     };
 
@@ -106,78 +119,81 @@ export default function Onboarding() {
 }
 
 const styles = StyleSheet.create({
-    container:
-    {
+    container: {
         flex: 1,
-        backgroundColor: '#fff',
+        backgroundColor: '#f7f7f7',
         justifyContent: 'center',
         alignItems: 'center'
     },
-    slide:
-    {
+    slide: {
         justifyContent: 'center',
         alignItems: 'center',
-        padding: 20
+        paddingHorizontal: 30,
     },
-    title:
-    {
-        fontSize: 28,
-        fontWeight: 'bold',
-        marginBottom: 10
-    },
-    description:
-    {
-        fontSize: 18,
+    title: {
+        fontSize: 30,
+        fontWeight: '700',
+        color: '#1a1a1a',
         textAlign: 'center',
-        color: '#555'
+        marginBottom: 14,
+        letterSpacing: 0.5
     },
-    indicatorContainer:
-    {
+    description: {
+        fontSize: 17,
+        textAlign: 'center',
+        color: '#4d4d4d',
+        lineHeight: 24,
+        maxWidth: '85%'
+    },
+    indicatorContainer: {
         flexDirection: 'row',
         position: 'absolute',
-        bottom: 100
+        bottom: 110,
     },
-    indicator:
-    {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
-        backgroundColor: '#ccc',
-        margin: 5
+    indicator: {
+        width: 8,
+        height: 8,
+        borderRadius: 50,
+        backgroundColor: '#d9d9d9',
+        marginHorizontal: 4
     },
-    activeIndicator:
-        { backgroundColor: '#fcbb30' },
-    button:
-    {
-        marginTop: 30,
-        backgroundColor: '#fcbb30',
-        paddingVertical: 12,
-        paddingHorizontal: 30,
-        borderRadius: 25
+    activeIndicator: {
+        backgroundColor: '#ffc125', 
+        width: 20,
     },
-    buttonText:
-    {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold'
+    button: {
+        marginTop: 35,
+        backgroundColor: '#ffc125',
+        paddingVertical: 14,
+        paddingHorizontal: 45,
+        borderRadius: 30,
+        shadowColor: '#ffc125',
+        shadowOpacity: 0.3,
+        shadowOffset: { width: 0, height: 3 },
+        shadowRadius: 6,
     },
-    nextButton:
-    {
-        position: 'absolute',
-        bottom: 40,
-        right: 30,
-        backgroundColor: '#fcbb30',
-        paddingVertical: 10,
-        paddingHorizontal: 20,
-        borderRadius: 20
-    },
-    nextButtonText:
-    {
+    buttonText: {
         color: '#000',
-        fontWeight: 'bold'
+        fontSize: 17,
+        fontWeight: '600',
+        letterSpacing: 0.5
     },
-    loadingContainer:
-    {
+    nextButton: {
+        position: 'absolute',
+        bottom: 45,
+        right: 28,
+        backgroundColor: '#ffc125',
+        paddingVertical: 10,
+        paddingHorizontal: 22,
+        borderRadius: 25,
+        elevation: 3
+    },
+    nextButtonText: {
+        color: '#fff',
+        fontSize: 15,
+        fontWeight: '600'
+    },
+    loadingContainer: {
         flex: 1,
         justifyContent: 'center',
         alignItems: 'center',

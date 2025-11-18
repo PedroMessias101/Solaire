@@ -10,10 +10,12 @@ import {
   Animated,
   StatusBar,
   Alert,
+  KeyboardAvoidingView
 } from "react-native";
 import { FontAwesome5, Ionicons } from "@expo/vector-icons";
 import { LinearGradient } from "expo-linear-gradient";
 import { useRouter } from "expo-router";
+import { Platform } from "react-native";
 
 const { width, height } = Dimensions.get("window");
 const API_URL = "https://solaire-z8mw.onrender.com";
@@ -169,6 +171,11 @@ export default function CadastroScreen() {
   );
 
   return (
+     <KeyboardAvoidingView
+    style={{ flex: 1 }}
+    behavior={Platform.OS === "ios" ? "padding" : "height"}
+    keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+  >
     <View style={styles.container}>
       <StatusBar barStyle="dark-content" />
       <Animated.View style={[ styles.backgroundCircle, { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] } ]}>
@@ -223,6 +230,7 @@ export default function CadastroScreen() {
         </TouchableOpacity>
       </ScrollView>
     </View>
+    </KeyboardAvoidingView>
   );
 }
 
