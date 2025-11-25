@@ -150,12 +150,19 @@ export default function HomeEmpresarial() {
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
           <MaterialCommunityIcons name="white-balance-sunny" size={35} color="#FFc125" />
         </Animated.View>
+
         <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>Carregando dados empresariais...</Text>
+
+        <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>
+          Carregando Perfil...
+        </Text>
+
       </View>
     );
   }
 
   return (
+
     // autoStart=true faz o tour iniciar automaticamente (respeita AsyncStorage dentro do provider)
     <TourProvider scrollRef={scrollRef} autoStart={true} theme={{ primary: "#2e86de", highlightColor: "#FFC107" }}>
       <View style={{ flex: 1 }}>
@@ -167,6 +174,10 @@ export default function HomeEmpresarial() {
                 <Animated.Image source={require("../../assets/logo_empresarial.png")} style={[estilos.avatar, { transform: [{ rotate: spin }] }]} />
               </TouchableOpacity>
             </TourStep>
+
+    <View style={{ flex: 1, backgroundColor: "#f9fafc" }}>
+      <ScrollView style={estilos.container} contentContainerStyle={{ paddingBottom: 160 }}>
+
 
             <View style={{ flex: 1 }}>
               <Text style={estilos.username}>{user?.name ?? "Usuário"}</Text>
@@ -250,7 +261,71 @@ export default function HomeEmpresarial() {
           <ChatBot />
         </View>
 
+
         <NavBarEmpresarial placas={placas} setPlacas={setPlacas} />
+
+        {/* ===================== DASHBOARD EMPRESARIAL REAL ===================== */}
+        <Text style={estilos.titulo}>Dashboard Empresarial</Text>
+
+        <View style={estilos.grid}>
+          <View style={estilos.card}>
+            <MaterialCommunityIcons name="solar-power" size={28} color="#FFA726" />
+            <Text style={estilos.cardLabel}>Energia Total</Text>
+            <Text style={estilos.cardValor}>{totalEnergia.toFixed(2)} kWh</Text>
+          </View>
+
+          <View style={estilos.card}>
+            <MaterialCommunityIcons name="flash" size={28} color="#FFC107" />
+            <Text style={estilos.cardLabel}>Tensão Média</Text>
+            <Text style={estilos.cardValor}>{mediaTensao.toFixed(1)} V</Text>
+          </View>
+
+          <View style={estilos.card}>
+            <MaterialCommunityIcons name="current-ac" size={28} color="#FFB300" />
+            <Text style={estilos.cardLabel}>Corrente Média</Text>
+            <Text style={estilos.cardValor}>{mediaCorrente.toFixed(1)} A</Text>
+          </View>
+
+          <View style={estilos.card}>
+            <MaterialCommunityIcons name="thermometer" size={28} color="#FFc125" />
+            <Text style={estilos.cardLabel}>Temperatura Média</Text>
+            <Text style={estilos.cardValor}>{mediaTemperatura.toFixed(1)} °C</Text>
+          </View>
+        </View>
+
+        {/* ===================== AÇÕES RÁPIDAS ===================== */}
+        <Text style={estilos.subtitulo}>Ações Rápidas</Text>
+
+        <View style={estilos.acoesContainer}>
+          <TouchableOpacity
+            style={estilos.botao}
+            onPress={() => router.push("/empresarial/simulador")}
+          >
+            <Feather name="server" size={22} color="#ffc125" />
+            <Text style={estilos.botaoTexto}>Simulador energético</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={estilos.botao}
+            onPress={() => router.push("/empresarial/relatorios")}
+          >
+            <Feather name="file-text" size={22} color="#ffc125" />
+            <Text style={estilos.botaoTexto}>Relatórios</Text>
+          </TouchableOpacity>
+
+          <TouchableOpacity
+            style={estilos.botao}
+            onPress={() => router.push("./configuracao")}
+          >
+            <Feather name="settings" size={22} color="#ffc125" />
+            <Text style={estilos.botaoTexto}>Configurações</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
+
+      {/* ChatBot e NavBar */}
+      <View style={estilos.chatBotContainer}>
+        <ChatBot />
       </View>
     </TourProvider>
   );
