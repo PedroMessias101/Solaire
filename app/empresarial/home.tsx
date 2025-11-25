@@ -155,14 +155,14 @@ export default function HomeEmpresarial() {
           <MaterialCommunityIcons name="white-balance-sunny" size={35} color="#FFc125" />
         </Animated.View>
         <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>
-          Carregando dados empresariais...
+          Carregando Perfil...
         </Text>
       </View>
     );
   }
 
   return (
-    <View style={{ flex: 1 }}>
+    <View style={{ flex: 1, backgroundColor: "#f9fafc" }}>
       <ScrollView style={estilos.container} contentContainerStyle={{ paddingBottom: 160 }}>
 
         {/* ===================== HEADER ===================== */}
@@ -220,10 +220,10 @@ export default function HomeEmpresarial() {
         <View style={estilos.acoesContainer}>
           <TouchableOpacity
             style={estilos.botao}
-            onPress={() => router.push("/empresarial/placas")}
+            onPress={() => router.push("/empresarial/simulador")}
           >
             <Feather name="server" size={22} color="#ffc125" />
-            <Text style={estilos.botaoTexto}>Gerenciar Placas</Text>
+            <Text style={estilos.botaoTexto}>Simulador energético</Text>
           </TouchableOpacity>
 
           <TouchableOpacity
@@ -236,7 +236,7 @@ export default function HomeEmpresarial() {
 
           <TouchableOpacity
             style={estilos.botao}
-            onPress={() => router.push("/empresarial/config")}
+            onPress={() => router.push("./configuracao")}
           >
             <Feather name="settings" size={22} color="#ffc125" />
             <Text style={estilos.botaoTexto}>Configurações</Text>
