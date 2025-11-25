@@ -1,58 +1,34 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, Alert, ScrollView } from "react-native";
-import { Feather, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import { Ionicons, MaterialIcons } from "@expo/vector-icons";
+import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 
-export function ConfigEmpresarial() {
-  const handleLogout = () => {
-    Alert.alert("Sair", "Deseja realmente sair?", [
-      { text: "Cancelar", style: "cancel" },
-      { text: "Sair", style: "destructive", onPress: () => {/* lógica de logout */} },
-    ]);
-  };
-
-  return (
-    <ScrollView style={estilos.container}>
-      <Text style={estilos.titulo}>Configurações Empresariais</Text>
-
-      <View style={estilos.item}>
-        <Feather name="user" size={22} color="#FFC125" />
-        <Text style={estilos.itemTexto}>Dados da Empresa</Text>
-      </View>
-
-      <View style={estilos.item}>
-        <MaterialCommunityIcons name="lock-reset" size={22} color="#FFC125" />
-        <Text style={estilos.itemTexto}>Alterar Senha</Text>
-      </View>
-
-      <View style={estilos.item}>
-        <MaterialCommunityIcons name="brightness-6" size={22} color="#FFC125" />
-        <Text style={estilos.itemTexto}>Acessibilidade</Text>
-      </View>
-
-      <TouchableOpacity style={estilos.logoutBtn} onPress={handleLogout}>
-        <Feather name="log-out" size={22} color="#fff" />
-        <Text style={estilos.logoutTexto}>Sair</Text>
-      </TouchableOpacity>
-    </ScrollView>
-  );
-}
-
-export function TelaConfig() {
+export default function TelaConfig() {
   const router = useRouter();
 
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={estilos.tela}>
         <View style={estilos.cabecalho}>
+          <TouchableOpacity
+            onPress={() => router.push("/empresarial/home")}
+            style={estilos.botaoVoltar}
+          >
+            <Ionicons name="arrow-back" size={22} color="#000" />
+          </TouchableOpacity>
+
           <Text style={estilos.tituloCabecalho}>Configurações</Text>
+
+          {/* Espaço para alinhar */}
           <View style={{ width: 22 }} />
         </View>
+
 
         <Text style={estilos.tituloSecao}>Conta</Text>
         <TouchableOpacity
           style={estilos.item}
-          onPress={() => router.push("/tabs/gerenciarConta")}
+          onPress={() => router.push("/empresarial/gerenciarconta")}
         >
           <View style={estilos.caixaIcone}>
             <Ionicons name="person-outline" size={22} color="#ffc125" />
@@ -63,19 +39,9 @@ export function TelaConfig() {
           </View>
         </TouchableOpacity>
 
-        <Text style={estilos.tituloSecao}>Notificação</Text>
-        <TouchableOpacity style={estilos.item}>
-          <View style={estilos.caixaIcone}>
-            <Ionicons name="alert-circle-outline" size={22} color="#ffc125" />
-          </View>
-          <View>
-            <Text style={estilos.tituloItem}>Alertas de Produção Baixa</Text>
-            <Text style={estilos.subtituloItem}>Seja avisado quando a produção cai</Text>
-          </View>
-        </TouchableOpacity>
 
         <Text style={estilos.tituloSecao}>Ajuda e Suporte</Text>
-        <TouchableOpacity style={estilos.item}>
+        <TouchableOpacity style={estilos.item} onPress={() => router.push("/empresarial/suporte")}>
           <View style={estilos.caixaIcone}>
             <Ionicons name="help-circle-outline" size={22} color="#ffc125" />
           </View>
@@ -90,17 +56,6 @@ export function TelaConfig() {
 }
 
 const estilos = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f5f5f5",
-    padding: 24,
-  },
-  titulo: {
-    fontSize: 22,
-    fontWeight: "bold",
-    marginBottom: 24,
-    color: "#222",
-  },
   tela: {
     flex: 1,
     backgroundColor: "#f5f5f5",
@@ -112,7 +67,16 @@ const estilos = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
     marginBottom: 20,
+    marginTop: 10,
   },
+  botaoVoltar: {
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  justifyContent: "center",
+  alignItems: "center",
+},
+
   tituloCabecalho: {
     fontSize: 18,
     fontWeight: "600",
@@ -129,33 +93,9 @@ const estilos = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     backgroundColor: "#fff",
-    padding: 18,
-    borderRadius: 14,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.04,
-    shadowRadius: 2,
-    elevation: 1,
-  },
-  itemTexto: {
-    marginLeft: 14,
-    fontSize: 16,
-    color: "#333",
-  },
-  logoutBtn: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#FFC125",
-    padding: 16,
-    borderRadius: 14,
-    marginTop: 32,
-    justifyContent: "center",
-  },
-  logoutTexto: {
-    color: "#fff",
-    fontWeight: "bold",
-    fontSize: 16,
-    marginLeft: 10,
+    padding: 12,
+    borderRadius: 12,
+    marginBottom: 10,
   },
   caixaIcone: {
     width: 40,

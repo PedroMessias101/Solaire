@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
         elevation: 3
     },
     nextButtonText: {
-        color: '#fff',
+        color: '#000',
         fontSize: 15,
         fontWeight: '600'
     },

@@ -46,9 +46,6 @@ export default function HomeEmpresarial() {
     outputRange: ["0deg", "360deg"],
   });
 
-  //===============================
-  // STEP 1 — CHECAR TOKEN
-  //===============================
   useEffect(() => {
     const checkToken = async () => {
       const storedToken = await AsyncStorage.getItem("userToken");
@@ -62,9 +59,6 @@ export default function HomeEmpresarial() {
     checkToken();
   }, []);
 
-  //===============================
-  // STEP 2 — BUSCAR USER + PLACAS
-  //===============================
   useEffect(() => {
     if (tokenChecked && token) {
       fetchUserAndPanels();
@@ -75,7 +69,7 @@ export default function HomeEmpresarial() {
     try {
       setLoading(true);
 
-      // ----- USER -----
+
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -91,7 +85,6 @@ export default function HomeEmpresarial() {
         setUser(userResponse.data);
       }
 
-      // ----- PLACAS -----
       const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -228,11 +221,12 @@ export default function HomeEmpresarial() {
 
           <TouchableOpacity
             style={estilos.botao}
-            onPress={() => router.push("/empresarial/relatorios")}
+            onPress={() => router.push("/empresarial/agendamento")}
           >
-            <Feather name="file-text" size={22} color="#ffc125" />
-            <Text style={estilos.botaoTexto}>Relatórios</Text>
+            <Feather name="calendar" size={22} color="#ffc125" />
+            <Text style={estilos.botaoTexto}>Agendamento</Text>
           </TouchableOpacity>
+
 
           <TouchableOpacity
             style={estilos.botao}

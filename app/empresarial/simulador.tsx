@@ -11,6 +11,9 @@ import {
   Platform,
   Clipboard,
 } from "react-native";
+import { useRouter } from "expo-router";
+import { Ionicons } from "@expo/vector-icons";
+
 
 interface ResultadosCalculo {
   consumoMensal: number;
@@ -67,6 +70,9 @@ export default function SimuladorEnergiaSolar(): JSX.Element {
     return Number.isFinite(numero) && !isNaN(numero) ? numero : valorPadrao;
   };
 
+  const router = useRouter();
+
+
   const resultados: ResultadosCalculo = useMemo(() => {
     const {
       consumoMensalKwh,
@@ -121,7 +127,7 @@ export default function SimuladorEnergiaSolar(): JSX.Element {
     // Cálculos de produção e economia
     const producaoDiariaKwh = (paineisViaveis * potenciaPainelW * horasSol * eficiencia) / 1000;
     const producaoMensalKwh = producaoDiariaKwh * 30;
-    const percentualCobertura = consumoMensal ? 
+    const percentualCobertura = consumoMensal ?
       Math.min(100, (producaoMensalKwh / consumoMensal) * 100) : 0;
 
     const economiaMensal = producaoMensalKwh * tarifa;
@@ -161,8 +167,8 @@ export default function SimuladorEnergiaSolar(): JSX.Element {
 • Área Necessária: ${resultados.areaNecessaria.toFixed(1)} m²
 • Investimento Total: R$ ${resultados.custoTotalSistema.toLocaleString('pt-BR')}
 • Economia Mensal: R$ ${resultados.economiaMensal.toFixed(2)}
-• Payback Estimado: ${Number.isFinite(resultados.tempoRetornoAnos) ? 
-      resultados.tempoRetornoAnos.toFixed(1) + " anos" : "—"}
+• Payback Estimado: ${Number.isFinite(resultados.tempoRetornoAnos) ?
+        resultados.tempoRetornoAnos.toFixed(1) + " anos" : "—"}
 • Cobertura Energética: ${resultados.percentualCobertura.toFixed(1)}% do consumo
 • Produção Mensal: ${resultados.producaoMensalKwh.toFixed(0)} kWh`;
 
@@ -171,8 +177,8 @@ export default function SimuladorEnergiaSolar(): JSX.Element {
       texto,
       [
         { text: "Fechar", style: "cancel" },
-        { 
-          text: "Copiar", 
+        {
+          text: "Copiar",
           onPress: async () => {
             await Clipboard.setString(texto);
             Alert.alert("Sucesso", "Relatório copiado para a área de transferência!");
@@ -226,6 +232,13 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
       behavior={Platform.select({ ios: "padding", android: undefined })}
     >
       <ScrollView contentContainerStyle={estilos.container}>
+        <TouchableOpacity
+          onPress={() => router.push("/empresarial/home")}
+          style={estilos.botaoVoltar}
+        >
+          <Ionicons name="arrow-back" size={22} color="#000" />
+        </TouchableOpacity>
+
         <View style={estilos.cabecalho}>
           <Text style={estilos.titulo}>Simulador de Energia Solar</Text>
           <Text style={estilos.subtitulo}>
@@ -251,11 +264,11 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
         </Secao>
 
         <Secao titulo="Orçamento e Espaço Disponível">
-          <EntradaLinha 
-            rotulo="Orçamento Disponível" 
-            valor={dadosEntrada.orcamento} 
-            onChange={(valor) => atualizarEntrada('orcamento', valor)} 
-            placeholder="ex: 20000" 
+          <EntradaLinha
+            rotulo="Orçamento Disponível"
+            valor={dadosEntrada.orcamento}
+            onChange={(valor) => atualizarEntrada('orcamento', valor)}
+            placeholder="ex: 20000"
             unidade="R$"
           />
           <EntradaLinha
@@ -268,32 +281,32 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
         </Secao>
 
         <Secao titulo="Especificações Técnicas do Sistema" >
-          <EntradaLinha 
-            rotulo="Potência por Painel" 
-            valor={dadosEntrada.potenciaPainel} 
-            onChange={(valor) => atualizarEntrada('potenciaPainel', valor)} 
-            placeholder="ex: 400" 
+          <EntradaLinha
+            rotulo="Potência por Painel"
+            valor={dadosEntrada.potenciaPainel}
+            onChange={(valor) => atualizarEntrada('potenciaPainel', valor)}
+            placeholder="ex: 400"
             unidade="W"
           />
-          <EntradaLinha 
-            rotulo="Área por Painel" 
-            valor={dadosEntrada.areaPainel} 
-            onChange={(valor) => atualizarEntrada('areaPainel', valor)} 
-            placeholder="ex: 1.94" 
+          <EntradaLinha
+            rotulo="Área por Painel"
+            valor={dadosEntrada.areaPainel}
+            onChange={(valor) => atualizarEntrada('areaPainel', valor)}
+            placeholder="ex: 1.94"
             unidade="m²"
           />
-          <EntradaLinha 
-            rotulo="Custo por Painel" 
-            valor={dadosEntrada.custoPainel} 
-            onChange={(valor) => atualizarEntrada('custoPainel', valor)} 
-            placeholder="ex: 650" 
+          <EntradaLinha
+            rotulo="Custo por Painel"
+            valor={dadosEntrada.custoPainel}
+            onChange={(valor) => atualizarEntrada('custoPainel', valor)}
+            placeholder="ex: 650"
             unidade="R$"
           />
-          <EntradaLinha 
-            rotulo="Custo do Inversor" 
-            valor={dadosEntrada.custoInversor} 
-            onChange={(valor) => atualizarEntrada('custoInversor', valor)} 
-            placeholder="ex: 3500" 
+          <EntradaLinha
+            rotulo="Custo do Inversor"
+            valor={dadosEntrada.custoInversor}
+            onChange={(valor) => atualizarEntrada('custoInversor', valor)}
+            placeholder="ex: 3500"
             unidade="R$"
           />
           <EntradaLinha
@@ -310,47 +323,47 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
             placeholder="ex: 0.85"
             unidade=""
           />
-          <EntradaLinha 
-            rotulo="Horas de Sol Pico" 
-            valor={dadosEntrada.horasSolPicoDia} 
-            onChange={(valor) => atualizarEntrada('horasSolPicoDia', valor)} 
-            placeholder="ex: 4.5" 
+          <EntradaLinha
+            rotulo="Horas de Sol Pico"
+            valor={dadosEntrada.horasSolPicoDia}
+            onChange={(valor) => atualizarEntrada('horasSolPicoDia', valor)}
+            placeholder="ex: 4.5"
             unidade="h/dia"
           />
         </Secao>
 
         <Secao titulo="Proposta Recomendada" >
-          <LinhaResultado 
-            rotulo="Sistema Proposto" 
-            valor={`${resultados.paineisViaveis} painéis`} 
+          <LinhaResultado
+            rotulo="Sistema Proposto"
+            valor={`${resultados.paineisViaveis} painéis`}
             destaque={true}
           />
-          <LinhaResultado 
-            rotulo="Potência Total" 
-            valor={`${(resultados.paineisViaveis * parseNumero(dadosEntrada.potenciaPainel) / 1000).toFixed(1)} kW`} 
+          <LinhaResultado
+            rotulo="Potência Total"
+            valor={`${(resultados.paineisViaveis * parseNumero(dadosEntrada.potenciaPainel) / 1000).toFixed(1)} kW`}
           />
-          <LinhaResultado 
-            rotulo="Área Necessária" 
+          <LinhaResultado
+            rotulo="Área Necessária"
             valor={`${resultados.areaNecessaria.toFixed(1)} m²`}
             status={resultados.cabeNaArea ? "success" : "error"}
           />
-          <LinhaResultado 
-            rotulo="Investimento Total" 
+          <LinhaResultado
+            rotulo="Investimento Total"
             valor={`R$ ${resultados.custoTotalSistema.toLocaleString('pt-BR')}`}
             status={resultados.dentroDoOrcamento ? "success" : "error"}
           />
-          <LinhaResultado 
-            rotulo="Cobertura do Consumo" 
-            valor={`${resultados.percentualCobertura.toFixed(1)}%`} 
+          <LinhaResultado
+            rotulo="Cobertura do Consumo"
+            valor={`${resultados.percentualCobertura.toFixed(1)}%`}
             status={resultados.percentualCobertura >= 80 ? "success" : "warning"}
           />
-          <LinhaResultado 
-            rotulo="Economia Mensal" 
-            valor={`R$ ${resultados.economiaMensal.toFixed(2)}`} 
+          <LinhaResultado
+            rotulo="Economia Mensal"
+            valor={`R$ ${resultados.economiaMensal.toFixed(2)}`}
           />
           <LinhaResultado
             rotulo="Retorno do Investimento"
-            valor={Number.isFinite(resultados.tempoRetornoAnos) ? 
+            valor={Number.isFinite(resultados.tempoRetornoAnos) ?
               `${resultados.tempoRetornoAnos.toFixed(1)} anos` : "—"}
           />
         </Secao>
@@ -358,7 +371,7 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
         {/* Alertas e Recomendações */}
         <View style={estilos.containerAlertas}>
           {!resultados.cabeNaArea && (
-            <Alerta 
+            <Alerta
               tipo="error"
               titulo="Área Insuficiente"
               mensagem={`Necessário: ${resultados.areaNecessaria.toFixed(1)} m² | Disponível: ${dadosEntrada.areaDisponivelM2} m²`}
@@ -366,7 +379,7 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
           )}
 
           {!resultados.dentroDoOrcamento && (
-            <Alerta 
+            <Alerta
               tipo="error"
               titulo="Orçamento Insuficiente"
               mensagem={`Faltam: R$ ${(resultados.custoTotalSistema - parseNumero(dadosEntrada.orcamento)).toLocaleString('pt-BR')}`}
@@ -374,7 +387,7 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
           )}
 
           {resultados.percentualCobertura < 80 && resultados.percentualCobertura > 0 && (
-            <Alerta 
+            <Alerta
               tipo="warning"
               titulo="Cobertura Parcial"
               mensagem={`Sistema cobre ${resultados.percentualCobertura.toFixed(1)}% do consumo mensal`}
@@ -382,7 +395,7 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
           )}
 
           {resultados.tempoRetornoAnos < 5 && (
-            <Alerta 
+            <Alerta
               tipo="success"
               titulo="Excelente Retorno"
               mensagem="Payback inferior a 5 anos - investimento altamente viável"
@@ -395,7 +408,7 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
           <TouchableOpacity style={estilos.botaoSecundario} onPress={mostrarAnaliseDetalhada}>
             <Text style={estilos.textoBotaoSecundario}>Análise Detalhada</Text>
           </TouchableOpacity>
-          
+
           <TouchableOpacity style={estilos.botaoPrimario} onPress={compartilharEstimativa}>
             <Text style={estilos.textoBotaoPrimario}>Gerar Relatório</Text>
           </TouchableOpacity>
@@ -412,8 +425,8 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
 }
 
 
-function Secao({ children, titulo, icone }: { 
-  children: React.ReactNode; 
+function Secao({ children, titulo, icone }: {
+  children: React.ReactNode;
   titulo: string;
   icone?: string;
 }) {
@@ -448,13 +461,13 @@ function EntradaLinha({ rotulo, valor, onChange, placeholder, unidade }: Entrada
   );
 }
 
-function LinhaResultado({ 
-  rotulo, 
-  valor, 
+function LinhaResultado({
+  rotulo,
+  valor,
   destaque = false,
-  status 
-}: { 
-  rotulo: string; 
+  status
+}: {
+  rotulo: string;
   valor: string | number;
   destaque?: boolean;
   status?: "success" | "error" | "warning";
@@ -518,6 +531,7 @@ const estilos = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
     backgroundColor: '#F9FAFB',
+    marginTop: 40,
   },
   cabecalho: {
     alignItems: 'center',
@@ -697,4 +711,12 @@ const estilos = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
+  botaoVoltar: {
+    position: "absolute",
+    top: 20,
+    left: 10,
+    zIndex: 999,
+    padding: 8,
+  }
+
 });
