@@ -1,4 +1,3 @@
-// app/(onde_esta)/HomeEmpresarial.tsx
 import React, { useEffect, useState, useRef } from "react";
 import {
   View,
@@ -6,20 +5,39 @@ import {
   StyleSheet,
   ScrollView,
   TouchableOpacity,
-  Image,
   Animated,
   Easing,
+  LayoutChangeEvent,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
+// Componentes assumidos
+import ChatBot from "../components/ChatBot";
 import { NavBarEmpresarial } from "../components/NavBarEmpresarial";
 import Notificacoes from "../components/notific";
-import WeatherCard from '../components/Clima';
-
-// TOUR
+import WeatherCard from "../components/Clima";
 import { TourProvider, TourStep } from "../components/TourGuide";
+
+// --- Tipos de Dados ---
+interface UserData {
+  name: string;
+  email: string;
+  // Adicione outros campos de usuário aqui
+}
+
+interface PlacaData {
+  id: string; // Exemplo de campo
+  serial: string;
+  status: "Ativa" | "Inativa" | string;
+  energia_kWh: number;
+  tensao: number;
+  corrente: number;
+  temperatura: number;
+  // Adicione outros campos da placa aqui
+}
+// -----------------------
 
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
@@ -27,19 +45,23 @@ const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
 export default function HomeEmpresarial() {
   const router = useRouter();
 
-  const [user, setUser] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  // Tipagem de estado
+  const [user, setUser] = useState<UserData | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
   const [token, setToken] = useState<string | null>(null);
-  const [placas, setPlacas] = useState<any[]>([]);
-  const [tokenChecked, setTokenChecked] = useState(false);
+  const [placas, setPlacas] = useState<PlacaData[]>([]);
+  const [tokenChecked, setTokenChecked] = useState<boolean>(false);
 
   const [tourSeen, setTourSeen] = useState<boolean | null>(null);
-  const [forceStartTour, setForceStartTour] = useState(false); // inicia tour manualmente quando true
+  const [forceStartTour, setForceStartTour] = useState<boolean>(false);
 
   const scrollRef = useRef<ScrollView | null>(null);
 
-  // Animação do Sol girando
+  // ======================
+  // ANIMAÇÃO DO SOL
+  // ======================
   const spinValue = useRef(new Animated.Value(0)).current;
+
   useEffect(() => {
     Animated.loop(
       Animated.timing(spinValue, {
@@ -56,10 +78,13 @@ export default function HomeEmpresarial() {
     outputRange: ["0deg", "360deg"],
   });
 
+  // ======================
   // CHECK TOKEN
+  // ======================
   useEffect(() => {
     const checkToken = async () => {
       const storedToken = await AsyncStorage.getItem("userToken");
+
       if (!storedToken) {
         router.replace("/auth/login");
         return;
@@ -71,25 +96,29 @@ export default function HomeEmpresarial() {
   }, []);
 
   useEffect(() => {
-    if (tokenChecked && token) {
-      fetchUserAndPanels();
-    }
+    if (tokenChecked && token) fetchUserAndPanels();
   }, [tokenChecked, token]);
 
-  // CARREGAR FLAG DO TOUR (para evitar iniciar sempre)
+  // ======================
+  // LOAD TOUR FLAG
+  // ======================
   useEffect(() => {
     const loadTourFlag = async () => {
-      try {
-        const value = await AsyncStorage.getItem("tourSeen");
-        setTourSeen(value === "true");
-      } catch (err) {
-        setTourSeen(false);
-      }
+      const flag = await AsyncStorage.getItem("tourSeen");
+      setTourSeen(flag === "true");
     };
     loadTourFlag();
   }, []);
 
+  // ======================
+  // FETCH DATA
+  // ======================
   const fetchUserAndPanels = async () => {
+    if (!token) {
+        setLoading(false);
+        return;
+    }
+    
     try {
       setLoading(true);
 
@@ -97,7 +126,6 @@ export default function HomeEmpresarial() {
         headers: { Authorization: `Bearer ${token}` },
       });
 
-      // Token inválido
       if (resUser.status === 401) {
         await AsyncStorage.removeItem("userToken");
         router.replace("/auth/login");
@@ -105,39 +133,38 @@ export default function HomeEmpresarial() {
       }
 
       const userResponse = await resUser.json();
-      if (userResponse.success) setUser(userResponse.data);
+      if (userResponse.success) setUser(userResponse.data as UserData);
 
-      // Buscar placas
       const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
-
       const placasResponse = await resPlacas.json();
-      const placasDoUsuario = placasResponse.data || [];
 
-      // Buscar dados simulados
-      const placasComDados = await Promise.all(
-        placasDoUsuario.map(async (placa: any) => {
+      const placasDoUsuario: PlacaData[] = placasResponse.data || [];
+
+      const placasCompletas = await Promise.all(
+        placasDoUsuario.map(async (placa) => {
           if (placa.status !== "Ativa")
-            return { ...placa, energia_kWh: 0, tensao: 0, corrente: 0, temperatura: 0 };
+            return { ...placa, energia_kWh: 0, tensao: 0, corrente: 0, temperatura: 0 } as PlacaData;
 
           try {
             const resSim = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
-            const dadosSim = await resSim.json();
+            const sim = await resSim.json();
+
             return {
               ...placa,
-              energia_kWh: dadosSim.energia_kWh || 0,
-              tensao: dadosSim.tensao || 0,
-              corrente: dadosSim.corrente || 0,
-              temperatura: dadosSim.temperatura || 0,
-            };
+              energia_kWh: sim.energia_kWh || 0,
+              tensao: sim.tensao || 0,
+              corrente: sim.corrente || 0,
+              temperatura: sim.temperatura || 0,
+            } as PlacaData;
           } catch {
-            return { ...placa, energia_kWh: 0, tensao: 0, corrente: 0, temperatura: 0 };
+            return { ...placa, energia_kWh: 0, tensao: 0, corrente: 0, temperatura: 0 } as PlacaData;
           }
         })
       );
 
-      setPlacas(placasComDados);
+      setPlacas(placasCompletas);
     } catch (err) {
       console.log("Erro ao buscar dados:", err);
     } finally {
@@ -145,41 +172,41 @@ export default function HomeEmpresarial() {
     }
   };
 
+  // ======================
+  // LOGOUT
+  // ======================
   const handleLogout = async () => {
     await AsyncStorage.removeItem("userToken");
     router.replace("/auth/login");
   };
 
+  // ======================
+  // TOUR ACTIONS
+  // ======================
   const marcarTourComoVisto = async () => {
-    try {
-      await AsyncStorage.setItem("tourSeen", "true");
-      setTourSeen(true);
-      setForceStartTour(false);
-    } catch (err) {
-      console.log("Erro ao salvar flag do tour", err);
-    }
+    await AsyncStorage.setItem("tourSeen", "true");
+    setTourSeen(true);
+    setForceStartTour(false);
   };
 
   const iniciarTourManualmente = async () => {
-    // remove a flag para forçar o autoStart apenas nesta sessão
-    try {
-      await AsyncStorage.removeItem("tourSeen");
-      setTourSeen(false);
-      setForceStartTour(true);
-    } catch (err) {
-      console.log("Erro ao resetar flag do tour", err);
-    }
+    await AsyncStorage.removeItem("tourSeen");
+    setTourSeen(false);
+    setForceStartTour(true);
   };
 
+  // ======================
+  // MÉTRICAS
+  // ======================
   const calcularTotais = () => {
     const ativos = placas.filter((p) => p.status === "Ativa");
 
-    const totalEnergia = ativos.reduce((a, p) => a + Number(p.energia_kWh || 0), 0);
-    const mediaTensao =
+    const totalEnergia: number = ativos.reduce((a, p) => a + Number(p.energia_kWh || 0), 0);
+    const mediaTensao: number =
       ativos.length ? ativos.reduce((a, p) => a + Number(p.tensao || 0), 0) / ativos.length : 0;
-    const mediaCorrente =
+    const mediaCorrente: number =
       ativos.length ? ativos.reduce((a, p) => a + Number(p.corrente || 0), 0) / ativos.length : 0;
-    const mediaTemperatura =
+    const mediaTemperatura: number =
       ativos.length ? ativos.reduce((a, p) => a + Number(p.temperatura || 0), 0) / ativos.length : 0;
 
     return { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura };
@@ -187,15 +214,18 @@ export default function HomeEmpresarial() {
 
   const { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura } = calcularTotais();
 
+  // ======================
+  // LOADING
+  // ======================
   if (tourSeen === null || !tokenChecked || loading) {
     return (
       <View style={estilos.loadingContainer}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
           <MaterialCommunityIcons name="white-balance-sunny" size={35} color="#FFc125" />
         </Animated.View>
-
-        <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>Carregando dados empresariais...</Text>
-
+        <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>
+          Carregando dados empresariais...
+        </Text>
       </View>
     );
   }
@@ -203,16 +233,17 @@ export default function HomeEmpresarial() {
   return (
     <TourProvider
       scrollRef={scrollRef}
-      // só inicia automaticamente se o usuário NÃO tiver visto antes ou se o usuário clicou em iniciar manualmente
       autoStart={!tourSeen || forceStartTour}
       theme={{ primary: "#2e86de", highlightColor: "#FFC107" }}
     >
-      <View style={{ flex: 1 }}>
-        <ScrollView ref={scrollRef} style={estilos.container} contentContainerStyle={{ paddingBottom: 160 }}>
-
-          {/* ================= HEADER ================= */}
+      <View style={{ flex: 1, backgroundColor: "#f9fafc" }}>
+        <ScrollView
+          ref={scrollRef}
+          style={estilos.container}
+          contentContainerStyle={{ paddingBottom: 160 }}
+        >
+          {/* HEADER */}
           <View style={estilos.header}>
-
             <TourStep stepKey="logo" title="Logo da Empresa" description="Clique para ver informações.">
               <TouchableOpacity>
                 <Animated.Image
@@ -221,7 +252,8 @@ export default function HomeEmpresarial() {
                 />
               </TouchableOpacity>
             </TourStep>
-
+            {/* O passo de notificação pode ser adicionado aqui, se o componente Notificacoes puder ser envolvido */}
+            
             <View style={{ flex: 1 }}>
               <Text style={estilos.username}>{user?.name ?? "Usuário"}</Text>
               <Text style={estilos.email}>{user?.email ?? "Painel Empresarial"}</Text>
@@ -230,92 +262,114 @@ export default function HomeEmpresarial() {
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Notificacoes />
 
-              {/* BOTÕES DE TOUR: Iniciar / Pular */}
-              <TouchableOpacity onPress={iniciarTourManualmente} style={{ padding: 8 }} accessibilityLabel="Iniciar tour">
-                <Feather name="play-circle" size={22} color="#2e86de" />
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={marcarTourComoVisto} style={{ padding: 8 }} accessibilityLabel="Pular tour">
-                <Feather name="x-circle" size={22} color="#ff5252" />
-              </TouchableOpacity>
-
-              <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }} accessibilityLabel="Sair">
+              <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }}>
                 <Feather name="log-out" size={24} color="#000" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* ================= DASHBOARD ================= */}
-          <Text style={estilos.titulo}>Dashboard Empresarial</Text>
+          {/* DASHBOARD - 4 PASSOS DE TOUR AQUI */}
+          <Text style={estilos.titulo}>Métricas Principais</Text>
 
           <View style={estilos.grid}>
-            <TourStep stepKey="energia-total" title="Energia Total" description="Total gerado pelas placas.">
-              <View style={estilos.card}>
-                <MaterialCommunityIcons name="solar-power" size={28} color="#ffa726" />
-                <Text style={estilos.cardLabel}>Energia Total</Text>
-                <Text style={estilos.cardValor}>{totalEnergia.toFixed(2)} kWh</Text>
-              </View>
-            </TourStep>
-
-            <TourStep stepKey="tensao-media" title="Tensão Média" description="Tensão média entre as placas.">
-              <View style={estilos.card}>
-                <MaterialCommunityIcons name="flash" size={28} color="#FFC107" />
-                <Text style={estilos.cardLabel}>Tensão Média</Text>
-                <Text style={estilos.cardValor}>{mediaTensao.toFixed(1)} V</Text>
-              </View>
-            </TourStep>
-
-            <View style={estilos.card}>
-              <MaterialCommunityIcons name="current-ac" size={28} color="#FFB300" />
-              <Text style={estilos.cardLabel}>Corrente Média</Text>
-              <Text style={estilos.cardValor}>{mediaCorrente.toFixed(1)} A</Text>
+            {/* 1. Energia Total */}
+            <View style={estilos.gridItem}>
+              <TourStep stepKey="energia-total" title="Energia Total" description="Total de energia gerada pelas placas ativas (em kWh).">
+                <View style={estilos.card}>
+                  <MaterialCommunityIcons name="solar-power" size={28} color="#ffa726" />
+                  <Text style={estilos.cardLabel}>Energia Total</Text>
+                  <Text style={estilos.cardValor}>{totalEnergia.toFixed(2)} kWh</Text>
+                </View>
+              </TourStep>
+            </View>
+            
+            {/* 2. Tensão Média */}
+            <View style={estilos.gridItem}>
+              <TourStep stepKey="tensao-media" title="Tensão Média" description="Tensão média medida entre as placas solares.">
+                <View style={estilos.card}>
+                  <MaterialCommunityIcons name="flash" size={28} color="#FFC107" />
+                  <Text style={estilos.cardLabel}>Tensão Média</Text>
+                  <Text style={estilos.cardValor}>{mediaTensao.toFixed(1)} V</Text>
+                </View>
+              </TourStep>
+            </View>
+            
+            {/* 3. Corrente Média */}
+            <View style={estilos.gridItem}>
+              <TourStep stepKey="corrente-media" title="Corrente Média" description="Corrente média de saída, indicando o fluxo de energia.">
+                <View style={estilos.card}>
+                  <MaterialCommunityIcons name="current-ac" size={28} color="#FFB300" />
+                  <Text style={estilos.cardLabel}>Corrente Média</Text>
+                  <Text style={estilos.cardValor}>{mediaCorrente.toFixed(1)} A</Text>
+                </View>
+              </TourStep>
             </View>
 
-            <View style={estilos.card}>
-              <MaterialCommunityIcons name="thermometer" size={28} color="#FFc125" />
-              <Text style={estilos.cardLabel}>Temperatura Média</Text>
-              <Text style={estilos.cardValor}>{mediaTemperatura.toFixed(1)} °C</Text>
+            {/* 4. Temperatura Média */}
+            <View style={estilos.gridItem}>
+              <TourStep stepKey="temperatura-media" title="Temperatura Média" description="Temperatura média de operação das placas. Valores altos podem indicar ineficiência.">
+                <View style={estilos.card}>
+                  <MaterialCommunityIcons name="thermometer" size={28} color="#FFc125" />
+                  <Text style={estilos.cardLabel}>Temperatura Média</Text>
+                  <Text style={estilos.cardValor}>{mediaTemperatura.toFixed(1)} °C</Text>
+                </View>
+              </TourStep>
             </View>
           </View>
 
           <WeatherCard />
 
-          {/* ================= AÇÕES RÁPIDAS ================= */}
+          {/* AÇÕES RÁPIDAS - 2 PASSOS DE TOUR AQUI */}
           <Text style={estilos.subtitulo}>Ações Rápidas</Text>
 
           <View style={estilos.acoesContainer}>
-            <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/simulador")}>
-              <Feather name="server" size={22} color="#ffc125" />
-              <Text style={estilos.botaoTexto}>Simulador</Text>
-            </TouchableOpacity>
+            {/* 5. Simulador */}
+            <TourStep stepKey="acao-simulador" title="Simulador de Placas" description="Acesse a ferramenta para planejar ou simular novas instalações solares.">
+              <TouchableOpacity
+                style={estilos.botao}
+                onPress={() => router.push("/empresarial/simulador")}
+              >
+                <Feather name="server" size={22} color="#ffc125" />
+                <Text style={estilos.botaoTexto}>Simulador</Text>
+              </TouchableOpacity>
+            </TourStep>
 
-            <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/agendamento")}>
-              <Feather name="calendar" size={22} color="#ffc125" />
-              <Text style={estilos.botaoTexto}>Agendamento</Text>
-            </TouchableOpacity>
+            {/* 6. Agendamento */}
+            <TourStep stepKey="acao-agendamento" title="Agendamento" description="Marque visitas técnicas, manutenções ou consultas.">
+              <TouchableOpacity
+                style={estilos.botao}
+                onPress={() => router.push("/empresarial/agendamento")}
+              >
+                <Feather name="calendar" size={22} color="#ffc125" />
+                <Text style={estilos.botaoTexto}>Agendamento</Text>
+              </TouchableOpacity>
+            </TourStep>
 
-            <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/configuracao")}>
+            <TouchableOpacity
+              style={estilos.botao}
+              onPress={() => router.push("/empresarial/configuracao")}
+            >
               <Feather name="settings" size={22} color="#ffc125" />
               <Text style={estilos.botaoTexto}>Configurações</Text>
             </TouchableOpacity>
           </View>
-
         </ScrollView>
 
-        {/* ================= COMPONENTES FIXOS ================= */}
-        {/* Note: o botao flutuante do ChatBot foi removido conforme solicitado. */}
-
+        {/* NAVBAR - 7º passo (opcional, se a NavBar puder ser envolvida) */}
         <NavBarEmpresarial placas={placas} setPlacas={setPlacas} />
-
       </View>
     </TourProvider>
   );
 }
 
 const estilos = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f9fafc", padding: 16, marginTop: 40 },
+  container: { flex: 1, padding: 16, marginTop: 40 },
 
-  loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
+  loadingContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
+  },
 
   header: {
     flexDirection: "row",
@@ -330,53 +384,68 @@ const estilos = StyleSheet.create({
     elevation: 4,
   },
 
-  avatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15, borderWidth: 2, borderColor: "#ffc125" },
+  avatar: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    marginRight: 15,
+    borderWidth: 2,
+    borderColor: "#ffc125",
+  },
 
   username: { fontSize: 20, fontWeight: "700", color: "#222" },
   email: { fontSize: 14, color: "#666", marginTop: 2 },
 
   titulo: { fontSize: 22, fontWeight: "700", marginBottom: 20, color: "#111" },
 
-  grid: { 
-    flexDirection: "row", 
-    flexWrap: "wrap", 
-    justifyContent: "space-between" 
+  grid: {
+    flexDirection: "row",
+    flexWrap: "wrap",
+    justifyContent: "space-between",
+  },
+
+  gridItem: {
+    flexBasis: "48%",
+    marginBottom: 16,
+    minHeight: 120,
+    height: 120,
   },
 
   card: {
-    flexBasis: "48%",
+    flex: 1,
     backgroundColor: "#fff",
     borderRadius: 18,
     padding: 18,
-    marginBottom: 16, 
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 5,
     elevation: 3,
     alignItems: "center",
     justifyContent: "center",
-    minHeight: 120, 
-    height: 120, 
   },
 
-  cardLabel: { 
-    fontSize: 15, 
-    color: "#555", 
-    marginTop: 8, 
+  cardLabel: {
+    fontSize: 15,
+    color: "#555",
+    marginTop: 8,
     textAlign: "center",
-    flexShrink: 1,
-  },
-  
-  cardValor: { 
-    fontSize: 20, 
-    fontWeight: "bold", 
-    color: "#111", 
-    marginTop: 6, 
-    textAlign: "center" 
   },
 
+  cardValor: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#111",
+    marginTop: 6,
+    textAlign: "center",
+  },
 
-  subtitulo: { marginTop: 25, fontSize: 18, fontWeight: "700", marginBottom: 12, color: "#222" },
+  subtitulo: {
+    marginTop: 25,
+    fontSize: 18,
+    fontWeight: "700",
+    marginBottom: 12,
+    color: "#222",
+  },
 
   acoesContainer: { gap: 12 },
 
@@ -394,6 +463,4 @@ const estilos = StyleSheet.create({
   },
 
   botaoTexto: { fontSize: 16, color: "#000", fontWeight: "600" },
-
-  chatBotContainer: { position: "absolute", bottom: 80, right: 16, zIndex: 1000 },
 });
