@@ -9,7 +9,6 @@ export default function WeatherCard() {
   const [energyData, setEnergyData] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  // Localização fixa
   const latitude = -23.55;
   const longitude = -46.63;
 
@@ -22,18 +21,15 @@ export default function WeatherCard() {
 
       setWeather(data.current);
 
-      // Cálculo simulado de produção de energia baseado na radiação solar e temperatura
-      const todayRadiation = data.daily.shortwave_radiation_sum[1]; // Hoje
-      const yesterdayRadiation = data.daily.shortwave_radiation_sum[0]; // Ontem
-      
-      const todayTemp = data.daily.temperature_2m_max[1]; // Temperatura máxima de hoje
-      const yesterdayTemp = data.daily.temperature_2m_max[0]; // Temperatura máxima de ontem
+      const todayRadiation = data.daily.shortwave_radiation_sum[1];
+      const yesterdayRadiation = data.daily.shortwave_radiation_sum[0];
 
-      // Fator de eficiência (temperaturas muito altas reduzem a eficiência dos painéis)
+      const todayTemp = data.daily.temperature_2m_max[1];
+      const yesterdayTemp = data.daily.temperature_2m_max[0];
+
       const todayEfficiency = Math.max(0.8, 1 - (todayTemp - 25) * 0.005);
       const yesterdayEfficiency = Math.max(0.8, 1 - (yesterdayTemp - 25) * 0.005);
 
-      // Produção estimada (radiação * eficiência)
       const todayProduction = todayRadiation * todayEfficiency;
       const yesterdayProduction = yesterdayRadiation * yesterdayEfficiency;
 
@@ -57,7 +53,7 @@ export default function WeatherCard() {
     const icons = {
       0: "sunny",
       1: "partly-sunny",
-      2: "partly-sunny", 
+      2: "partly-sunny",
       3: "cloudy",
       45: "cloudy",
       48: "cloudy",
@@ -156,71 +152,58 @@ export default function WeatherCard() {
           <Text style={styles.locationText}>São Paulo, SP</Text>
         </View>
         <Text style={styles.time}>
-          {new Date().toLocaleTimeString('pt-BR', { 
-            hour: '2-digit', 
-            minute: '2-digit' 
-          })}
+          {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
         </Text>
       </View>
 
-      {/* Conteúdo Principal */}
       <View style={styles.content}>
-        {/* Ícone do Tempo */}
         <View style={styles.weatherIconContainer}>
-          <Ionicons 
-            name={getWeatherIcon(weather.weather_code)} 
-            size={44} 
-            color={getWeatherColor(weather.weather_code)} 
+          <Ionicons
+            name={getWeatherIcon(weather.weather_code)}
+            size={44}
+            color={getWeatherColor(weather.weather_code)}
           />
         </View>
 
-        {/* Temperatura e Condição */}
         <View style={styles.weatherInfo}>
-          <Text style={styles.temperature}>
-            {Math.round(weather.temperature_2m)}°
-          </Text>
-          <Text style={styles.condition}>
-            {getWeatherCondition(weather.weather_code)}
-          </Text>
+          <Text style={styles.temperature}>{Math.round(weather.temperature_2m)}°</Text>
+          <Text style={styles.condition}>{getWeatherCondition(weather.weather_code)}</Text>
         </View>
 
-        {/* Comparação de Energia */}
         <View style={styles.energyContainer}>
           <View style={styles.energyIcon}>
-            <Ionicons 
-              name={energyData.variation >= 0 ? "trending-up" : "trending-down"} 
-              size={18} 
-              color={energyData.variation >= 0 ? "#10B981" : "#EF4444"} 
+            <Ionicons
+              name={energyData.variation >= 0 ? "trending-up" : "trending-down"}
+              size={18}
+              color={energyData.variation >= 0 ? "#10B981" : "#EF4444"}
             />
           </View>
           <View style={styles.energyContent}>
-            <Text style={[
-              styles.energyVariation,
-              { color: energyData.variation >= 0 ? "#10B981" : "#EF4444" }
-            ]}>
-              {energyData.variation >= 0 ? "+" : ""}{energyData.variation.toFixed(1)}%
+            <Text
+              style={[
+                styles.energyVariation,
+                { color: energyData.variation >= 0 ? "#10B981" : "#EF4444" },
+              ]}
+            >
+              {energyData.variation >= 0 ? "+" : ""}
+              {energyData.variation.toFixed(1)}%
             </Text>
-            <Text style={styles.energyLabel}>
-              vs. ontem
-            </Text>
+            <Text style={styles.energyLabel}>vs. ontem</Text>
           </View>
         </View>
       </View>
 
-      {/* Status Footer */}
       <View style={styles.footer}>
         <View style={styles.status}>
-          <View style={[
-            styles.statusIndicator,
-            { backgroundColor: energyStatus.color }
-          ]} />
-          <Text style={styles.statusText}>
-            {energyStatus.text}
-          </Text>
+          <View
+            style={[
+              styles.statusIndicator,
+              { backgroundColor: energyStatus.color },
+            ]}
+          />
+          <Text style={styles.statusText}>{energyStatus.text}</Text>
         </View>
-        <Text style={styles.temperatureInfo}>
-          {Math.round(energyData.temperature)}°C máxima
-        </Text>
+        <Text style={styles.temperatureInfo}>{Math.round(energyData.temperature)}°C máxima</Text>
       </View>
     </View>
   );
@@ -228,73 +211,75 @@ export default function WeatherCard() {
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: '#FFFFFF',
+    backgroundColor: "#FFFFFF",
     borderRadius: 16,
     padding: 16,
-    width: 354,
+
+    // 🔥 Responsivo
+    width: width * 0.92,
+    maxWidth: 380,
+    
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.08,
     shadowRadius: 12,
     elevation: 3,
     borderWidth: 1,
-    borderColor: '#F1F5F9',
+    borderColor: "#F1F5F9",
+
+    alignSelf: "center",
   },
   header: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
     marginBottom: 16,
   },
   location: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   locationText: {
     fontSize: 14,
     color: "#64748B",
     marginLeft: 6,
-    fontWeight: '500',
+    fontWeight: "500",
   },
   time: {
     fontSize: 12,
     color: "#94A3B8",
-    fontWeight: '500',
+    fontWeight: "500",
   },
   content: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
     marginBottom: 16,
   },
   weatherIconContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
     width: 60,
     height: 60,
+    justifyContent: "center",
+    alignItems: "center",
   },
   weatherInfo: {
-    alignItems: 'center',
     flex: 1,
+    alignItems: "center",
   },
   temperature: {
     fontSize: 32,
     fontWeight: "700",
     color: "#0F172A",
-    marginBottom: 2,
   },
   condition: {
     fontSize: 12,
     color: "#64748B",
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: "500",
+    textAlign: "center",
   },
   energyContainer: {
-    alignItems: 'center',
-    backgroundColor: '#F8FAFC',
+    alignItems: "center",
+    backgroundColor: "#F8FAFC",
     padding: 12,
     borderRadius: 12,
     minWidth: 80,
@@ -303,30 +288,27 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   energyContent: {
-    alignItems: 'center',
+    alignItems: "center",
   },
   energyVariation: {
     fontSize: 16,
     fontWeight: "700",
-    textAlign: 'center',
   },
   energyLabel: {
     fontSize: 10,
     color: "#64748B",
-    fontWeight: '500',
-    textAlign: 'center',
+    fontWeight: "500",
   },
   footer: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    flexDirection: "row",
+    justifyContent: "space-between",
     borderTopWidth: 1,
     borderTopColor: "#F1F5F9",
     paddingTop: 12,
   },
   status: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   statusIndicator: {
     width: 8,
@@ -337,11 +319,11 @@ const styles = StyleSheet.create({
   statusText: {
     fontSize: 12,
     color: "#64748B",
-    fontWeight: '500',
+    fontWeight: "500",
   },
   temperatureInfo: {
     fontSize: 11,
     color: "#94A3B8",
-    fontWeight: '500',
+    fontWeight: "500",
   },
 });

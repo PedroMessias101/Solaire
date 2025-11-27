@@ -9,7 +9,9 @@ import {
   Alert,
   Modal,
   Animated,
-  Dimensions
+  Dimensions,
+  KeyboardAvoidingView,
+  Platform
 } from "react-native";
 import { Calendar } from 'react-native-calendars';
 import Icon from 'react-native-vector-icons/MaterialIcons';
@@ -53,12 +55,9 @@ export default function ScheduleScreen() {
     setShowTimePicker(false);
   };
 
-  // CORREÇÃO: Função formatDate corrigida
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    
-    // Garante que a data seja tratada corretamente
-    const date = new Date(dateString + 'T00:00:00'); // Adiciona horário para evitar problemas de fuso
+    const date = new Date(dateString + 'T00:00:00');
     return date.toLocaleDateString('pt-BR', {
       day: '2-digit',
       month: '2-digit',
@@ -66,18 +65,16 @@ export default function ScheduleScreen() {
     });
   };
 
-  // CORREÇÃO: Função para obter a data atual no formato YYYY-MM-DD
   const getToday = () => {
     const today = new Date();
-    const year = today.getFullYear();
-    const month = String(today.getMonth() + 1).padStart(2, '0');
-    const day = String(today.getDate()).padStart(2, '0');
-    return `${year}-${month}-${day}`;
+    const y = today.getFullYear();
+    const m = String(today.getMonth() + 1).padStart(2, '0');
+    const d = String(today.getDate()).padStart(2, '0');
+    return `${y}-${m}-${d}`;
   };
 
   const showSuccessAnimation = () => {
     setShowConfetti(true);
-    
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
@@ -96,22 +93,20 @@ export default function ScheduleScreen() {
 
   const handleSchedule = () => {
     if (!selectedService || !selectedDate || !selectedTime || !customerName || !customerPhone) {
-      Alert.alert(
-        "Atenção", 
-        "Por favor, preencha todos os campos obrigatórios.",
-        [{ text: "Entendi", style: "cancel" }]
-      );
+      Alert.alert("Atenção", "Por favor, preencha todos os campos obrigatórios.");
       return;
     }
 
     const selectedServiceName = services.find(s => s.id === selectedService)?.name;
 
-    // CORREÇÃO: Usando a função formatDate corrigida
     Alert.alert(
       "Agendamento Confirmado!",
-      `**Detalhes do Agendamento:**\n\nServiço: ${selectedServiceName}\nData: ${formatDate(selectedDate)}\nHorário: ${selectedTime}\nCliente: ${customerName}\n\nEntraremos em contato em breve para confirmar todos os detalhes.`,
-      [{ 
-        text: "Perfeito!", 
+      `Serviço: ${selectedServiceName}
+Data: ${formatDate(selectedDate)}
+Horário: ${selectedTime}
+Cliente: ${customerName}`,
+      [{
+        text: "Perfeito!",
         onPress: () => {
           showSuccessAnimation();
           resetForm();
@@ -130,9 +125,8 @@ export default function ScheduleScreen() {
     setDescription("");
   };
 
-  // CORREÇÃO: Usando a função getToday corrigida
   const today = getToday();
-  
+
   const markedDates = {
     [selectedDate]: {
       selected: true,
@@ -142,378 +136,204 @@ export default function ScheduleScreen() {
   };
 
   return (
-    <View style={styles.container}>
-      <ScrollView contentContainerStyle={styles.content}>
-        {/* Header */}
-        <View style={styles.header}>
-          <Text style={styles.title}>Agendar Serviço</Text>
-          <Text style={styles.subtitle}>Preencha os dados abaixo para agendar seu serviço</Text>
-        </View>
-
-        {/* Card de Serviços */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Tipo de Serviço *</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.servicesScroll}>
-            {services.map(service => (
-              <TouchableOpacity
-                key={service.id}
-                style={[
-                  styles.serviceButton,
-                  selectedService === service.id && styles.serviceButtonSelected
-                ]}
-                onPress={() => setSelectedService(service.id)}
-              >
-                <View style={[
-                  styles.serviceIconContainer,
-                  selectedService === service.id && styles.serviceIconContainerSelected
-                ]}>
-                  <Icon 
-                    name={service.icon} 
-                    size={24} 
-                    color={selectedService === service.id ? "#ffc125" : "#6b7280"} 
-                  />
-                </View>
-                <Text style={[
-                  styles.serviceText,
-                  selectedService === service.id && styles.serviceTextSelected
-                ]}>
-                  {service.name}
-                </Text>
-              </TouchableOpacity>
-            ))}
-          </ScrollView>
-        </View>
-
-        {/* Card de Data e Hora */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Data e Horário *</Text>
-          
-          <View style={styles.datetimeRow}>
-            <TouchableOpacity 
-              style={styles.datetimeButton} 
-              onPress={() => setShowCalendar(true)}
-            >
-              <Icon name="calendar-today" size={20} color="#ffc125" />
-              <View style={styles.datetimeTextContainer}>
-                <Text style={styles.datetimeLabel}>Data</Text>
-                <Text style={selectedDate ? styles.datetimeValue : styles.datetimePlaceholder}>
-                  {selectedDate ? formatDate(selectedDate) : "Selecionar data"}
-                </Text>
-              </View>
-              <Icon name="chevron-right" size={20} color="#9ca3af" />
-            </TouchableOpacity>
-
-            <View style={styles.separator} />
-
-            <TouchableOpacity 
-              style={styles.datetimeButton} 
-              onPress={() => setShowTimePicker(true)}
-            >
-              <Icon name="access-time" size={20} color="#ffc125" />
-              <View style={styles.datetimeTextContainer}>
-                <Text style={styles.datetimeLabel}>Horário</Text>
-                <Text style={selectedTime ? styles.datetimeValue : styles.datetimePlaceholder}>
-                  {selectedTime ? selectedTime : "Selecionar horário"}
-                </Text>
-              </View>
-              <Icon name="chevron-right" size={20} color="#9ca3af" />
-            </TouchableOpacity>
-          </View>
-        </View>
-
-        {/* Modal do Calendário */}
-        <Modal
-          visible={showCalendar}
-          animationType="slide"
-          transparent={true}
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 10 : 0}
+    >
+      <View style={styles.container}>
+        <ScrollView 
+          contentContainerStyle={styles.content}
+          keyboardShouldPersistTaps="handled"
         >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Selecionar Data</Text>
-                <TouchableOpacity 
-                  style={styles.closeIcon}
-                  onPress={() => setShowCalendar(false)}
+          {/* Header */}
+          <View style={styles.header}>
+            <Text style={styles.title}>Agendar Serviço</Text>
+            <Text style={styles.subtitle}>Preencha os dados abaixo para agendar seu serviço</Text>
+          </View>
+
+          {/* Card Serviços */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Tipo de Serviço *</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false}>
+              {services.map(service => (
+                <TouchableOpacity
+                  key={service.id}
+                  style={[
+                    styles.serviceButton,
+                    selectedService === service.id && styles.serviceButtonSelected
+                  ]}
+                  onPress={() => setSelectedService(service.id)}
                 >
-                  <Icon name="close" size={24} color="#6b7280" />
+                  <View style={[
+                    styles.serviceIconContainer,
+                    selectedService === service.id && styles.serviceIconContainerSelected
+                  ]}>
+                    <Icon name={service.icon} size={24} color={selectedService === service.id ? "#ffc125" : "#6b7280"} />
+                  </View>
+                  <Text style={[
+                    styles.serviceText,
+                    selectedService === service.id && styles.serviceTextSelected
+                  ]}>
+                    {service.name}
+                  </Text>
                 </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+
+          {/* Card Data e Hora */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Data e Horário *</Text>
+
+            <View style={styles.datetimeRow}>
+              <TouchableOpacity 
+                style={styles.datetimeButton}
+                onPress={() => setShowCalendar(true)}
+              >
+                <Icon name="calendar-today" size={20} color="#ffc125" />
+                <View style={styles.datetimeTextContainer}>
+                  <Text style={styles.datetimeLabel}>Data</Text>
+                  <Text>{selectedDate ? formatDate(selectedDate) : "Selecionar data"}</Text>
+                </View>
+              </TouchableOpacity>
+
+              <View style={styles.separator} />
+
+              <TouchableOpacity 
+                style={styles.datetimeButton}
+                onPress={() => setShowTimePicker(true)}
+              >
+                <Icon name="access-time" size={20} color="#ffc125" />
+                <View style={styles.datetimeTextContainer}>
+                  <Text style={styles.datetimeLabel}>Horário</Text>
+                  <Text>{selectedTime || "Selecionar horário"}</Text>
+                </View>
+              </TouchableOpacity>
+            </View>
+          </View>
+
+          {/* Modal Calendário */}
+          <Modal visible={showCalendar} transparent animationType="slide">
+            <View style={styles.modalContainer}>
+              <View style={styles.modalContent}>
+                <View style={styles.modalHeader}>
+                  <Text style={styles.modalTitle}>Selecionar Data</Text>
+                  <TouchableOpacity onPress={() => setShowCalendar(false)}>
+                    <Icon name="close" size={24} />
+                  </TouchableOpacity>
+                </View>
+
+                <Calendar
+                  minDate={today}
+                  onDayPress={handleDateSelect}
+                  markedDates={markedDates}
+                />
               </View>
-              <Calendar
-                minDate={today}
-                onDayPress={handleDateSelect}
-                markedDates={markedDates}
-                theme={{
-                  backgroundColor: '#ffffff',
-                  calendarBackground: '#ffffff',
-                  textSectionTitleColor: '#374151',
-                  selectedDayBackgroundColor: '#ffc125',
-                  selectedDayTextColor: '#ffffff',
-                  todayTextColor: '#ffc125',
-                  dayTextColor: '#1f2937',
-                  textDisabledColor: '#d1d5db',
-                  dotColor: '#ffc125',
-                  selectedDotColor: '#ffffff',
-                  arrowColor: '#ffc125',
-                  monthTextColor: '#1f2937',
-                  textDayFontWeight: '500',
-                  textMonthFontWeight: 'bold',
-                  textDayHeaderFontWeight: '600',
-                  textDayFontSize: 16,
-                  textMonthFontSize: 18,
-                  textDayHeaderFontSize: 14,
-                }}
-                style={styles.calendar}
+            </View>
+          </Modal>
+
+          {/* Inputs */}
+          <View style={styles.card}>
+            <Text style={styles.cardTitle}>Dados Pessoais</Text>
+
+            <View style={styles.inputContainer}>
+              <Icon name="person" size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Nome completo *"
+                value={customerName}
+                onChangeText={setCustomerName}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Icon name="phone" size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Telefone/WhatsApp *"
+                keyboardType="phone-pad"
+                value={customerPhone}
+                onChangeText={setCustomerPhone}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Icon name="location-on" size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={styles.input}
+                placeholder="Endereço"
+                value={customerAddress}
+                onChangeText={setCustomerAddress}
+              />
+            </View>
+
+            <View style={styles.inputContainer}>
+              <Icon name="description" size={20} color="#6b7280" style={styles.inputIcon} />
+              <TextInput
+                style={[styles.input, styles.textArea]}
+                placeholder="Descrição (opcional)"
+                multiline
+                value={description}
+                onChangeText={setDescription}
               />
             </View>
           </View>
-        </Modal>
 
-        {/* Modal de Horários */}
-        <Modal
-          visible={showTimePicker}
-          animationType="slide"
-          transparent={true}
-        >
-          <View style={styles.modalContainer}>
-            <View style={styles.modalContent}>
-              <View style={styles.modalHeader}>
-                <Text style={styles.modalTitle}>Selecionar Horário</Text>
-                <TouchableOpacity 
-                  style={styles.closeIcon}
-                  onPress={() => setShowTimePicker(false)}
-                >
-                  <Icon name="close" size={24} color="#6b7280" />
-                </TouchableOpacity>
-              </View>
-              <ScrollView style={styles.timeGrid}>
-                <View style={styles.timeRow}>
-                  {timeSlots.map((time) => (
-                    <TouchableOpacity
-                      key={time}
-                      style={[
-                        styles.timeOption,
-                        selectedTime === time && styles.timeOptionSelected
-                      ]}
-                      onPress={() => handleTimeSelect(time)}
-                    >
-                      <Text style={[
-                        styles.timeOptionText,
-                        selectedTime === time && styles.timeOptionTextSelected
-                      ]}>
-                        {time}
-                      </Text>
-                    </TouchableOpacity>
-                  ))}
-                </View>
-              </ScrollView>
-            </View>
-          </View>
-        </Modal>
+          {/* Botão */}
+          <TouchableOpacity style={styles.scheduleButton} onPress={handleSchedule}>
+            <Text style={styles.scheduleButtonText}>Confirmar Agendamento</Text>
+            <Icon name="arrow-forward" size={22} color="#fff" />
+          </TouchableOpacity>
+        </ScrollView>
 
-        {/* Card de Dados Pessoais */}
-        <View style={styles.card}>
-          <Text style={styles.cardTitle}>Dados Pessoais</Text>
-          
-          <View style={styles.inputContainer}>
-            <Icon name="person" size={20} color="#6b7280" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Nome completo *"
-              placeholderTextColor="#9ca3af"
-              value={customerName}
-              onChangeText={setCustomerName}
-            />
-          </View>
+        {showConfetti && (
+          <ConfettiCannon
+            count={200}
+            origin={{ x: Dimensions.get('window').width / 2, y: 0 }}
+            fadeOut
+          />
+        )}
 
-          <View style={styles.inputContainer}>
-            <Icon name="phone" size={20} color="#6b7280" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Telefone/WhatsApp *"
-              placeholderTextColor="#9ca3af"
-              value={customerPhone}
-              onChangeText={setCustomerPhone}
-              keyboardType="phone-pad"
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Icon name="location-on" size={20} color="#6b7280" style={styles.inputIcon} />
-            <TextInput
-              style={styles.input}
-              placeholder="Endereço para atendimento"
-              placeholderTextColor="#9ca3af"
-              value={customerAddress}
-              onChangeText={setCustomerAddress}
-            />
-          </View>
-
-          <View style={styles.inputContainer}>
-            <Icon name="description" size={20} color="#6b7280" style={styles.inputIcon} />
-            <TextInput
-              style={[styles.input, styles.textArea]}
-              placeholder="Descrição do serviço (opcional)"
-              placeholderTextColor="#9ca3af"
-              value={description}
-              onChangeText={setDescription}
-              multiline
-              numberOfLines={4}
-              textAlignVertical="top"
-            />
-          </View>
-        </View>
-
-        {/* Botão de Agendar */}
-        <TouchableOpacity style={styles.scheduleButton} onPress={handleSchedule}>
-          <Text style={styles.scheduleButtonText}>Confirmar Agendamento</Text>
-          <Icon name="arrow-forward" size={20} color="white" />
-        </TouchableOpacity>
-
-        <Text style={styles.note}>
-          * Campos obrigatórios{'\n'}
-          Entraremos em contato para confirmar o agendamento.
-        </Text>
-      </ScrollView>
-
-      {/* Confetti Cannon */}
-      {showConfetti && (
-        <ConfettiCannon
-          count={200}
-          origin={{ x: Dimensions.get('window').width / 2, y: 0 }}
-          explosionSpeed={300}
-          fallSpeed={3000}
-          fadeOut={true}
-        />
-      )}
-
-      {/* Mensagem de Sucesso com Animação */}
-      <Animated.View style={[styles.successMessage, { opacity: fadeAnim }]}>
-        <View style={styles.successContent}>
-          <Icon name="celebration" size={40} color="#ffc125" />
+        <Animated.View style={[styles.successMessage, { opacity: fadeAnim }]}>
           <Text style={styles.successTitle}>Agendamento Confirmado!</Text>
-          <Text style={styles.successText}>
-            Seu agendamento foi realizado com sucesso!
-          </Text>
-        </View>
-      </Animated.View>
-    </View>
+        </Animated.View>
+      </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: "#f8fafc",
-  },
-  content: {
-    padding: 20,
-    paddingBottom: 40,
-  },
-  header: {
-    alignItems: "center",
-    marginBottom: 32,
-    marginTop: 10,
-  },
-  title: {
-    fontSize: 32,
-    fontWeight: "700",
-    color: "#000",
-    marginBottom: 8,
-  },
-  subtitle: {
-    fontSize: 16,
-    color: "#64748b",
-    textAlign: "center",
-  },
+  container: { flex: 1, backgroundColor: "#f8fafc" },
+  content: { padding: 20, paddingBottom: 100 },
+  header: { alignItems: "center", marginBottom: 20, marginTop: 10 },
+  title: { fontSize: 32, fontWeight: "700", color: "#000" },
+  subtitle: { fontSize: 16, color: "#64748b", textAlign: "center" },
   card: {
     backgroundColor: "white",
     borderRadius: 16,
     padding: 20,
     marginBottom: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 10,
-    elevation: 3,
-    borderWidth: 1,
-    borderColor: "#f1f5f9",
+    elevation: 6
   },
-  cardTitle: {
-    fontSize: 18,
-    fontWeight: "600",
-    color: "#1e293b",
-    marginBottom: 16,
-  },
-  servicesScroll: {
-    marginBottom: 8,
-  },
-  serviceButton: {
-    alignItems: "center",
-    marginRight: 16,
-    minWidth: 100,
-  },
+  cardTitle: { fontSize: 18, fontWeight: "600", marginBottom: 16 },
+  serviceButton: { alignItems: "center", marginRight: 16 },
+  serviceButtonSelected: { opacity: 0.9 },
   serviceIconContainer: {
-    width: 60,
-    height: 60,
-    borderRadius: 16,
-    backgroundColor: "#ffff",
+    width: 60, height: 60, borderRadius: 16,
+    backgroundColor: "#fff",
     justifyContent: "center",
     alignItems: "center",
-    marginBottom: 8,
     borderWidth: 2,
-    borderColor: "#ffff",
+    borderColor: "#fff"
   },
-  serviceIconContainerSelected: {
-    backgroundColor: "#faefd3ff",
-    borderColor: "#ffc125",
-  },
-  serviceText: {
-    color: "#64748b",
-    fontWeight: "500",
-    fontSize: 13,
-    textAlign: "center",
-  },
-  serviceTextSelected: {
-    color: "#ffc125",
-    fontWeight: "600",
-  },
-  datetimeRow: {
-    flexDirection: "row",
-    alignItems: "center",
-  },
-  datetimeButton: {
-    flex: 1,
-    flexDirection: "row",
-    alignItems: "center",
-    paddingVertical: 12,
-  },
-  datetimeTextContainer: {
-    flex: 1,
-    marginLeft: 12,
-  },
-  datetimeLabel: {
-    fontSize: 12,
-    color: "#64748b",
-    marginBottom: 2,
-  },
-  datetimeValue: {
-    fontSize: 16,
-    color: "#1e293b",
-    fontWeight: "500",
-  },
-  datetimePlaceholder: {
-    fontSize: 16,
-    color: "#9ca3af",
-  },
-  separator: {
-    width: 1,
-    height: 40,
-    backgroundColor: "#e2e8f0",
-    marginHorizontal: 16,
-  },
+  serviceIconContainerSelected: { borderColor: "#ffc125", backgroundColor: "#faefd3" },
+  serviceText: { color: "#64748b" },
+  serviceTextSelected: { color: "#ffc125", fontWeight: "700" },
+  datetimeRow: { flexDirection: "row", alignItems: "center" },
+  datetimeButton: { flex: 1, flexDirection: "row", paddingVertical: 12 },
+  separator: { width: 1, height: 40, backgroundColor: "#e2e8f0", marginHorizontal: 16 },
+  datetimeLabel: { fontSize: 12, color: "#666" },
   inputContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -523,148 +343,50 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: "#e2e8f0",
   },
-  inputIcon: {
-    padding: 16,
+  inputIcon: { padding: 16 },
+  input: { flex: 1, padding: 16, paddingLeft: 0 },
+  textArea: { height: 100 },
+  scheduleButton: {
+    backgroundColor: "#ffc125",
+    padding: 18,
+    borderRadius: 16,
+    alignItems: "center",
+    flexDirection: "row",
+    justifyContent: "center",
+    marginTop: 10
   },
-  input: {
-    flex: 1,
-    padding: 16,
-    paddingLeft: 0,
-    fontSize: 16,
-    color: "#1e293b",
-  },
-  textArea: {
-    height: 100,
-    textAlignVertical: "top",
+  scheduleButtonText: {
+    color: "#fff",
+    fontSize: 18,
+    fontWeight: "700",
+    marginRight: 8
   },
   modalContainer: {
     flex: 1,
     justifyContent: "center",
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0,0,0,0.4)",
   },
   modalContent: {
-    backgroundColor: "white",
+    backgroundColor: "#fff",
     borderRadius: 20,
     margin: 20,
-    maxHeight: "80%",
-    overflow: "hidden",
+    paddingBottom: 20,
   },
   modalHeader: {
+    padding: 20,
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "center",
-    padding: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: "#f1f5f9",
   },
-  modalTitle: {
-    fontSize: 20,
-    fontWeight: "600",
-    color: "#1e293b",
-  },
-  closeIcon: {
-    padding: 4,
-  },
-  calendar: {
-    borderRadius: 0,
-  },
-  timeGrid: {
-    maxHeight: 400,
-    padding: 16,
-  },
-  timeRow: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-  timeOption: {
-    backgroundColor: "#f8fafc",
-    padding: 16,
-    borderRadius: 12,
-    margin: 4,
-    minWidth: "30%",
-    alignItems: "center",
-    borderWidth: 1,
-    borderColor: "#e2e8f0",
-  },
-  timeOptionSelected: {
-    backgroundColor: "#ffc125",
-    borderColor: "#ffc125",
-  },
-  timeOptionText: {
-    color: "#374151",
-    fontWeight: "500",
-    fontSize: 14,
-  },
-  timeOptionTextSelected: {
-    color: "white",
-  },
-  scheduleButton: {
-    backgroundColor: "#ffc125",
-    padding: 20,
-    borderRadius: 16,
-    alignItems: "center",
-    marginTop: 8,
-    marginBottom: 20,
-    flexDirection: "row",
-    justifyContent: "center",
-    shadowColor: "#ffc125",
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 6,
-  },
-  scheduleButtonText: {
-    color: "white",
-    fontSize: 18,
-    fontWeight: "600",
-    marginRight: 8,
-  },
-  note: {
-    textAlign: "center",
-    color: "#64748b",
-    fontSize: 14,
-    lineHeight: 20,
-    marginTop: 10,
-  },
+  modalTitle: { fontSize: 20, fontWeight: "700" },
   successMessage: {
-    position: 'absolute',
-    top: '30%',
-    left: '10%',
-    right: '10%',
-    backgroundColor: 'white',
-    borderRadius: 20,
+    position: "absolute",
+    top: "40%",
+    left: "10%",
+    right: "10%",
+    backgroundColor: "#fff",
     padding: 30,
-    alignItems: 'center',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 10,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 20,
-    elevation: 10,
-    borderWidth: 1,
-    borderColor: '#ffc125',
+    borderRadius: 20,
+    alignItems: "center"
   },
-  successContent: {
-    alignItems: 'center',
-  },
-  successTitle: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: '#ffc125',
-    marginTop: 16,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  successText: {
-    fontSize: 16,
-    color: '#64748b',
-    textAlign: 'center',
-    lineHeight: 22,
-  },
+  successTitle: { fontSize: 20, fontWeight: "700", color: "#ffc125" }
 });

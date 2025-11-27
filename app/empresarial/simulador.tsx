@@ -13,6 +13,7 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import { Ionicons } from "@expo/vector-icons";
+import { Background } from "@react-navigation/elements";
 
 
 interface ResultadosCalculo {
@@ -228,7 +229,7 @@ ${!resultados.cabeNaArea ? '⚠️ ÁREA INSUFICIENTE' : ''}`
 
   return (
     <KeyboardAvoidingView
-      style={{ flex: 1 }}
+      style={{ flex: 1, backgroundColor: '#F9FAFB' }}
       behavior={Platform.select({ ios: "padding", android: undefined })}
     >
       <ScrollView contentContainerStyle={estilos.container}>
@@ -527,6 +528,7 @@ function Alerta({ tipo, titulo, mensagem }: {
 }
 
 const estilos = StyleSheet.create({
+
   container: {
     flexGrow: 1,
     padding: 16,
@@ -538,6 +540,13 @@ const estilos = StyleSheet.create({
     marginBottom: 24,
     paddingVertical: 16,
   },
+    botaoVoltar: {
+  width: 32,
+  height: 32,
+  borderRadius: 8,
+  justifyContent: "center",
+  alignItems: "center",
+},
   titulo: {
     fontSize: 24,
     fontWeight: "700",
@@ -711,12 +720,6 @@ const estilos = StyleSheet.create({
     textAlign: 'center',
     fontStyle: 'italic',
   },
-  botaoVoltar: {
-    position: "absolute",
-    top: 20,
-    left: 10,
-    zIndex: 999,
-    padding: 8,
-  }
+
 
 });

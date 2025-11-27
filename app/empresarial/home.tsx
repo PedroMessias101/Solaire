@@ -7,13 +7,11 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
-  LayoutChangeEvent,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
 
-// Componentes assumidos
 import ChatBot from "../components/ChatBot";
 import { NavBarEmpresarial } from "../components/NavBarEmpresarial";
 import Notificacoes from "../components/notific";
@@ -24,20 +22,17 @@ import { TourProvider, TourStep } from "../components/TourGuide";
 interface UserData {
   name: string;
   email: string;
-  // Adicione outros campos de usuário aqui
 }
 
 interface PlacaData {
-  id: string; // Exemplo de campo
+  id: string;
   serial: string;
   status: "Ativa" | "Inativa" | string;
   energia_kWh: number;
   tensao: number;
   corrente: number;
   temperatura: number;
-  // Adicione outros campos da placa aqui
 }
-// -----------------------
 
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
@@ -45,7 +40,6 @@ const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
 export default function HomeEmpresarial() {
   const router = useRouter();
 
-  // Tipagem de estado
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [token, setToken] = useState<string | null>(null);
@@ -71,7 +65,7 @@ export default function HomeEmpresarial() {
         useNativeDriver: true,
       })
     ).start();
-  }, []);
+  }, [spinValue]);
 
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
@@ -93,7 +87,7 @@ export default function HomeEmpresarial() {
       setTokenChecked(true);
     };
     checkToken();
-  }, []);
+  }, [router]);
 
   useEffect(() => {
     if (tokenChecked && token) fetchUserAndPanels();
@@ -115,10 +109,10 @@ export default function HomeEmpresarial() {
   // ======================
   const fetchUserAndPanels = async () => {
     if (!token) {
-        setLoading(false);
-        return;
+      setLoading(false);
+      return;
     }
-    
+
     try {
       setLoading(true);
 
@@ -140,12 +134,18 @@ export default function HomeEmpresarial() {
       });
       const placasResponse = await resPlacas.json();
 
-      const placasDoUsuario: PlacaData[] = placasResponse.data || [];
+      const placasDoUsuario: any[] = placasResponse.data || [];
 
-      const placasCompletas = await Promise.all(
-        placasDoUsuario.map(async (placa) => {
+      const placasCompletas: PlacaData[] = await Promise.all(
+        placasDoUsuario.map(async (placa: any) => {
           if (placa.status !== "Ativa")
-            return { ...placa, energia_kWh: 0, tensao: 0, corrente: 0, temperatura: 0 } as PlacaData;
+            return {
+              ...placa,
+              energia_kWh: 0,
+              tensao: 0,
+              corrente: 0,
+              temperatura: 0,
+            } as PlacaData;
 
           try {
             const resSim = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
@@ -158,8 +158,15 @@ export default function HomeEmpresarial() {
               corrente: sim.corrente || 0,
               temperatura: sim.temperatura || 0,
             } as PlacaData;
-          } catch {
-            return { ...placa, energia_kWh: 0, tensao: 0, corrente: 0, temperatura: 0 } as PlacaData;
+          } catch (error) {
+            console.log("Erro simulacao para placa", placa.serial, error);
+            return {
+              ...placa,
+              energia_kWh: 0,
+              tensao: 0,
+              corrente: 0,
+              temperatura: 0,
+            } as PlacaData;
           }
         })
       );
@@ -172,17 +179,11 @@ export default function HomeEmpresarial() {
     }
   };
 
-  // ======================
-  // LOGOUT
-  // ======================
   const handleLogout = async () => {
     await AsyncStorage.removeItem("userToken");
     router.replace("/auth/login");
   };
 
-  // ======================
-  // TOUR ACTIONS
-  // ======================
   const marcarTourComoVisto = async () => {
     await AsyncStorage.setItem("tourSeen", "true");
     setTourSeen(true);
@@ -195,9 +196,6 @@ export default function HomeEmpresarial() {
     setForceStartTour(true);
   };
 
-  // ======================
-  // MÉTRICAS
-  // ======================
   const calcularTotais = () => {
     const ativos = placas.filter((p) => p.status === "Ativa");
 
@@ -214,9 +212,6 @@ export default function HomeEmpresarial() {
 
   const { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura } = calcularTotais();
 
-  // ======================
-  // LOADING
-  // ======================
   if (tourSeen === null || !tokenChecked || loading) {
     return (
       <View style={estilos.loadingContainer}>
@@ -245,15 +240,14 @@ export default function HomeEmpresarial() {
           {/* HEADER */}
           <View style={estilos.header}>
             <TourStep stepKey="logo" title="Logo da Empresa" description="Clique para ver informações.">
-              <TouchableOpacity>
+              <TouchableOpacity onPress={() => {}}>
                 <Animated.Image
                   source={require("../../assets/logo_empresarial.png")}
                   style={[estilos.avatar, { transform: [{ rotate: spin }] }]}
                 />
               </TouchableOpacity>
             </TourStep>
-            {/* O passo de notificação pode ser adicionado aqui, se o componente Notificacoes puder ser envolvido */}
-            
+
             <View style={{ flex: 1 }}>
               <Text style={estilos.username}>{user?.name ?? "Usuário"}</Text>
               <Text style={estilos.email}>{user?.email ?? "Painel Empresarial"}</Text>
@@ -261,18 +255,16 @@ export default function HomeEmpresarial() {
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Notificacoes />
-
               <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }}>
                 <Feather name="log-out" size={24} color="#000" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* DASHBOARD - 4 PASSOS DE TOUR AQUI */}
+          {/* DASHBOARD */}
           <Text style={estilos.titulo}>Métricas Principais</Text>
 
           <View style={estilos.grid}>
-            {/* 1. Energia Total */}
             <View style={estilos.gridItem}>
               <TourStep stepKey="energia-total" title="Energia Total" description="Total de energia gerada pelas placas ativas (em kWh).">
                 <View style={estilos.card}>
@@ -282,8 +274,7 @@ export default function HomeEmpresarial() {
                 </View>
               </TourStep>
             </View>
-            
-            {/* 2. Tensão Média */}
+
             <View style={estilos.gridItem}>
               <TourStep stepKey="tensao-media" title="Tensão Média" description="Tensão média medida entre as placas solares.">
                 <View style={estilos.card}>
@@ -293,8 +284,7 @@ export default function HomeEmpresarial() {
                 </View>
               </TourStep>
             </View>
-            
-            {/* 3. Corrente Média */}
+
             <View style={estilos.gridItem}>
               <TourStep stepKey="corrente-media" title="Corrente Média" description="Corrente média de saída, indicando o fluxo de energia.">
                 <View style={estilos.card}>
@@ -305,7 +295,6 @@ export default function HomeEmpresarial() {
               </TourStep>
             </View>
 
-            {/* 4. Temperatura Média */}
             <View style={estilos.gridItem}>
               <TourStep stepKey="temperatura-media" title="Temperatura Média" description="Temperatura média de operação das placas. Valores altos podem indicar ineficiência.">
                 <View style={estilos.card}>
@@ -319,11 +308,10 @@ export default function HomeEmpresarial() {
 
           <WeatherCard />
 
-          {/* AÇÕES RÁPIDAS - 2 PASSOS DE TOUR AQUI */}
+          {/* AÇÕES RÁPIDAS */}
           <Text style={estilos.subtitulo}>Ações Rápidas</Text>
 
           <View style={estilos.acoesContainer}>
-            {/* 5. Simulador */}
             <TourStep stepKey="acao-simulador" title="Simulador de Placas" description="Acesse a ferramenta para planejar ou simular novas instalações solares.">
               <TouchableOpacity
                 style={estilos.botao}
@@ -334,7 +322,6 @@ export default function HomeEmpresarial() {
               </TouchableOpacity>
             </TourStep>
 
-            {/* 6. Agendamento */}
             <TourStep stepKey="acao-agendamento" title="Agendamento" description="Marque visitas técnicas, manutenções ou consultas.">
               <TouchableOpacity
                 style={estilos.botao}
@@ -355,7 +342,6 @@ export default function HomeEmpresarial() {
           </View>
         </ScrollView>
 
-        {/* NAVBAR - 7º passo (opcional, se a NavBar puder ser envolvida) */}
         <NavBarEmpresarial placas={placas} setPlacas={setPlacas} />
       </View>
     </TourProvider>
@@ -416,12 +402,15 @@ const estilos = StyleSheet.create({
     backgroundColor: "#fff",
     borderRadius: 18,
     padding: 18,
+    marginBottom: 16,
     shadowColor: "#000",
     shadowOpacity: 0.06,
     shadowRadius: 5,
     elevation: 3,
     alignItems: "center",
     justifyContent: "center",
+    minHeight: 120,
+    height: 120,
   },
 
   cardLabel: {
@@ -447,20 +436,21 @@ const estilos = StyleSheet.create({
     color: "#222",
   },
 
-  acoesContainer: { gap: 12 },
+  acoesContainer: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
 
   botao: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 12,
-    backgroundColor: "#fff",
     padding: 16,
     borderRadius: 12,
     shadowColor: "#000",
     shadowOpacity: 0.08,
     shadowRadius: 4,
     elevation: 3,
+    backgroundColor: "#fff",
+    marginBottom: 12,
+    marginRight: 12,
   },
 
-  botaoTexto: { fontSize: 16, color: "#000", fontWeight: "600" },
+  botaoTexto: { fontSize: 16, color: "#000", fontWeight: "600", marginLeft: 8 },
 });

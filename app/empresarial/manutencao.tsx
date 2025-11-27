@@ -201,8 +201,9 @@ export default function DiagnosticoPlaca(): JSX.Element {
 
   return (
     <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+
       <TouchableOpacity
-        onPress={() => router.push("/tabs/perfil")} 
+        onPress={() => router.push("/empresarial/configuracao")} 
         style={styles.botaoVoltar}
       >
         <Ionicons name="arrow-back" size={22} color="#000" />

@@ -1,3 +1,4 @@
+// components/TourGuide.tsx
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import {
   Animated,
@@ -14,17 +15,17 @@ import {
   ScrollView,
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
- 
+
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get("window");
-const TOUR_SEEN_KEY = "app_tour_seen_v1"; // chave usada para salvar se já viu o tour
- 
+const TOUR_SEEN_KEY = "app_tour_seen_v1"; 
+
 type StepMeta = {
   key: string;
   title: string;
   description?: string;
   layout?: LayoutRectangle;
 };
- 
+
 type Theme = {
   overlayColor: string;
   highlightColor: string;
@@ -34,17 +35,17 @@ type Theme = {
   textSecondary: string;
   border: string;
 };
- 
+
 const DEFAULT_THEME: Theme = {
   overlayColor: "rgba(6,10,17,0.62)",
   highlightColor: "#FFD54F",
-  primary: "#2e86de",
+  primary: "#ffc125",
   cardBackground: "#ffffff",
   textPrimary: "#0f1724",
   textSecondary: "#555",
   border: "rgba(15,20,30,0.04)",
 };
- 
+
 type TourContextType = {
   registerStep: (key: string, meta: Omit<StepMeta, "layout">) => void;
   updateLayout: (key: string, layout: LayoutRectangle) => void;
@@ -57,38 +58,37 @@ type TourContextType = {
   registerScrollRef?: (ref: React.RefObject<ScrollView>) => void;
   markSeen: () => Promise<void>;
 };
- 
+
 const TourContext = createContext<TourContextType | null>(null);
- 
+
 export const useTour = (): TourContextType => {
   const ctx = useContext(TourContext);
   if (!ctx) throw new Error("useTour must be used inside TourProvider");
   return ctx;
 };
- 
+
 export const TourProvider: React.FC<{
   children: React.ReactNode;
   autoStart?: boolean;
   scrollRef?: React.RefObject<ScrollView>;
   theme?: Partial<Theme>;
-  // se quiser garantir que o tour sempre apareça ignore AsyncStorage (forceShow)
   forceShow?: boolean;
 }> = ({ children, autoStart = false, scrollRef: initialScrollRef, theme: themeProp = {}, forceShow = false }) => {
   const theme = useMemo(() => ({ ...DEFAULT_THEME, ...themeProp }), [themeProp]);
- 
+
   const [steps, setSteps] = useState<Record<string, StepMeta>>({});
   const [order, setOrder] = useState<string[]>([]);
   const [isRunning, setIsRunning] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
   const stepRefs = useRef<Record<string, any>>({});
   const scrollRef = useRef<React.RefObject<ScrollView> | null>(initialScrollRef ?? null);
- 
+
   // animações
   const overlayFade = useRef(new Animated.Value(0)).current;
   const tooltipAnim = useRef(new Animated.Value(0)).current;
   const pulseAnim = useRef(new Animated.Value(0)).current;
   const pulseLoopRef = useRef<Animated.CompositeAnimation | null>(null);
- 
+
   useEffect(() => {
     pulseLoopRef.current = Animated.loop(
       Animated.sequence([
@@ -101,29 +101,29 @@ export const TourProvider: React.FC<{
       pulseLoopRef.current?.stop();
     };
   }, [pulseAnim]);
- 
+
   // registro de passos
   const registerStep = useCallback((key: string, meta: Omit<StepMeta, "layout">) => {
     setSteps((prev) => ({ ...prev, [key]: { ...(prev[key] ?? {}), ...meta, key } }));
     setOrder((o) => (o.includes(key) ? o : [...o, key]));
   }, []);
- 
+
   const updateLayout = useCallback((key: string, layout: LayoutRectangle) => {
     setSteps((prev) => ({ ...prev, [key]: { ...(prev[key] ?? { key }), layout } }));
   }, []);
- 
+
   const registerRef = useCallback((key: string, ref: any) => {
     stepRefs.current[key] = ref;
   }, []);
- 
+
   const registerScrollRef = useCallback((ref: React.RefObject<ScrollView>) => {
     if (ref) scrollRef.current = ref;
   }, []);
- 
+
   useEffect(() => {
     if (currentIndex >= order.length && order.length > 0) setCurrentIndex(0);
   }, [order, currentIndex]);
- 
+
   // medir elemento (web/native)
   const measureStepByRef = useCallback(
     async (key: string) => {
@@ -154,7 +154,7 @@ export const TourProvider: React.FC<{
     },
     [updateLayout]
   );
- 
+
   // garante visibilidade: rola e remede
   const ensureCurrentVisible = useCallback(
     async (idx: number) => {
@@ -180,13 +180,13 @@ export const TourProvider: React.FC<{
     },
     [measureStepByRef, order, steps]
   );
- 
+
   // start (levemente modificado para respeitar AsyncStorage)
   const startTour = useCallback(
     async (opts?: { fromIndex?: number; force?: boolean }) => {
       const fromIndex = opts?.fromIndex ?? 0;
       const force = opts?.force ?? false;
- 
+
       // se não exigido forçar, checar se já foi visto
       if (!force && !forceShow) {
         try {
@@ -198,7 +198,7 @@ export const TourProvider: React.FC<{
           // ignorar erro de leitura, continuar
         }
       }
- 
+
       if (order.length === 0) return;
       setCurrentIndex(Math.max(0, Math.min(fromIndex, order.length - 1)));
       setIsRunning(true);
@@ -211,7 +211,7 @@ export const TourProvider: React.FC<{
     },
     [order.length, overlayFade, tooltipAnim, forceShow]
   );
- 
+
   // marcar como visto (persiste)
   const markSeen = useCallback(async () => {
     try {
@@ -220,14 +220,14 @@ export const TourProvider: React.FC<{
       // ignorar falha
     }
   }, []);
- 
+
   // stop robusto
   const stopTour = useCallback(() => {
     // parar animações
     overlayFade.stopAnimation();
     tooltipAnim.stopAnimation();
     pulseLoopRef.current?.stop();
- 
+
     // saída suave
     Animated.timing(overlayFade, { toValue: 0, duration: 220, easing: Easing.in(Easing.cubic), useNativeDriver: true }).start(() => {
       setIsRunning(false);
@@ -242,7 +242,7 @@ export const TourProvider: React.FC<{
       pulseLoopRef.current.start();
     });
   }, [overlayFade, tooltipAnim, pulseAnim]);
- 
+
   // next/prev
   const next = useCallback(() => {
     setCurrentIndex((i) => {
@@ -257,20 +257,20 @@ export const TourProvider: React.FC<{
     tooltipAnim.setValue(0);
     Animated.timing(tooltipAnim, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [order.length, stopTour, tooltipAnim, markSeen]);
- 
+
   const prev = useCallback(() => {
     setCurrentIndex((i) => Math.max(0, i - 1));
     tooltipAnim.setValue(0);
     Animated.timing(tooltipAnim, { toValue: 1, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: true }).start();
   }, [tooltipAnim]);
- 
+
   // pular: marca visto e fecha imediatamente
   const skip = useCallback(() => {
     markSeen().then(() => {
       stopTour();
     });
   }, [markSeen, stopTour]);
- 
+
   // garantir visibilidade ao trocar index
   useEffect(() => {
     if (!isRunning) return;
@@ -283,7 +283,7 @@ export const TourProvider: React.FC<{
       mounted = false;
     };
   }, [currentIndex, ensureCurrentVisible, isRunning]);
- 
+
   // autoStart (respeita AsyncStorage/forceShow)
   useEffect(() => {
     if (!autoStart) return;
@@ -292,10 +292,10 @@ export const TourProvider: React.FC<{
       return () => clearTimeout(t);
     }
   }, [autoStart, order.length, isRunning, startTour]);
- 
+
   const currentKey = order[currentIndex];
   const currentStep = currentKey ? steps[currentKey] : undefined;
- 
+
   const computeTooltip = (layout?: LayoutRectangle) => {
     const W = Math.min(SCREEN_WIDTH - 48, 420);
     if (!layout) return { top: SCREEN_HEIGHT * 0.35, left: 24, width: W, arrowLeft: 36, arrowDown: true };
@@ -309,9 +309,9 @@ export const TourProvider: React.FC<{
     const arrowDown = !preferBelow;
     return { top, left, width: W, arrowLeft, arrowDown };
   };
- 
+
   const tooltip = computeTooltip(currentStep?.layout);
- 
+
   const value = useMemo(
     () => ({
       registerStep,
@@ -327,15 +327,15 @@ export const TourProvider: React.FC<{
     }),
     [registerStep, updateLayout, registerRef, startTour, stopTour, isRunning, currentIndex, order.length, registerScrollRef, markSeen]
   );
- 
+
   return (
     <TourContext.Provider value={value}>
       {children}
- 
+
       {isRunning && currentStep && (
         <Animated.View pointerEvents="auto" style={[styles.overlayContainer, { opacity: overlayFade }]}>
           <View style={[styles.dim, { backgroundColor: theme.overlayColor }]} />
- 
+
           {currentStep.layout && (
             <Animated.View
               pointerEvents="none"
@@ -352,7 +352,7 @@ export const TourProvider: React.FC<{
               ]}
             />
           )}
- 
+
           <Animated.View
             pointerEvents="box-none"
             style={[
@@ -373,7 +373,7 @@ export const TourProvider: React.FC<{
           >
             <Text style={[styles.tooltipTitle, { color: theme.textPrimary }]}>{currentStep?.title}</Text>
             {currentStep?.description ? <Text style={[styles.tooltipBody, { color: theme.textSecondary }]}>{currentStep.description}</Text> : null}
- 
+
             <View style={styles.progressRow}>
               <View style={styles.progressLabel}>
                 <Text style={[styles.progressTxt, { color: theme.textSecondary }]}>{currentIndex + 1}/{order.length}</Text>
@@ -382,14 +382,14 @@ export const TourProvider: React.FC<{
                 <View style={[styles.progressFill, { width: `${Math.round(((currentIndex + 1) / Math.max(1, order.length)) * 100)}%`, backgroundColor: theme.primary }]} />
               </View>
             </View>
- 
+
             <View style={styles.controlsRow}>
               <TouchableOpacity onPress={prev} disabled={currentIndex === 0} style={[styles.ghostBtn, currentIndex === 0 && styles.ghostDisabled]}>
                 <Text style={[styles.ghostTxt, currentIndex === 0 && styles.ghostTxtDisabled]}>Anterior</Text>
               </TouchableOpacity>
- 
+
               <View style={{ flex: 1 }} />
- 
+
               <TouchableOpacity
                 onPress={() => {
                   if (currentIndex + 1 >= order.length) {
@@ -401,12 +401,12 @@ export const TourProvider: React.FC<{
                 <Text style={styles.primaryTxt}>{currentIndex + 1 === order.length ? "Concluir" : "Próximo"}</Text>
               </TouchableOpacity>
             </View>
- 
+
             <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 10 }}>
               <TouchableOpacity onPress={skip}>
                 <Text style={[styles.skipTxt, { color: theme.textSecondary }]}>Pular</Text>
               </TouchableOpacity>
- 
+
               <TouchableOpacity onPress={async () => { await markSeen(); stopTour(); }}>
                 <Text style={[styles.closeTxt, { color: theme.textSecondary }]}>Fechar</Text>
               </TouchableOpacity>
@@ -417,7 +417,7 @@ export const TourProvider: React.FC<{
     </TourContext.Provider>
   );
 };
- 
+
 /* ----------------- TourStep ----------------- */
 export const TourStep: React.FC<
   React.PropsWithChildren<{
@@ -428,19 +428,19 @@ export const TourStep: React.FC<
 > = ({ children, stepKey, title, description }) => {
   const ctx = useContext(TourContext);
   if (!ctx) throw new Error("TourStep must be used inside TourProvider");
- 
+
   useEffect(() => {
     ctx.registerStep(stepKey, { key: stepKey, title, description });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [stepKey, title, description]);
- 
+
   const ref = useRef<any>(null);
- 
+
   useEffect(() => {
     ctx.registerRef(stepKey, ref);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
- 
+
   const measure = () => {
     if (Platform.OS === "web") {
       const node = ref.current ?? ref;
@@ -458,7 +458,7 @@ export const TourStep: React.FC<
       if (typeof x === "number") ctx.updateLayout(stepKey, { x, y, width, height });
     });
   };
- 
+
   useEffect(() => {
     const t = setTimeout(measure, 60);
     if (Platform.OS === "web") {
@@ -472,14 +472,14 @@ export const TourStep: React.FC<
     return () => clearTimeout(t);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
- 
+
   return (
     <View ref={ref} onLayout={measure} collapsable={false}>
       {children}
     </View>
   );
 };
- 
+
 /* ----------------- StartTourButton (exportável, use se precisar) ----------------- */
 export const StartTourButton: React.FC<{ style?: any; label?: string }> = ({ style, label = "Iniciar Tour" }) => {
   const ctx = useTour();
@@ -489,7 +489,7 @@ export const StartTourButton: React.FC<{ style?: any; label?: string }> = ({ sty
     </TouchableOpacity>
   );
 };
- 
+
 const styles = StyleSheet.create({
   overlayContainer: { position: "absolute", left: 0, top: 0, right: 0, bottom: 0, zIndex: 99999 },
   dim: { ...StyleSheet.absoluteFillObject },
@@ -514,5 +514,5 @@ const styles = StyleSheet.create({
   skipTxt: { fontSize: 13, fontWeight: "700" },
   floatingStart: { position: "absolute", right: 18, bottom: 28, paddingHorizontal: 16, paddingVertical: 12, borderRadius: 999, elevation: 10, zIndex: 99999, backgroundColor: "#2e86de" },
 });
- 
+
 export { DEFAULT_THEME };
