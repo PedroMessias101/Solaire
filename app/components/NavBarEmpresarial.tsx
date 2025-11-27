@@ -118,14 +118,15 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
       }
 
       const savedData = await resBackend.json();
+      const panel = savedData.panel ?? savedData;
 
       const novaPlaca = {
-        id: savedData.panel.id,  // <-- CORRIGIDO
-        serial: savedData.panel.serial,
-        location: savedData.panel.location,
-        model: savedData.panel.model,
-        status: savedData.panel.status ?? "Ativa",
-        energia_kWh: savedData.panel.energia_kWh ?? 0,
+        id: panel.id,
+        serial: panel.serial,
+        location: panel.location,
+        model: panel.model ?? "Genérico",
+        status: panel.status ?? "Ativa",
+        energia_kWh: panel.energia_kWh ?? 0,
       };
 
       setPlacas([...placas, novaPlaca]);

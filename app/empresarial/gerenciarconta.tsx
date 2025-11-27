@@ -9,7 +9,7 @@ import {
 } from "react-native";
 import { Feather, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import AsyncStorage from "@react-native-async-storage/async-storage";  // <-- FALTAVA
+import AsyncStorage from "@react-native-async-storage/async-storage"; 
 
 export default function ManageAccountScreen() {
   const router = useRouter();
@@ -48,14 +48,10 @@ export default function ManageAccountScreen() {
                 Alert.alert("Erro", data.message || "Falha ao deletar conta.");
                 return;
               }
-
-              // Remover login local
               await AsyncStorage.removeItem("token");
               await AsyncStorage.removeItem("userId");
 
               Alert.alert("Conta excluída!", "Seu usuário foi deletado com sucesso.");
-
-              // 🔥 Caminho correto
               router.replace("/auth/login");
 
             } catch (err) {
@@ -86,7 +82,7 @@ export default function ManageAccountScreen() {
         <Text style={styles.sectionTitle}>Conta</Text>
         <TouchableOpacity
           style={styles.item}
-          onPress={() => router.push("/tabs/conta")}
+          onPress={() => router.push("/empresarial/conta")}
         >
           <View style={styles.iconBox}>
             <Feather name="user" size={22} color="#ffc125" />

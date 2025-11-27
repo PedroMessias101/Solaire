@@ -13,13 +13,10 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-
 import ChatBot from "../components/ChatBot";
 import { NavBarEmpresarial } from "../components/NavBarEmpresarial";
 import Notificacoes from "../components/notific";
 import WeatherCard from '../components/Clima';
-
-// TOUR
 import { TourProvider, TourStep } from "../components/TourGuide";
 
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
@@ -166,7 +163,7 @@ export default function HomeEmpresarial() {
 
   return (
     <TourProvider scrollRef={scrollRef} autoStart={true}>
-      <View style={{ flex: 1 }}>
+      <View style={{ flex: 1, backgroundColor: "#f9fafc" }}>
         <ScrollView ref={scrollRef} style={estilos.container} contentContainerStyle={{ paddingBottom: 160 }}>
 
           {/* ================= HEADER ================= */}
@@ -194,7 +191,7 @@ export default function HomeEmpresarial() {
             </View>
           </View>
           {/* ================= DASHBOARD ================= */}
-          <Text style={estilos.titulo}>Dashboard Empresarial</Text>
+          <Text style={estilos.titulo}>Métricas Principais</Text>
 
           <View style={estilos.grid}>
             <TourStep stepKey="energia-total" title="Energia Total" description="Total gerado pelas placas.">
