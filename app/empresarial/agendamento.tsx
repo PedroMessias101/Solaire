@@ -53,14 +53,29 @@ export default function ScheduleScreen() {
     setShowTimePicker(false);
   };
 
+  // CORREÇÃO: Função formatDate corrigida
   const formatDate = (dateString) => {
     if (!dateString) return "";
-    const date = new Date(dateString);
-    return date.toLocaleDateString('pt-BR');
+    
+    // Garante que a data seja tratada corretamente
+    const date = new Date(dateString + 'T00:00:00'); // Adiciona horário para evitar problemas de fuso
+    return date.toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric'
+    });
+  };
+
+  // CORREÇÃO: Função para obter a data atual no formato YYYY-MM-DD
+  const getToday = () => {
+    const today = new Date();
+    const year = today.getFullYear();
+    const month = String(today.getMonth() + 1).padStart(2, '0');
+    const day = String(today.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const showSuccessAnimation = () => {
-
     setShowConfetti(true);
     
     Animated.timing(fadeAnim, {
@@ -91,7 +106,7 @@ export default function ScheduleScreen() {
 
     const selectedServiceName = services.find(s => s.id === selectedService)?.name;
 
-    // Alert de confirmação
+    // CORREÇÃO: Usando a função formatDate corrigida
     Alert.alert(
       "Agendamento Confirmado!",
       `**Detalhes do Agendamento:**\n\nServiço: ${selectedServiceName}\nData: ${formatDate(selectedDate)}\nHorário: ${selectedTime}\nCliente: ${customerName}\n\nEntraremos em contato em breve para confirmar todos os detalhes.`,
@@ -115,7 +130,8 @@ export default function ScheduleScreen() {
     setDescription("");
   };
 
-  const today = new Date().toISOString().split('T')[0];
+  // CORREÇÃO: Usando a função getToday corrigida
+  const today = getToday();
   
   const markedDates = {
     [selectedDate]: {

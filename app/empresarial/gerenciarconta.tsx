@@ -1,19 +1,79 @@
 import React from "react";
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  ScrollView,
+  Alert
+} from "react-native";
 import { Feather, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
+import AsyncStorage from "@react-native-async-storage/async-storage";  // <-- FALTAVA
 
 export default function ManageAccountScreen() {
   const router = useRouter();
 
+  const handleDeleteAccount = () => {
+    Alert.alert(
+      "Confirmar Exclusão",
+      "Tem certeza que deseja excluir sua conta? Esta ação é permanente.",
+      [
+        { text: "Cancelar", style: "cancel" },
+        {
+          text: "Excluir",
+          style: "destructive",
+          onPress: async () => {
+            try {
+              const token = await AsyncStorage.getItem("token");
+              const userId = await AsyncStorage.getItem("userId");
+
+              if (!token || !userId) {
+                Alert.alert("Erro", "Não foi possível identificar o usuário.");
+                return;
+              }
+
+              const response = await fetch("https://solaire-z8mw.onrender.com/delete-user", {
+                method: "DELETE",
+                headers: {
+                  "Content-Type": "application/json",
+                  Authorization: `Bearer ${token}`,
+                },
+                body: JSON.stringify({ id: userId }),
+              });
+
+              const data = await response.json();
+
+              if (!response.ok) {
+                Alert.alert("Erro", data.message || "Falha ao deletar conta.");
+                return;
+              }
+
+              // Remover login local
+              await AsyncStorage.removeItem("token");
+              await AsyncStorage.removeItem("userId");
+
+              Alert.alert("Conta excluída!", "Seu usuário foi deletado com sucesso.");
+
+              // 🔥 Caminho correto
+              router.replace("/auth/login");
+
+            } catch (err) {
+              console.log(err);
+              Alert.alert("Erro", "Não foi possível excluir sua conta.");
+            }
+          },
+        },
+      ]
+    );
+  };
+
   return (
     <View style={{ flex: 1 }}>
       <ScrollView style={styles.screen}>
-        
         <View style={styles.header}>
           <TouchableOpacity
-            onPress={() => router.push("/empresarial/config")}
+            onPress={() => router.push("/empresarial/configuracao")}
             style={styles.backButton}
           >
             <Ionicons name="arrow-back" size={22} color="#000" />
@@ -23,7 +83,6 @@ export default function ManageAccountScreen() {
           <View style={{ width: 22 }} />
         </View>
 
-        {/* Seção Conta */}
         <Text style={styles.sectionTitle}>Conta</Text>
         <TouchableOpacity
           style={styles.item}
@@ -52,7 +111,10 @@ export default function ManageAccountScreen() {
 
         {/* Dados e Conta */}
         <Text style={styles.sectionTitle}>Dados e Conta</Text>
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity
+          style={styles.item}
+          onPress={handleDeleteAccount}
+        >
           <View style={styles.iconBox}>
             <MaterialIcons name="delete-outline" size={22} color="#ffc125" />
           </View>
@@ -61,10 +123,7 @@ export default function ManageAccountScreen() {
             <Text style={styles.itemSubtitle}>Remova permanentemente sua conta</Text>
           </View>
         </TouchableOpacity>
-
       </ScrollView>
-
-      <AnimatedBottomNavBar />
     </View>
   );
 }

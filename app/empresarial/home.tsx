@@ -13,11 +13,12 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
 import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
-import ChatBot from "../components/ChatBot";
+
 import { NavBarEmpresarial } from "../components/NavBarEmpresarial";
 import Notificacoes from "../components/notific";
+import WeatherCard from '../components/Clima';
 
-// Tour (certifique-se que app/components/TourGuide.tsx está presente)
+// TOUR
 import { TourProvider, TourStep } from "../components/TourGuide";
 
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
@@ -32,10 +33,12 @@ export default function HomeEmpresarial() {
   const [placas, setPlacas] = useState<any[]>([]);
   const [tokenChecked, setTokenChecked] = useState(false);
 
-  // ref do ScrollView — importante passar ao TourProvider
+  const [tourSeen, setTourSeen] = useState<boolean | null>(null);
+  const [forceStartTour, setForceStartTour] = useState(false); // inicia tour manualmente quando true
+
   const scrollRef = useRef<ScrollView | null>(null);
 
-  // Animação sol
+  // Animação do Sol girando
   const spinValue = useRef(new Animated.Value(0)).current;
   useEffect(() => {
     Animated.loop(
@@ -47,12 +50,13 @@ export default function HomeEmpresarial() {
       })
     ).start();
   }, []);
+
   const spin = spinValue.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
   });
 
-  // STEP 1 — CHECAR TOKEN
+  // CHECK TOKEN
   useEffect(() => {
     const checkToken = async () => {
       const storedToken = await AsyncStorage.getItem("userToken");
@@ -66,22 +70,34 @@ export default function HomeEmpresarial() {
     checkToken();
   }, []);
 
-  // STEP 2 — BUSCAR USER + PLACAS
   useEffect(() => {
     if (tokenChecked && token) {
       fetchUserAndPanels();
     }
   }, [tokenChecked, token]);
 
+  // CARREGAR FLAG DO TOUR (para evitar iniciar sempre)
+  useEffect(() => {
+    const loadTourFlag = async () => {
+      try {
+        const value = await AsyncStorage.getItem("tourSeen");
+        setTourSeen(value === "true");
+      } catch (err) {
+        setTourSeen(false);
+      }
+    };
+    loadTourFlag();
+  }, []);
+
   const fetchUserAndPanels = async () => {
     try {
       setLoading(true);
 
-      // USER
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
 
+      // Token inválido
       if (resUser.status === 401) {
         await AsyncStorage.removeItem("userToken");
         router.replace("/auth/login");
@@ -91,7 +107,7 @@ export default function HomeEmpresarial() {
       const userResponse = await resUser.json();
       if (userResponse.success) setUser(userResponse.data);
 
-      // PLACAS
+      // Buscar placas
       const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -99,11 +115,12 @@ export default function HomeEmpresarial() {
       const placasResponse = await resPlacas.json();
       const placasDoUsuario = placasResponse.data || [];
 
-      // API SIMULACAO
+      // Buscar dados simulados
       const placasComDados = await Promise.all(
         placasDoUsuario.map(async (placa: any) => {
           if (placa.status !== "Ativa")
             return { ...placa, energia_kWh: 0, tensao: 0, corrente: 0, temperatura: 0 };
+
           try {
             const resSim = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
             const dadosSim = await resSim.json();
@@ -129,22 +146,48 @@ export default function HomeEmpresarial() {
   };
 
   const handleLogout = async () => {
-    await AsyncStorage.removeItem("userToken"); // remove só token
+    await AsyncStorage.removeItem("userToken");
     router.replace("/auth/login");
+  };
+
+  const marcarTourComoVisto = async () => {
+    try {
+      await AsyncStorage.setItem("tourSeen", "true");
+      setTourSeen(true);
+      setForceStartTour(false);
+    } catch (err) {
+      console.log("Erro ao salvar flag do tour", err);
+    }
+  };
+
+  const iniciarTourManualmente = async () => {
+    // remove a flag para forçar o autoStart apenas nesta sessão
+    try {
+      await AsyncStorage.removeItem("tourSeen");
+      setTourSeen(false);
+      setForceStartTour(true);
+    } catch (err) {
+      console.log("Erro ao resetar flag do tour", err);
+    }
   };
 
   const calcularTotais = () => {
     const ativos = placas.filter((p) => p.status === "Ativa");
-    const totalEnergia = ativos.reduce((acc, p) => acc + (Number(p.energia_kWh) || 0), 0);
-    const mediaTensao = ativos.length ? ativos.reduce((a, p) => a + (Number(p.tensao) || 0), 0) / ativos.length : 0;
-    const mediaCorrente = ativos.length ? ativos.reduce((a, p) => a + (Number(p.corrente) || 0), 0) / ativos.length : 0;
-    const mediaTemperatura = ativos.length ? ativos.reduce((a, p) => a + (Number(p.temperatura) || 0), 0) / ativos.length : 0;
+
+    const totalEnergia = ativos.reduce((a, p) => a + Number(p.energia_kWh || 0), 0);
+    const mediaTensao =
+      ativos.length ? ativos.reduce((a, p) => a + Number(p.tensao || 0), 0) / ativos.length : 0;
+    const mediaCorrente =
+      ativos.length ? ativos.reduce((a, p) => a + Number(p.corrente || 0), 0) / ativos.length : 0;
+    const mediaTemperatura =
+      ativos.length ? ativos.reduce((a, p) => a + Number(p.temperatura || 0), 0) / ativos.length : 0;
+
     return { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura };
   };
 
   const { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura } = calcularTotais();
 
-  if (!tokenChecked || loading) {
+  if (tourSeen === null || !tokenChecked || loading) {
     return (
       <View style={estilos.loadingContainer}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
@@ -152,20 +195,30 @@ export default function HomeEmpresarial() {
         </Animated.View>
 
         <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>Carregando dados empresariais...</Text>
+
       </View>
     );
   }
 
   return (
-    // autoStart=true faz o tour iniciar automaticamente (respeita AsyncStorage dentro do provider)
-    <TourProvider scrollRef={scrollRef} autoStart={true} theme={{ primary: "#2e86de", highlightColor: "#FFC107" }}>
+    <TourProvider
+      scrollRef={scrollRef}
+      // só inicia automaticamente se o usuário NÃO tiver visto antes ou se o usuário clicou em iniciar manualmente
+      autoStart={!tourSeen || forceStartTour}
+      theme={{ primary: "#2e86de", highlightColor: "#FFC107" }}
+    >
       <View style={{ flex: 1 }}>
         <ScrollView ref={scrollRef} style={estilos.container} contentContainerStyle={{ paddingBottom: 160 }}>
-          {/* HEADER */}
+
+          {/* ================= HEADER ================= */}
           <View style={estilos.header}>
-            <TourStep stepKey="logo" title="Logo da Empresa" description="Toque para acessar opções da filial.">
-              <TouchableOpacity onPress={() => { /* mantém comportamento se precisar */ }}>
-                <Animated.Image source={require("../../assets/logo_empresarial.png")} style={[estilos.avatar, { transform: [{ rotate: spin }] }]} />
+
+            <TourStep stepKey="logo" title="Logo da Empresa" description="Clique para ver informações.">
+              <TouchableOpacity>
+                <Animated.Image
+                  source={require("../../assets/logo_empresarial.png")}
+                  style={[estilos.avatar, { transform: [{ rotate: spin }] }]}
+                />
               </TouchableOpacity>
             </TourStep>
 
@@ -176,25 +229,35 @@ export default function HomeEmpresarial() {
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
               <Notificacoes />
-              <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }}>
+
+              {/* BOTÕES DE TOUR: Iniciar / Pular */}
+              <TouchableOpacity onPress={iniciarTourManualmente} style={{ padding: 8 }} accessibilityLabel="Iniciar tour">
+                <Feather name="play-circle" size={22} color="#2e86de" />
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={marcarTourComoVisto} style={{ padding: 8 }} accessibilityLabel="Pular tour">
+                <Feather name="x-circle" size={22} color="#ff5252" />
+              </TouchableOpacity>
+
+              <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }} accessibilityLabel="Sair">
                 <Feather name="log-out" size={24} color="#000" />
               </TouchableOpacity>
             </View>
           </View>
 
-          {/* DASHBOARD */}
+          {/* ================= DASHBOARD ================= */}
           <Text style={estilos.titulo}>Dashboard Empresarial</Text>
 
           <View style={estilos.grid}>
-            <TourStep stepKey="energia-total" title="Energia Total" description="Energia gerada por todas as unidades ativas.">
+            <TourStep stepKey="energia-total" title="Energia Total" description="Total gerado pelas placas.">
               <View style={estilos.card}>
-                <MaterialCommunityIcons name="solar-power" size={28} color="#FFA726" />
+                <MaterialCommunityIcons name="solar-power" size={28} color="#ffa726" />
                 <Text style={estilos.cardLabel}>Energia Total</Text>
                 <Text style={estilos.cardValor}>{totalEnergia.toFixed(2)} kWh</Text>
               </View>
             </TourStep>
 
-            <TourStep stepKey="tensao-media" title="Tensão Média" description="Tensão média atual das placas ativas.">
+            <TourStep stepKey="tensao-media" title="Tensão Média" description="Tensão média entre as placas.">
               <View style={estilos.card}>
                 <MaterialCommunityIcons name="flash" size={28} color="#FFC107" />
                 <Text style={estilos.cardLabel}>Tensão Média</Text>
@@ -202,56 +265,48 @@ export default function HomeEmpresarial() {
               </View>
             </TourStep>
 
-            <TourStep stepKey="corrente-media" title="Corrente Média" description="Corrente média das placas ativas.">
-              <View style={estilos.card}>
-                <MaterialCommunityIcons name="current-ac" size={28} color="#FFB300" />
-                <Text style={estilos.cardLabel}>Corrente Média</Text>
-                <Text style={estilos.cardValor}>{mediaCorrente.toFixed(1)} A</Text>
-              </View>
-            </TourStep>
+            <View style={estilos.card}>
+              <MaterialCommunityIcons name="current-ac" size={28} color="#FFB300" />
+              <Text style={estilos.cardLabel}>Corrente Média</Text>
+              <Text style={estilos.cardValor}>{mediaCorrente.toFixed(1)} A</Text>
+            </View>
 
-            <TourStep stepKey="temperatura-media" title="Temperatura Média" description="Temperatura média dos equipamentos.">
-              <View style={estilos.card}>
-                <MaterialCommunityIcons name="thermometer" size={28} color="#FFc125" />
-                <Text style={estilos.cardLabel}>Temperatura Média</Text>
-                <Text style={estilos.cardValor}>{mediaTemperatura.toFixed(1)} °C</Text>
-              </View>
-            </TourStep>
+            <View style={estilos.card}>
+              <MaterialCommunityIcons name="thermometer" size={28} color="#FFc125" />
+              <Text style={estilos.cardLabel}>Temperatura Média</Text>
+              <Text style={estilos.cardValor}>{mediaTemperatura.toFixed(1)} °C</Text>
+            </View>
           </View>
 
-          {/* AÇÕES RÁPIDAS */}
+          <WeatherCard />
+
+          {/* ================= AÇÕES RÁPIDAS ================= */}
           <Text style={estilos.subtitulo}>Ações Rápidas</Text>
 
           <View style={estilos.acoesContainer}>
-            <TourStep stepKey="gerenciar-placas" title="Gerenciar Placas" description="Acesse o painel de gerenciamento de placas.">
-              <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/placas")}>
-                <Feather name="server" size={22} color="#ffc125" />
-                <Text style={estilos.botaoTexto}>Gerenciar Placas</Text>
-              </TouchableOpacity>
-            </TourStep>
+            <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/simulador")}>
+              <Feather name="server" size={22} color="#ffc125" />
+              <Text style={estilos.botaoTexto}>Simulador</Text>
+            </TouchableOpacity>
 
-            <TourStep stepKey="relatorios" title="Relatórios" description="Veja relatórios e históricos.">
-              <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/relatorios")}>
-                <Feather name="file-text" size={22} color="#ffc125" />
-                <Text style={estilos.botaoTexto}>Relatórios</Text>
-              </TouchableOpacity>
-            </TourStep>
+            <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/agendamento")}>
+              <Feather name="calendar" size={22} color="#ffc125" />
+              <Text style={estilos.botaoTexto}>Agendamento</Text>
+            </TouchableOpacity>
 
-            <TourStep stepKey="configuracoes" title="Configurações" description="Ajustes e preferências do painel.">
-              <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/config")}>
-                <Feather name="settings" size={22} color="#ffc125" />
-                <Text style={estilos.botaoTexto}>Configurações</Text>
-              </TouchableOpacity>
-            </TourStep>
+            <TouchableOpacity style={estilos.botao} onPress={() => router.push("/empresarial/configuracao")}>
+              <Feather name="settings" size={22} color="#ffc125" />
+              <Text style={estilos.botaoTexto}>Configurações</Text>
+            </TouchableOpacity>
           </View>
+
         </ScrollView>
 
-        {/* ChatBot e NavBar — NÃO envolver no TourStep para evitar conflitos */}
-        <View style={estilos.chatBotContainer}>
-          <ChatBot />
-        </View>
+        {/* ================= COMPONENTES FIXOS ================= */}
+        {/* Note: o botao flutuante do ChatBot foi removido conforme solicitado. */}
 
         <NavBarEmpresarial placas={placas} setPlacas={setPlacas} />
+
       </View>
     </TourProvider>
   );
@@ -259,19 +314,86 @@ export default function HomeEmpresarial() {
 
 const estilos = StyleSheet.create({
   container: { flex: 1, backgroundColor: "#f9fafc", padding: 16, marginTop: 40 },
+
   loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center" },
-  header: { flexDirection: "row", alignItems: "center", backgroundColor: "#fff", padding: 14, borderRadius: 16, marginBottom: 20, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 6, elevation: 4 },
+
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#fff",
+    padding: 14,
+    borderRadius: 16,
+    marginBottom: 20,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 6,
+    elevation: 4,
+  },
+
   avatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15, borderWidth: 2, borderColor: "#ffc125" },
+
   username: { fontSize: 20, fontWeight: "700", color: "#222" },
   email: { fontSize: 14, color: "#666", marginTop: 2 },
+
   titulo: { fontSize: 22, fontWeight: "700", marginBottom: 20, color: "#111" },
-  grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
-  card: { width: "48%", backgroundColor: "#fff", borderRadius: 18, padding: 18, marginBottom: 16, shadowColor: "#000", shadowOpacity: 0.06, shadowRadius: 5, elevation: 3, alignItems: "center" },
-  cardLabel: { fontSize: 15, color: "#555", marginTop: 8, textAlign: "center" },
-  cardValor: { fontSize: 20, fontWeight: "bold", color: "#111", marginTop: 6, textAlign: "center" },
+
+  grid: { 
+    flexDirection: "row", 
+    flexWrap: "wrap", 
+    justifyContent: "space-between" 
+  },
+
+  card: {
+    flexBasis: "48%",
+    backgroundColor: "#fff",
+    borderRadius: 18,
+    padding: 18,
+    marginBottom: 16, 
+    shadowColor: "#000",
+    shadowOpacity: 0.06,
+    shadowRadius: 5,
+    elevation: 3,
+    alignItems: "center",
+    justifyContent: "center",
+    minHeight: 120, 
+    height: 120, 
+  },
+
+  cardLabel: { 
+    fontSize: 15, 
+    color: "#555", 
+    marginTop: 8, 
+    textAlign: "center",
+    flexShrink: 1,
+  },
+  
+  cardValor: { 
+    fontSize: 20, 
+    fontWeight: "bold", 
+    color: "#111", 
+    marginTop: 6, 
+    textAlign: "center" 
+  },
+
+
   subtitulo: { marginTop: 25, fontSize: 18, fontWeight: "700", marginBottom: 12, color: "#222" },
+
   acoesContainer: { gap: 12 },
-  botao: { flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#fff", padding: 16, borderRadius: 12, shadowColor: "#000", shadowOpacity: 0.08, shadowRadius: 4, elevation: 3 },
+
+  botao: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    backgroundColor: "#fff",
+    padding: 16,
+    borderRadius: 12,
+    shadowColor: "#000",
+    shadowOpacity: 0.08,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+
   botaoTexto: { fontSize: 16, color: "#000", fontWeight: "600" },
+
   chatBotContainer: { position: "absolute", bottom: 80, right: 16, zIndex: 1000 },
 });
