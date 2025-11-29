@@ -75,7 +75,7 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
         },
         body: JSON.stringify({
           serial: codigo.toUpperCase(),
-          location: "Padrão",
+          location: "São Paulo",
           model: "Genérico"
         }),
 

@@ -203,25 +203,47 @@ export default function TelaPerfil() {
   };
 
 
-  const enviarEnergiaParaBackend = async (placa: Placa, energia: number) => {
+  const enviarEnergiaParaBackend = async (placa: Placa, energia_kWh: number) => {
     try {
+          console.log("DEBUG placa:", placa);
+    console.log("DEBUG placa.id:", placa?.id);
       const token = await AsyncStorage.getItem("userToken");
       if (!token) return;
-      await fetch(`${API_USUARIO_URL}/panels/${placa.serial}/status`, {
-        method: "PATCH",
+
+      // Converter energia kWh para W (aprox. instantâneo)
+      // Se a API já aceita kWh diretamente, apenas envie energia_kWh.
+      const potencia_W = energia_kWh * 1000;
+
+      const response = await fetch(`${API_USUARIO_URL}/measurements`, {
+        method: "POST",
         headers: {
           "Content-Type": "application/json",
           Authorization: `Bearer ${token}`,
         },
         body: JSON.stringify({
-          status: placa.status || "Desconhecido",
-          energia_kWh: energia,
+          panelId: placa.id,                // ID da placa (backend espera número)
+          potencia_W,                       // potência calculada
+          tensao: placa.tensao ?? 0,
+          corrente: placa.tensao ? potencia_W / placa.tensao : 0, // evita erro
+          temperatura: placa.temperatura ?? 0,
+          intervaloSegundos: 5,
+          status: placa.status === "Ativa" ? "Ativa" : "Desativada"
         }),
       });
+
+      const result = await response.json();
+      console.log("✔ Backend recebeu:", result);
+
+      if (!response.ok) {
+        console.log("⚠ Erro resposta backend:", result);
+      }
+
     } catch (err) {
-      console.log("Erro ao enviar energia para backend:", err);
+      console.log("❌ Erro ao enviar energia para backend:", err);
     }
   };
+
+
 
   const salvarHistorico = async (placa: Placa) => {
     try {
@@ -529,7 +551,7 @@ export default function TelaPerfil() {
                         paddingHorizontal: 8,
                         borderRadius: 6,
                       }}
-                      onPress={() => router.push(`./manuntecao`)}
+                      onPress={() => router.push(`/empresarial/manutencao2`)}
                     >
                       <Text style={{ color: "#FFF", fontSize: 11, fontWeight: "700" }}>
                         Ir para manutenção

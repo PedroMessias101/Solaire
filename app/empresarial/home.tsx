@@ -263,7 +263,7 @@ export default function HomeEmpresarial() {
 
           {/* DASHBOARD */}
           <Text style={estilos.titulo}>Métricas Principais</Text>
-
+<TouchableOpacity onPress={() => router.push("/empresarial/registros")}>
           <View style={estilos.grid}>
             <View style={estilos.gridItem}>
               <TourStep stepKey="energia-total" title="Energia Total" description="Total de energia gerada pelas placas ativas (em kWh).">
@@ -305,6 +305,7 @@ export default function HomeEmpresarial() {
               </TourStep>
             </View>
           </View>
+          </TouchableOpacity>
 
           <WeatherCard />
 
