@@ -85,7 +85,7 @@ export default function CadastroScreen() {
   const formatarCPF = (texto) => {
     // Remove tudo que não é número
     const apenasNumeros = texto.replace(/\D/g, '');
-    
+
     // Aplica a máscara: 000.000.000-00
     if (apenasNumeros.length <= 3) {
       return apenasNumeros;
@@ -102,7 +102,7 @@ export default function CadastroScreen() {
   const formatarCNPJ = (texto) => {
     // Remove tudo que não é número
     const apenasNumeros = texto.replace(/\D/g, '');
-    
+
     // Aplica a máscara: 00.000.000/0000-00
     if (apenasNumeros.length <= 2) {
       return apenasNumeros;
@@ -139,7 +139,7 @@ export default function CadastroScreen() {
     if (!senha) return 0;
 
     let forca = 0;
-    
+
     // Critérios de força
     if (senha.length >= 8) forca += 1;
     if (senha.length >= 12) forca += 1;
@@ -199,7 +199,7 @@ export default function CadastroScreen() {
     } else {
       if (!nomeEmpresa || !cnpj || !nomeAdmin || !email || !senha) return false;
     }
-    
+
     return senha === confirmaSenha && isSenhaForte();
   };
 
@@ -230,22 +230,23 @@ export default function CadastroScreen() {
         name: nomeResidencial,
         email: email,
         password: senha,
-        cpf: removerMascara(cpf), // Remove a máscara antes de enviar
+        cpf: removerMascara(cpf)
       };
     } else { // Empresarial
-      if (!nomeEmpresa || !cnpj || !nomeAdmin || !email || !senha) {
+      if (!nomeEmpresa || !nomeAdmin || !email || !senha) {
         Alert.alert("Erro", "Por favor, preencha todos os campos para o cadastro empresarial.");
         setLoading(false);
         return;
       }
       url = `${API_URL}/users/register/business`;
       body = {
-        companyName: nomeEmpresa,
-        companyCnpj: removerMascara(cnpj), // Remove a máscara antes de enviar
         userName: nomeAdmin,
         userEmail: email,
         password: senha,
+        companyName: nomeEmpresa,
+        cnpj: removerMascara(cnpj) 
       };
+
     }
 
     try {
@@ -271,26 +272,27 @@ export default function CadastroScreen() {
     }
   };
 
+
   const renderResidencialForm = () => (
     <>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="user" size={16} color="#333" style={styles.icon} />
-        <TextInput 
-          style={styles.input} 
-          placeholder="Nome completo" 
-          value={nomeResidencial} 
-          onChangeText={setNomeResidencial} 
+        <TextInput
+          style={styles.input}
+          placeholder="Nome completo"
+          value={nomeResidencial}
+          onChangeText={setNomeResidencial}
           placeholderTextColor="#333"
         />
       </View>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
-        <TextInput 
-          style={styles.input} 
-          placeholder="CPF" 
-          value={cpf} 
+        <TextInput
+          style={styles.input}
+          placeholder="CPF"
+          value={cpf}
           onChangeText={handleCpfChange}
-          keyboardType="numeric" 
+          keyboardType="numeric"
           placeholderTextColor="#333"
           maxLength={14} // 000.000.000-00
         />
@@ -302,34 +304,34 @@ export default function CadastroScreen() {
     <>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="building" size={16} color="#333" style={styles.icon} />
-        <TextInput 
-          style={styles.input} 
-          placeholder="Nome da Empresa" 
-          value={nomeEmpresa} 
-          onChangeText={setNomeEmpresa}  
+        <TextInput
+          style={styles.input}
+          placeholder="Nome da Empresa"
+          value={nomeEmpresa}
+          onChangeText={setNomeEmpresa}
           placeholderTextColor="#333"
         />
       </View>
       <View style={styles.inputContainer}>
         <FontAwesome5 name="id-card" size={16} color="#333" style={styles.icon} />
-        <TextInput 
-          style={styles.input} 
-          placeholder="CNPJ" 
-          value={cnpj} 
+        <TextInput
+          style={styles.input}
+          placeholder="CNPJ"
+          value={cnpj}
           onChangeText={handleCnpjChange}
-          keyboardType="numeric" 
+          keyboardType="numeric"
           placeholderTextColor="#333"
           maxLength={18} // 00.000.000/0000-00
         />
       </View>
-       <View style={styles.inputContainer}>
+      <View style={styles.inputContainer}>
         <FontAwesome5 name="user-tie" size={16} color="#333" style={styles.icon} />
-        <TextInput 
-          style={styles.input} 
-          placeholder="Seu nome (Administrador)" 
-          value={nomeAdmin} 
-          onChangeText={setNomeAdmin} 
-          placeholderTextColor="#333" 
+        <TextInput
+          style={styles.input}
+          placeholder="Seu nome (Administrador)"
+          value={nomeAdmin}
+          onChangeText={setNomeAdmin}
+          placeholderTextColor="#333"
         />
       </View>
     </>
@@ -339,14 +341,14 @@ export default function CadastroScreen() {
   const BarraForcaSenha = () => (
     <View style={styles.barraForcaContainer}>
       <View style={styles.barraForcaBackground}>
-        <View 
+        <View
           style={[
-            styles.barraForcaPreenchimento, 
-            { 
+            styles.barraForcaPreenchimento,
+            {
               width: `${(forcaSenha / 6) * 100}%`,
               backgroundColor: corForcaSenha
             }
-          ]} 
+          ]}
         />
       </View>
       {textoForcaSenha ? (
@@ -358,92 +360,92 @@ export default function CadastroScreen() {
   );
 
   return (
-     <KeyboardAvoidingView
-    style={{ flex: 1 }}
-    behavior={Platform.OS === "ios" ? "padding" : "height"}
-    keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
-  >
-    <View style={styles.container}>
-      <StatusBar barStyle="dark-content" />
-      <Animated.View style={[ styles.backgroundCircle, { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] } ]}>
-        <LinearGradient colors={["#fbf5deff", "#ffffffff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientCircle} />
-      </Animated.View>
+    <KeyboardAvoidingView
+      style={{ flex: 1 }}
+      behavior={Platform.OS === "ios" ? "padding" : "height"}
+      keyboardVerticalOffset={Platform.OS === "ios" ? 100 : 0}
+    >
+      <View style={styles.container}>
+        <StatusBar barStyle="dark-content" />
+        <Animated.View style={[styles.backgroundCircle, { transform: [{ scaleX }, { scaleY }, { translateX }, { translateY }] }]}>
+          <LinearGradient colors={["#fbf5deff", "#ffffffff"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.gradientCircle} />
+        </Animated.View>
 
-      <ScrollView contentContainerStyle={styles.contentContainer}>
-        <Text style={styles.title}>Crie sua conta</Text>
-        <Text style={styles.subtitle}>Comece a monitorar sua energia hoje</Text>
+        <ScrollView contentContainerStyle={styles.contentContainer}>
+          <Text style={styles.title}>Crie sua conta</Text>
+          <Text style={styles.subtitle}>Comece a monitorar sua energia hoje</Text>
 
-        <View style={styles.tabs}>
-          <TouchableOpacity style={[styles.tab, tab === "residencial" && styles.tabAtiva]} onPress={() => setTab("residencial")}>
-            <Text style={[styles.tabTexto, tab === "residencial" && styles.tabTextoAtivo]}>Residencial</Text>
-          </TouchableOpacity>
-          <TouchableOpacity style={[styles.tab, tab === "empresarial" && styles.tabAtiva]} onPress={() => setTab("empresarial")}>
-            <Text style={[styles.tabTexto, tab === "empresarial" && styles.tabTextoAtivo]}>Empresarial</Text>
-          </TouchableOpacity>
-        </View>
+          <View style={styles.tabs}>
+            <TouchableOpacity style={[styles.tab, tab === "residencial" && styles.tabAtiva]} onPress={() => setTab("residencial")}>
+              <Text style={[styles.tabTexto, tab === "residencial" && styles.tabTextoAtivo]}>Residencial</Text>
+            </TouchableOpacity>
+            <TouchableOpacity style={[styles.tab, tab === "empresarial" && styles.tabAtiva]} onPress={() => setTab("empresarial")}>
+              <Text style={[styles.tabTexto, tab === "empresarial" && styles.tabTextoAtivo]}>Empresarial</Text>
+            </TouchableOpacity>
+          </View>
 
-        {tab === "residencial" ? renderResidencialForm() : renderEmpresarialForm()}
+          {tab === "residencial" ? renderResidencialForm() : renderEmpresarialForm()}
 
-        {/* Campos Comuns */}
-        <View style={styles.inputContainer}>
-          <Ionicons name="mail" size={18} color="#333" style={styles.icon} />
-          <TextInput style={styles.input} placeholder="E-mail de acesso" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#333" />
-        </View>
-        
-        <View style={styles.inputContainer}>
-          <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
-          <TextInput 
-            style={styles.input} 
-            placeholder="Senha" 
-            secureTextEntry={!mostrarSenha} 
-            value={senha} 
-            onChangeText={atualizarForcaSenha} 
-            placeholderTextColor="#333" 
-          />
-          <TouchableOpacity onPress={() => setMostrarSenha(prev => !prev)}>
-            <Ionicons name={mostrarSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
-          </TouchableOpacity>
-        </View>
-        
-        {/* Barra de força da senha */}
-        <BarraForcaSenha />
-        
-        <View style={styles.inputContainer}>
-          <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
-          <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry={!mostrarConfirmaSenha} value={confirmaSenha} onChangeText={setConfirmaSenha} placeholderTextColor="#333"/>
-          <TouchableOpacity onPress={() => setMostrarConfirmaSenha(prev => !prev)}>
-            <Ionicons name={mostrarConfirmaSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
-          </TouchableOpacity>
-        </View>
+          {/* Campos Comuns */}
+          <View style={styles.inputContainer}>
+            <Ionicons name="mail" size={18} color="#333" style={styles.icon} />
+            <TextInput style={styles.input} placeholder="E-mail de acesso" value={email} onChangeText={setEmail} keyboardType="email-address" autoCapitalize="none" placeholderTextColor="#333" />
+          </View>
 
-        <TouchableOpacity 
-          style={[
-            styles.button, 
-            !isBotaoHabilitado() && styles.buttonDisabled
-          ]} 
-          onPress={handleCadastro} 
-          disabled={loading || !isBotaoHabilitado()}
-        >
-          <LinearGradient 
-            colors={isBotaoHabilitado() ? ["#ffc125", "#ffc125"] : ["#cccccc", "#cccccc"]} 
-            style={styles.buttonGradient}
+          <View style={styles.inputContainer}>
+            <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
+            <TextInput
+              style={styles.input}
+              placeholder="Senha"
+              secureTextEntry={!mostrarSenha}
+              value={senha}
+              onChangeText={atualizarForcaSenha}
+              placeholderTextColor="#333"
+            />
+            <TouchableOpacity onPress={() => setMostrarSenha(prev => !prev)}>
+              <Ionicons name={mostrarSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
+            </TouchableOpacity>
+          </View>
+
+          {/* Barra de força da senha */}
+          <BarraForcaSenha />
+
+          <View style={styles.inputContainer}>
+            <FontAwesome5 name="lock" size={16} color="#333" style={styles.icon} />
+            <TextInput style={styles.input} placeholder="Confirmar senha" secureTextEntry={!mostrarConfirmaSenha} value={confirmaSenha} onChangeText={setConfirmaSenha} placeholderTextColor="#333" />
+            <TouchableOpacity onPress={() => setMostrarConfirmaSenha(prev => !prev)}>
+              <Ionicons name={mostrarConfirmaSenha ? "eye-off" : "eye"} size={20} color="#333" style={styles.iconRight} />
+            </TouchableOpacity>
+          </View>
+
+          <TouchableOpacity
+            style={[
+              styles.button,
+              !isBotaoHabilitado() && styles.buttonDisabled
+            ]}
+            onPress={handleCadastro}
+            disabled={loading || !isBotaoHabilitado()}
           >
-            <Text style={[
-              styles.buttonText,
-              !isBotaoHabilitado() && styles.buttonTextDisabled
-            ]}>
-              {loading ? "Cadastrando..." : "Cadastrar"}
-            </Text>
-          </LinearGradient>
-        </TouchableOpacity>
+            <LinearGradient
+              colors={isBotaoHabilitado() ? ["#ffc125", "#ffc125"] : ["#cccccc", "#cccccc"]}
+              style={styles.buttonGradient}
+            >
+              <Text style={[
+                styles.buttonText,
+                !isBotaoHabilitado() && styles.buttonTextDisabled
+              ]}>
+                {loading ? "Cadastrando..." : "Cadastrar"}
+              </Text>
+            </LinearGradient>
+          </TouchableOpacity>
 
-        <TouchableOpacity onPress={() => router.push("/auth/login")}>
-          <Text style={styles.linkText}>
-            Já tem conta? <Text style={styles.linkHighlight}>Entrar</Text>
-          </Text>
-        </TouchableOpacity>
-      </ScrollView>
-    </View>
+          <TouchableOpacity onPress={() => router.push("/auth/login")}>
+            <Text style={styles.linkText}>
+              Já tem conta? <Text style={styles.linkHighlight}>Entrar</Text>
+            </Text>
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
     </KeyboardAvoidingView>
   );
 }
@@ -472,10 +474,10 @@ const styles = StyleSheet.create({
   linkText: { color: "#6c757d", fontSize: width * 0.038, fontWeight: "500" },
   linkHighlight: { color: "#ffc125", fontWeight: "600", textDecorationLine: "underline" },
   // Estilos para a barra de força da senha
-  barraForcaContainer: { 
-    width: "100%", 
+  barraForcaContainer: {
+    width: "100%",
     marginBottom: 20,
-    alignItems: "center" 
+    alignItems: "center"
   },
   barraForcaBackground: {
     width: "100%",
