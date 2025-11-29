@@ -55,49 +55,49 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
     return pathname.includes(route);
   };
 
+  // SALVAR PLACA NO BACKEND (usando SERIAL AGORA)
+  const salvarPlacaNoBackend = async (codigo: string) => {
+    try {
+      console.log("Enviando placa ao backend:", codigo);
 
-  // -------------------------------
-// SALVAR PLACA NO BACKEND (apenas code)
-// -------------------------------
-const salvarPlacaNoBackend = async (codigo: string) => {
-  try {
-    console.log("Enviando placa ao backend:", codigo);
+      const token = await AsyncStorage.getItem("userToken");
 
-    const token = await AsyncStorage.getItem("token");
+      if (!token) {
+        Alert.alert("Erro", "Você não está autenticada. Faça login novamente.");
+        return false;
+      }
 
-    if (!token) {
-      Alert.alert("Erro", "Você não está autenticada. Faça login novamente.");
+      const response = await fetch("https://solaire-z8mw.onrender.com/panels", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          serial: codigo.toUpperCase(),
+          location: "Padrão",
+          model: "Genérico"
+        }),
+
+      });
+
+      const result = await response.json();
+      console.log("Resposta do backend:", result);
+
+      if (!response.ok) {
+        Alert.alert("Erro", result.error || "Falha ao salvar placa no backend.");
+        return false;
+      }
+
+      setPlacas([...placas, result]);
+      return true;
+
+    } catch (error) {
+      console.log("Erro ao salvar no backend:", error);
+      Alert.alert("Erro", "Não foi possível salvar a placa no backend.");
       return false;
     }
-
-    const response = await fetch("https://solaire-z8mw.onrender.com/panels", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Authorization: `Bearer ${token}`,
-      },
-      body: JSON.stringify({
-        code: codigo, // apenas isso na criação
-      }),
-    });
-
-    const result = await response.json();
-    console.log("Resposta do backend:", result);
-
-    if (!response.ok) {
-      Alert.alert("Erro", result.error || "Falha ao salvar placa no backend.");
-      return false;
-    }
-
-    setPlacas([...placas, result]);
-    return true;
-
-  } catch (error) {
-    console.log("Erro ao salvar no backend:", error);
-    Alert.alert("Erro", "Não foi possível salvar a placa no backend.");
-    return false;
-  }
-};
+  };
 
 
   // -------------------------------
@@ -137,57 +137,57 @@ Temperatura: ${dados.temperatura ?? "--"} °C
     }
   };
 
-const handleBuscarCodigo = async () => {
-  try {
-    setCarregando(true);
-    setEtapaAtual("Buscando na API de simulação...");
+  const handleBuscarCodigo = async () => {
+    try {
+      setCarregando(true);
+      setEtapaAtual("Buscando na API de simulação...");
 
-    if (!codigoPlaca.trim()) {
-      Alert.alert("Erro", "Digite um código válido!");
-      return;
-    }
+      if (!codigoPlaca.trim()) {
+        Alert.alert("Erro", "Digite um código válido!");
+        return;
+      }
 
-    console.log("Buscando placa:", codigoPlaca);
+      console.log("Buscando placa:", codigoPlaca);
 
-    const response = await fetch(
-      `https://placa-api-eaho.onrender.com/${codigoPlaca}`
-    );
+      const response = await fetch(
+        `https://placa-api-eaho.onrender.com/${codigoPlaca}`
+      );
 
-    if (!response.ok) {
-      Alert.alert("Erro", "Código não encontrado na API de simulação.");
-      return;
-    }
+      if (!response.ok) {
+        Alert.alert("Erro", "Código não encontrado na API de simulação.");
+        return;
+      }
 
-    const data = await response.json();
-    console.log("Dados da simulação:", data);
+      const data = await response.json();
+      console.log("Dados da simulação:", data);
 
-    Alert.alert(
-      "Dados da API",
-      `
+      Alert.alert(
+        "Dados da API",
+        `
 Energia: ${data.energia_kWh} kWh
 Tensão: ${data.tensao} V
 Corrente: ${data.corrente} A
 Temperatura: ${data.temperatura} °C
 Status: ${data.status}
       `
-    );
+      );
 
-    const ok = await salvarPlacaNoBackend(codigoPlaca);
+      const ok = await salvarPlacaNoBackend(codigoPlaca);
 
-    if (ok) {
-      Alert.alert("Sucesso", "Placa adicionada ao seu sistema!");
-      setModalVisible(false);
-      setCodigoPlaca("");
+      if (ok) {
+        Alert.alert("Sucesso", "Placa adicionada ao seu sistema!");
+        setModalVisible(false);
+        setCodigoPlaca("");
+      }
+
+    } catch (error) {
+      console.log("Erro ao buscar simulação:", error);
+      Alert.alert("Erro", "Falha ao conectar à API de simulação.");
+    } finally {
+      setCarregando(false);
+      setEtapaAtual("");
     }
-
-  } catch (error) {
-    console.log("Erro ao buscar simulação:", error);
-    Alert.alert("Erro", "Falha ao conectar à API de simulação.");
-  } finally {
-    setCarregando(false);
-    setEtapaAtual("");
-  }
-};
+  };
 
 
   return (
