@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   View,
   TouchableOpacity,
@@ -14,6 +14,8 @@ import {
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
+import { useApi } from "../../hooks/useApi";
+import { useWebSocket } from "../../hooks/useWebSocket";
 
 interface Props {
   placas: any[];
@@ -24,6 +26,10 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
   const router = useRouter();
   const pathname = usePathname();
 
+  // >>> INSTANCIANDO HOOKS <<<
+  const api = useApi();
+  const { message, connected } = useWebSocket();
+
   const [modalVisible, setModalVisible] = useState(false);
   const [codigoPlaca, setCodigoPlaca] = useState("");
   const [carregando, setCarregando] = useState(false);
@@ -31,18 +37,9 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
   const [modoBusca, setModoBusca] = useState<"codigo" | "arduino">("codigo");
 
   const tabs = [
-    {
-      icon: "home",
-      route: "/empresarial/home",
-    },
-    {
-      icon: "scan-outline",
-      action: () => setModalVisible(true),
-    },
-    {
-      icon: "person",
-      route: "/empresarial/perfil",
-    },
+    { icon: "home", route: "/empresarial/home" },
+    { icon: "scan-outline", action: () => setModalVisible(true) },
+    { icon: "person", route: "/empresarial/perfil" },
   ];
 
   const handlePress = (tab: any) => {
@@ -50,18 +47,38 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
     if (tab.route) router.push(tab.route);
   };
 
-  const isActive = (route: string | undefined) => {
-    if (!route) return false;
-    return pathname.includes(route);
-  };
+  const isActive = (route: string | undefined) =>
+    route ? pathname.includes(route) : false;
 
-  // SALVAR PLACA NO BACKEND (usando SERIAL AGORA)
+  // ============================================================
+  // REST → pegar dados do ESP32 ao abrir a tela empresarial
+  // ============================================================
+  useEffect(() => {
+    api
+      .get("/esp32/data")
+      .then((res) => {
+        console.log("REST no Empresarial:", res.data);
+      })
+      .catch((err) => console.log("Erro REST:", err));
+  }, []);
+
+  // ============================================================
+  // WEBSOCKET → dados em tempo real
+  // ============================================================
+  useEffect(() => {
+    if (message) {
+      console.log("WS Empresarial:", message);
+    }
+  }, [message]);
+
+  // ============================================================
+  // SALVAR PLACA NO BACKEND
+  // ============================================================
   const salvarPlacaNoBackend = async (codigo: string) => {
     try {
       console.log("Enviando placa ao backend:", codigo);
 
       const token = await AsyncStorage.getItem("userToken");
-
       if (!token) {
         Alert.alert("Erro", "Você não está autenticada. Faça login novamente.");
         return false;
@@ -76,9 +93,8 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
         body: JSON.stringify({
           serial: codigo.toUpperCase(),
           location: "São Paulo",
-          model: "Genérico"
+          model: "Genérico",
         }),
-
       });
 
       const result = await response.json();
@@ -91,7 +107,6 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
 
       setPlacas([...placas, result]);
       return true;
-
     } catch (error) {
       console.log("Erro ao salvar no backend:", error);
       Alert.alert("Erro", "Não foi possível salvar a placa no backend.");
@@ -99,10 +114,9 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
     }
   };
 
-
-  // -------------------------------
-  // 🔥 BUSCAR DO ARDUINO
-  // -------------------------------
+  // ============================================================
+  // BUSCAR DADOS DO ARDUINO
+  // ============================================================
   const handleBuscarArduino = async () => {
     try {
       setCarregando(true);
@@ -137,6 +151,9 @@ Temperatura: ${dados.temperatura ?? "--"} °C
     }
   };
 
+  // ============================================================
+  // BUSCAR DADOS DA API DE SIMULAÇÃO
+  // ============================================================
   const handleBuscarCodigo = async () => {
     try {
       setCarregando(true);
@@ -179,7 +196,6 @@ Status: ${data.status}
         setModalVisible(false);
         setCodigoPlaca("");
       }
-
     } catch (error) {
       console.log("Erro ao buscar simulação:", error);
       Alert.alert("Erro", "Falha ao conectar à API de simulação.");
@@ -189,7 +205,9 @@ Status: ${data.status}
     }
   };
 
-
+  // ============================================================
+  // RENDER
+  // ============================================================
   return (
     <View style={styles.container}>
       {tabs.map((tab, index) => {
@@ -260,7 +278,6 @@ Status: ${data.status}
               </TouchableOpacity>
             </View>
 
-            {/* CÓDIGO */}
             {modoBusca === "codigo" && (
               <>
                 <Text style={styles.modalSubtitle}>Digite o código</Text>
@@ -276,7 +293,6 @@ Status: ${data.status}
               </>
             )}
 
-            {/* LOADING */}
             {carregando && (
               <View style={styles.loadingContainer}>
                 <ActivityIndicator size="large" color="#FFC125" />
@@ -284,7 +300,6 @@ Status: ${data.status}
               </View>
             )}
 
-            {/* BOTÕES */}
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -315,9 +330,9 @@ Status: ${data.status}
   );
 };
 
-// -------------------------
+// ============================================================
 // ESTILOS
-// -------------------------
+// ============================================================
 const styles = StyleSheet.create({
   container: {
     position: "absolute",

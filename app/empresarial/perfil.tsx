@@ -214,7 +214,7 @@ export default function TelaPerfil() {
       // Se a API já aceita kWh diretamente, apenas envie energia_kWh.
       const potencia_W = energia_kWh * 1000;
 
-      const response = await fetch(`${API_USUARIO_URL}/measurements`, {
+      const response = await fetch(`${API_USUARIO_URL}/measurements/panel`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
