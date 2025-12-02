@@ -52,7 +52,7 @@ export default function TelaConfig() {
         </TouchableOpacity>
           <TouchableOpacity style={estilos.item} onPress={() => router.push("/empresarial/manutencao")}>
           <View style={estilos.caixaIcone}>
-            <Ionicons name="help-circle-outline" size={22} color="#ffc125" />
+            <Ionicons name="tools" size={22} color="#ffc125" />
           </View>
           <View>
             <Text style={estilos.tituloItem}>Manutenção</Text>

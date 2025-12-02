@@ -443,9 +443,15 @@ const EmpresarialContent = () => {
             </View>
           </View>
 
+<<<<<<< HEAD
           {/* DASHBOARD - MÉTRICAS PRINCIPAIS */}
           <Text style={estilos.titulo}>Métricas Operacionais</Text>
 
+=======
+          {/* DASHBOARD */}
+          <Text style={estilos.titulo}>Métricas Principais</Text>
+<TouchableOpacity onPress={() => router.push("/empresarial/registros")}>
+>>>>>>> efd4e66b87f3cbb684b1c103076a925bfa8b8044
           <View style={estilos.grid}>
             {/* TOUR STEP 4: ENERGIA TOTAL */}
             <View style={estilos.gridItem}>
@@ -491,6 +497,7 @@ const EmpresarialContent = () => {
               </TourStep>
             </View>
           </View>
+          </TouchableOpacity>
 
           {/* CARD DE CLIMA */}
           <WeatherCard />
