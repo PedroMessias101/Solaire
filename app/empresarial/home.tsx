@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import {
   View,
   Text,
@@ -7,18 +7,25 @@ import {
   TouchableOpacity,
   Animated,
   Easing,
+  useColorScheme,
+  ActivityIndicator,
+  Platform, // Importar Platform para hacks de ScrollView
 } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from "expo-router";
-import { Feather, MaterialCommunityIcons } from "@expo/vector-icons";
+import { Feather, MaterialCommunityIcons, Ionicons } from "@expo/vector-icons";
 
-import ChatBot from "../components/ChatBot";
-import { NavBarEmpresarial } from "../components/NavBarEmpresarial";
+// Componentes (Mantenha este caminho consistente com seu projeto)
+import { NavBarEmpresarial } from "../components/NavBarEmpresarial"; 
 import Notificacoes from "../components/notific";
 import WeatherCard from "../components/Clima";
-import { TourProvider, TourStep } from "../components/TourGuide";
+// TourProvider/TourStep (Assumindo que estão neste caminho)
+import { TourProvider, TourStep, useTour } from "../components/TourGuide"; 
 
-// --- Tipos de Dados ---
+// ====================================================================
+// TIPOS DE DADOS E CONSTANTES
+// ====================================================================
+
 interface UserData {
   name: string;
   email: string;
@@ -34,28 +41,143 @@ interface PlacaData {
   temperatura: number;
 }
 
+interface TotaisData {
+  totalEnergia: number;
+  mediaTensao: number;
+  mediaCorrente: number;
+  mediaTemperatura: number;
+}
+
 const API_USUARIO_URL = "https://solaire-z8mw.onrender.com";
 const API_SIMULACAO_URL = "https://placa-api-eaho.onrender.com";
+const THEME_STORAGE_KEY = "userThemePreference";
+const TOUR_STORAGE_KEY = "tourSeen";
 
-export default function HomeEmpresarial() {
+// Cores base para o tema
+const CORES_TEMA = {
+  primary: "#FFC125", // Amarelo (Destaque)
+  secondary: "#2e86de", // Azul (Ações)
+  backgroundLight: "#f9fafc",
+  backgroundDark: "#1f2937",
+  cardLight: "#ffffff",
+  cardDark: "#374151",
+  textPrimaryLight: "#111111",
+  textPrimaryDark: "#f9fafc",
+  textSecondaryLight: "#666666",
+  textSecondaryDark: "#bbbbbb",
+  shadow: "#000000",
+};
+
+// ====================================================================
+// FUNÇÕES AUXILIARES (Lógica de Cálculo)
+// ====================================================================
+
+const calcularTotais = (placas: PlacaData[]): TotaisData => {
+  const ativos = placas.filter((p) => p.status === "Ativa");
+
+  const totalEnergia: number = ativos.reduce((a, p) => a + Number(p.energia_kWh || 0), 0);
+  const somaTensao: number = ativos.reduce((a, p) => a + Number(p.tensao || 0), 0);
+  const somaCorrente: number = ativos.reduce((a, p) => a + Number(p.corrente || 0), 0);
+  const somaTemperatura: number = ativos.reduce((a, p) => a + Number(p.temperatura || 0), 0);
+
+  const count = ativos.length;
+
+  return {
+    totalEnergia,
+    mediaTensao: count > 0 ? somaTensao / count : 0,
+    mediaCorrente: count > 0 ? somaCorrente / count : 0,
+    mediaTemperatura: count > 0 ? somaTemperatura / count : 0,
+  };
+};
+
+// ====================================================================
+// FUNÇÃO DE ESTILOS DINÂMICOS
+// ====================================================================
+
+const getDynamicStyles = (currentScheme: 'light' | 'dark') => {
+  const isDark = currentScheme === 'dark';
+  const theme = isDark ? CORES_TEMA.backgroundDark : CORES_TEMA.backgroundLight;
+  const cardBg = isDark ? CORES_TEMA.cardDark : CORES_TEMA.cardLight;
+  const textPrimary = isDark ? CORES_TEMA.textPrimaryDark : CORES_TEMA.textPrimaryLight;
+  const textSecondary = isDark ? CORES_TEMA.textSecondaryDark : CORES_TEMA.textSecondaryLight;
+  const shadowColor = CORES_TEMA.shadow;
+
+  return StyleSheet.create({
+    container: { flex: 1, padding: 16, marginTop: 40, backgroundColor: theme },
+    loadingContainer: { flex: 1, justifyContent: "center", alignItems: "center", backgroundColor: theme },
+    errorText: { marginTop: 15, color: '#D9534F', fontSize: 16, textAlign: 'center' },
+    retryButton: { marginTop: 20, backgroundColor: CORES_TEMA.secondary, padding: 10, borderRadius: 8 },
+    retryButtonText: { color: CORES_TEMA.textPrimaryDark, fontWeight: 'bold' },
+
+    header: {
+      flexDirection: "row",
+      alignItems: "center",
+      backgroundColor: cardBg,
+      padding: 14,
+      borderRadius: 16,
+      marginBottom: 20,
+      shadowColor: shadowColor,
+      shadowOpacity: isDark ? 0.2 : 0.08,
+      shadowRadius: 6,
+      elevation: 4,
+    },
+    avatar: { width: 60, height: 60, borderRadius: 30, marginRight: 15, borderWidth: 2, borderColor: CORES_TEMA.primary },
+    username: { fontSize: 20, fontWeight: "700", color: textPrimary },
+    email: { fontSize: 14, color: textSecondary, marginTop: 2 },
+    
+    themeToggle: { padding: 8, marginRight: 5, backgroundColor: cardBg, borderRadius: 10 },
+
+    titulo: { fontSize: 22, fontWeight: "700", marginBottom: 20, color: textPrimary },
+    subtitulo: { marginTop: 25, fontSize: 18, fontWeight: "700", marginBottom: 12, color: textPrimary },
+    grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
+    gridItem: { flexBasis: "48%", marginBottom: 16, minHeight: 120, height: 120 },
+    card: {
+      flex: 1, backgroundColor: cardBg, borderRadius: 18, padding: 18, marginBottom: 16,
+      shadowColor: shadowColor, shadowOpacity: isDark ? 0.2 : 0.06, shadowRadius: 5, elevation: 3,
+      alignItems: "center", justifyContent: "center", minHeight: 120, height: 120,
+    },
+    cardLabel: { fontSize: 15, color: textSecondary, marginTop: 8, textAlign: "center" },
+    cardValor: { fontSize: 20, fontWeight: "bold", color: textPrimary, marginTop: 6, textAlign: "center" },
+
+    acoesContainer: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
+    botao: {
+      flexDirection: "row", alignItems: "center", padding: 16, borderRadius: 12,
+      shadowColor: shadowColor, shadowOpacity: isDark ? 0.2 : 0.08, shadowRadius: 4, elevation: 3,
+      backgroundColor: cardBg, marginBottom: 12, marginRight: 12,
+    },
+    botaoTexto: { fontSize: 16, color: textPrimary, fontWeight: "600", marginLeft: 8 },
+  });
+};
+
+// ====================================================================
+// COMPONENTE FILHO: EMPRESARIAL CONTENT (Onde o useTour é chamado)
+// ====================================================================
+
+const EmpresarialContent = () => {
   const router = useRouter();
+  const systemColorScheme = useColorScheme();
+  
+  // HOOK DE CONTEXTO DO TOUR (Deve estar dentro do provedor)
+  const { startTour, registerScrollRef } = useTour();
 
+  // --- Estados do Componente ---
   const [user, setUser] = useState<UserData | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
   const [token, setToken] = useState<string | null>(null);
   const [placas, setPlacas] = useState<PlacaData[]>([]);
   const [tokenChecked, setTokenChecked] = useState<boolean>(false);
-
+  const [error, setError] = useState<string | null>(null);
+  
+  // --- Tema e Tour ---
+  const [themeOverride, setThemeOverride] = useState<'light' | 'dark' | null>(null);
   const [tourSeen, setTourSeen] = useState<boolean | null>(null);
   const [forceStartTour, setForceStartTour] = useState<boolean>(false);
 
+  // REFERÊNCIA DO SCROLLVIEW
   const scrollRef = useRef<ScrollView | null>(null);
 
-  // ======================
-  // ANIMAÇÃO DO SOL
-  // ======================
+  // --- Lógica da Animação do Sol ---
   const spinValue = useRef(new Animated.Value(0)).current;
-
   useEffect(() => {
     Animated.loop(
       Animated.timing(spinValue, {
@@ -71,43 +193,42 @@ export default function HomeEmpresarial() {
     inputRange: [0, 1],
     outputRange: ["0deg", "360deg"],
   });
+  
+  // --- CÁLCULO DO TEMA ATUAL ---
+  const currentColorScheme: 'light' | 'dark' = useMemo(() => {
+    return themeOverride || systemColorScheme || 'light';
+  }, [themeOverride, systemColorScheme]);
 
-  // ======================
-  // CHECK TOKEN
-  // ======================
+  // --- ESTILOS DINÂMICOS (Otimizados) ---
+  const estilos = useMemo(() => getDynamicStyles(currentColorScheme), [currentColorScheme]);
+
+  // --- 1. AUTENTICAÇÃO, TEMA e TOUR (Ao carregar) ---
   useEffect(() => {
-    const checkToken = async () => {
+    const loadInitialData = async () => {
+      // Token
       const storedToken = await AsyncStorage.getItem("userToken");
-
       if (!storedToken) {
         router.replace("/auth/login");
         return;
       }
       setToken(storedToken);
       setTokenChecked(true);
-    };
-    checkToken();
-  }, [router]);
 
-  useEffect(() => {
-    if (tokenChecked && token) fetchUserAndPanels();
-  }, [tokenChecked, token]);
-
-  // ======================
-  // LOAD TOUR FLAG
-  // ======================
-  useEffect(() => {
-    const loadTourFlag = async () => {
-      const flag = await AsyncStorage.getItem("tourSeen");
+      // Preferência de Tema
+      const storedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
+      if (storedTheme === 'light' || storedTheme === 'dark') {
+          setThemeOverride(storedTheme);
+      }
+      
+      // Tour
+      const flag = await AsyncStorage.getItem(TOUR_STORAGE_KEY);
       setTourSeen(flag === "true");
     };
-    loadTourFlag();
-  }, []);
+    loadInitialData();
+  }, [router]);
 
-  // ======================
-  // FETCH DATA
-  // ======================
-  const fetchUserAndPanels = async () => {
+  // --- 2. FETCH DE DADOS (Restaurado com lógica de placas) ---
+  const fetchUserAndPanels = useCallback(async () => {
     if (!token) {
       setLoading(false);
       return;
@@ -115,7 +236,9 @@ export default function HomeEmpresarial() {
 
     try {
       setLoading(true);
+      setError(null);
 
+      // 1. Busca Dados do Usuário
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
@@ -129,16 +252,17 @@ export default function HomeEmpresarial() {
       const userResponse = await resUser.json();
       if (userResponse.success) setUser(userResponse.data as UserData);
 
+      // 2. Busca Dados das Placas
       const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       const placasResponse = await resPlacas.json();
-
       const placasDoUsuario: any[] = placasResponse.data || [];
 
+      // 3. Agrega Dados de Simulação
       const placasCompletas: PlacaData[] = await Promise.all(
         placasDoUsuario.map(async (placa: any) => {
-          if (placa.status !== "Ativa")
+          if (placa.status !== "Ativa") {
             return {
               ...placa,
               energia_kWh: 0,
@@ -146,11 +270,13 @@ export default function HomeEmpresarial() {
               corrente: 0,
               temperatura: 0,
             } as PlacaData;
+          }
 
           try {
             const resSim = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
+            if (!resSim.ok) throw new Error("Falha na API de Simulação");
+            
             const sim = await resSim.json();
-
             return {
               ...placa,
               energia_kWh: sim.energia_kWh || 0,
@@ -158,8 +284,8 @@ export default function HomeEmpresarial() {
               corrente: sim.corrente || 0,
               temperatura: sim.temperatura || 0,
             } as PlacaData;
-          } catch (error) {
-            console.log("Erro simulacao para placa", placa.serial, error);
+          } catch (e) {
+            console.warn("Erro simulacao para placa:", placa.serial, e);
             return {
               ...placa,
               energia_kWh: 0,
@@ -173,78 +299,110 @@ export default function HomeEmpresarial() {
 
       setPlacas(placasCompletas);
     } catch (err) {
-      console.log("Erro ao buscar dados:", err);
+      console.error("Erro geral ao buscar dados:", err);
+      setError("Não foi possível carregar os dados. Verifique sua conexão.");
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, router]);
+  
+  // Efeito para chamar a busca de dados
+  useEffect(() => {
+    if (tokenChecked && token) fetchUserAndPanels();
+  }, [tokenChecked, token, fetchUserAndPanels]);
 
+  // --- 3. LÓGICA DE CÁLCULO (Otimizada com useMemo) ---
+  const { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura } = useMemo(
+    () => calcularTotais(placas),
+    [placas]
+  );
+  
+  // --- 4. AÇÕES DE TEMA, TOUR e LOGOUT ---
+  const toggleTheme = async () => {
+      const newTheme = currentColorScheme === 'light' ? 'dark' : 'light';
+      setThemeOverride(newTheme);
+      await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
+  };
+  
   const handleLogout = async () => {
     await AsyncStorage.removeItem("userToken");
     router.replace("/auth/login");
   };
 
-  const marcarTourComoVisto = async () => {
-    await AsyncStorage.setItem("tourSeen", "true");
-    setTourSeen(true);
-    setForceStartTour(false);
-  };
-
   const iniciarTourManualmente = async () => {
-    await AsyncStorage.removeItem("tourSeen");
+    await AsyncStorage.removeItem(TOUR_STORAGE_KEY);
     setTourSeen(false);
     setForceStartTour(true);
+    // Inicia o tour
+    if (startTour) {
+      setTimeout(() => startTour({ force: true }), 100); 
+    }
   };
 
-  const calcularTotais = () => {
-    const ativos = placas.filter((p) => p.status === "Ativa");
+  // ====================================================================
+  // FUNÇÕES DE REGISTRO DO SCROLLVIEW PARA CORREÇÃO DE TREMOR
+  // ====================================================================
 
-    const totalEnergia: number = ativos.reduce((a, p) => a + Number(p.energia_kWh || 0), 0);
-    const mediaTensao: number =
-      ativos.length ? ativos.reduce((a, p) => a + Number(p.tensao || 0), 0) / ativos.length : 0;
-    const mediaCorrente: number =
-      ativos.length ? ativos.reduce((a, p) => a + Number(p.corrente || 0), 0) / ativos.length : 0;
-    const mediaTemperatura: number =
-      ativos.length ? ativos.reduce((a, p) => a + Number(p.temperatura || 0), 0) / ativos.length : 0;
+  const handleScrollLayout = useCallback(() => {
+    // Registra a referência do ScrollView para que o Tour possa rastrear a rolagem
+    if (scrollRef.current) {
+      registerScrollRef(scrollRef);
+    }
+  }, [registerScrollRef]);
 
-    return { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura };
-  };
+  // ====================================================================
+  // RENDERIZAÇÃO CONDICIONAL
+  // ====================================================================
 
-  const { totalEnergia, mediaTensao, mediaCorrente, mediaTemperatura } = calcularTotais();
-
+  // 1. Loading
   if (tourSeen === null || !tokenChecked || loading) {
     return (
       <View style={estilos.loadingContainer}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <MaterialCommunityIcons name="white-balance-sunny" size={35} color="#FFc125" />
+          <MaterialCommunityIcons name="white-balance-sunny" size={35} color={CORES_TEMA.primary} />
         </Animated.View>
-        <Text style={{ marginTop: 10, color: "#444", fontSize: 16 }}>
+        <ActivityIndicator size="large" color={CORES_TEMA.secondary} style={{ marginTop: 15 }} />
+        <Text style={{ marginTop: 10, color: estilos.username.color, fontSize: 16 }}>
           Carregando dados empresariais...
         </Text>
       </View>
     );
   }
+  
+  // 2. Erro
+  if (error) {
+      return (
+          <View style={estilos.loadingContainer}>
+              <Feather name="alert-triangle" size={30} color="#D9534F" />
+              <Text style={estilos.errorText}>{error}</Text>
+              <TouchableOpacity onPress={fetchUserAndPanels} style={estilos.retryButton}>
+                  <Text style={estilos.retryButtonText}>Tentar Novamente</Text>
+              </TouchableOpacity>
+          </View>
+      );
+  }
 
+  // 3. Conteúdo Principal
   return (
-    <TourProvider
-      scrollRef={scrollRef}
-      autoStart={!tourSeen || forceStartTour}
-      theme={{ primary: "#2e86de", highlightColor: "#FFC107" }}
-    >
-      <View style={{ flex: 1, backgroundColor: "#f9fafc" }}>
+      <View style={{ flex: 1, backgroundColor: estilos.container.backgroundColor }}>
         <ScrollView
           ref={scrollRef}
+          onLayout={handleScrollLayout} // Usa a função otimizada de registro
           style={estilos.container}
+          // Adiciona o 'scrollEventThrottle' para melhor rastreamento da rolagem (Android/iOS)
+          scrollEventThrottle={Platform.select({ ios: 1, android: 16 })}
           contentContainerStyle={{ paddingBottom: 160 }}
         >
           {/* HEADER */}
           <View style={estilos.header}>
-            <TourStep stepKey="logo" title="Logo da Empresa" description="Clique para ver informações.">
+            {/* TOUR STEP 1: PERFIL */}
+            <TourStep 
+                stepKey="perfil" 
+                title="Identificação do Gestor" 
+                description={`Bem-vindo(a), ${user?.name ?? 'Gestor'}. Aqui você pode acessar configurações do perfil e dados contratuais.`}
+            >
               <TouchableOpacity onPress={() => {}}>
-                <Animated.Image
-                  source={require("../../assets/logo_empresarial.png")}
-                  style={[estilos.avatar, { transform: [{ rotate: spin }] }]}
-                />
+                <Feather name="user" size={30} color={CORES_TEMA.primary} style={estilos.avatar} />
               </TouchableOpacity>
             </TourStep>
 
@@ -254,51 +412,85 @@ export default function HomeEmpresarial() {
             </View>
 
             <View style={{ flexDirection: "row", alignItems: "center" }}>
-              <Notificacoes />
+              
+              {/* TOUR STEP 2: TEMA */}
+              <TourStep
+                stepKey="tema"
+                title="Modo Claro/Escuro"
+                description="Alterne rapidamente para o modo escuro para reduzir o esforço visual em ambientes de pouca luz."
+              >
+                <TouchableOpacity onPress={toggleTheme} style={estilos.themeToggle}>
+                  {currentColorScheme === 'dark' ? (
+                    <Ionicons name="moon" size={24} color={estilos.username.color} />
+                  ) : (
+                    <Ionicons name="sunny-sharp" size={24} color={CORES_TEMA.primary} />
+                  )}
+                </TouchableOpacity>
+              </TourStep>
+              
+              {/* TOUR STEP 3: NOTIFICAÇÕES */}
+              <TourStep
+                stepKey="notificacoes"
+                title="Alertas do Sistema"
+                description="Verifique esta seção para alertas críticos sobre a performance, manutenção ou segurança do seu sistema."
+              >
+                  <Notificacoes />
+              </TourStep>
+              
               <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }}>
-                <Feather name="log-out" size={24} color="#000" />
+                <Feather name="log-out" size={24} color={estilos.username.color} /> 
               </TouchableOpacity>
             </View>
           </View>
 
+<<<<<<< HEAD
+          {/* DASHBOARD - MÉTRICAS PRINCIPAIS */}
+          <Text style={estilos.titulo}>Métricas Operacionais</Text>
+
+=======
           {/* DASHBOARD */}
           <Text style={estilos.titulo}>Métricas Principais</Text>
 <TouchableOpacity onPress={() => router.push("/empresarial/registros")}>
+>>>>>>> efd4e66b87f3cbb684b1c103076a925bfa8b8044
           <View style={estilos.grid}>
+            {/* TOUR STEP 4: ENERGIA TOTAL */}
             <View style={estilos.gridItem}>
-              <TourStep stepKey="energia-total" title="Energia Total" description="Total de energia gerada pelas placas ativas (em kWh).">
+              <TourStep stepKey="energia-total" title="Produção Total (kWh)" description="A métrica mais importante: total de energia gerada por todos os painéis ativos no período." position="bottom">
                 <View style={estilos.card}>
-                  <MaterialCommunityIcons name="solar-power" size={28} color="#ffa726" />
+                  <MaterialCommunityIcons name="solar-power" size={28} color={CORES_TEMA.primary} />
                   <Text style={estilos.cardLabel}>Energia Total</Text>
                   <Text style={estilos.cardValor}>{totalEnergia.toFixed(2)} kWh</Text>
                 </View>
               </TourStep>
             </View>
 
+            {/* TOUR STEP 5: TENSÃO MÉDIA */}
             <View style={estilos.gridItem}>
-              <TourStep stepKey="tensao-media" title="Tensão Média" description="Tensão média medida entre as placas solares.">
+              <TourStep stepKey="tensao-media" title="Tensão Média (V)" description="Tensão elétrica média medida. Mantenha esta métrica dentro dos limites operacionais seguros." position="bottom">
                 <View style={estilos.card}>
-                  <MaterialCommunityIcons name="flash" size={28} color="#FFC107" />
+                  <MaterialCommunityIcons name="flash" size={28} color={CORES_TEMA.primary} />
                   <Text style={estilos.cardLabel}>Tensão Média</Text>
                   <Text style={estilos.cardValor}>{mediaTensao.toFixed(1)} V</Text>
                 </View>
               </TourStep>
             </View>
 
+            {/* TOUR STEP 6: CORRENTE MÉDIA (Posição Top para estabilidade) */}
             <View style={estilos.gridItem}>
-              <TourStep stepKey="corrente-media" title="Corrente Média" description="Corrente média de saída, indicando o fluxo de energia.">
+              <TourStep stepKey="corrente-media" title="Corrente Média (A)" description="Fluxo de corrente elétrica. Quedas aqui podem indicar problemas de conexão ou sombreamento." position="top">
                 <View style={estilos.card}>
-                  <MaterialCommunityIcons name="current-ac" size={28} color="#FFB300" />
+                  <MaterialCommunityIcons name="current-ac" size={28} color={CORES_TEMA.primary} />
                   <Text style={estilos.cardLabel}>Corrente Média</Text>
                   <Text style={estilos.cardValor}>{mediaCorrente.toFixed(1)} A</Text>
                 </View>
               </TourStep>
             </View>
 
+            {/* TOUR STEP 7: TEMPERATURA MÉDIA (Posição Top para estabilidade) */}
             <View style={estilos.gridItem}>
-              <TourStep stepKey="temperatura-media" title="Temperatura Média" description="Temperatura média de operação das placas. Valores altos podem indicar ineficiência.">
+              <TourStep stepKey="temperatura-media" title="Temperatura Média (°C)" description="O calor afeta a eficiência. Monitore esta média para evitar superaquecimento dos painéis." position="top">
                 <View style={estilos.card}>
-                  <MaterialCommunityIcons name="thermometer" size={28} color="#FFc125" />
+                  <MaterialCommunityIcons name="thermometer" size={28} color={CORES_TEMA.primary} />
                   <Text style={estilos.cardLabel}>Temperatura Média</Text>
                   <Text style={estilos.cardValor}>{mediaTemperatura.toFixed(1)} °C</Text>
                 </View>
@@ -307,28 +499,31 @@ export default function HomeEmpresarial() {
           </View>
           </TouchableOpacity>
 
+          {/* CARD DE CLIMA */}
           <WeatherCard />
 
           {/* AÇÕES RÁPIDAS */}
           <Text style={estilos.subtitulo}>Ações Rápidas</Text>
 
           <View style={estilos.acoesContainer}>
-            <TourStep stepKey="acao-simulador" title="Simulador de Placas" description="Acesse a ferramenta para planejar ou simular novas instalações solares.">
+            {/* TOUR STEP 8: SIMULADOR */}
+            <TourStep stepKey="acao-simulador" title="Simulação de Cenários" description="Use esta ferramenta para planejar a expansão da sua instalação ou simular o retorno de investimento (ROI)." position="bottom">
               <TouchableOpacity
                 style={estilos.botao}
                 onPress={() => router.push("/empresarial/simulador")}
               >
-                <Feather name="server" size={22} color="#ffc125" />
+                <Feather name="server" size={22} color={CORES_TEMA.primary} />
                 <Text style={estilos.botaoTexto}>Simulador</Text>
               </TouchableOpacity>
             </TourStep>
 
-            <TourStep stepKey="acao-agendamento" title="Agendamento" description="Marque visitas técnicas, manutenções ou consultas.">
+            {/* TOUR STEP 9: AGENDAMENTO */}
+            <TourStep stepKey="acao-agendamento" title="Agendar Manutenção" description="Acesse a agenda para marcar visitas técnicas, manutenções preventivas ou inspeções de segurança." position="bottom">
               <TouchableOpacity
                 style={estilos.botao}
                 onPress={() => router.push("/empresarial/agendamento")}
               >
-                <Feather name="calendar" size={22} color="#ffc125" />
+                <Feather name="calendar" size={22} color={CORES_TEMA.primary} />
                 <Text style={estilos.botaoTexto}>Agendamento</Text>
               </TouchableOpacity>
             </TourStep>
@@ -337,121 +532,56 @@ export default function HomeEmpresarial() {
               style={estilos.botao}
               onPress={() => router.push("/empresarial/configuracao")}
             >
-              <Feather name="settings" size={22} color="#ffc125" />
+              <Feather name="settings" size={22} color={CORES_TEMA.primary} />
               <Text style={estilos.botaoTexto}>Configurações</Text>
             </TouchableOpacity>
+
+            {/* TOUR STEP 10: VER TOUR (Manual) */}
+            <TourStep stepKey="ver-tour" title="Revisitar Guia" description="Clique aqui a qualquer momento para refazer este Tour de introdução." position="bottom">
+              <TouchableOpacity
+                style={estilos.botao}
+                onPress={iniciarTourManualmente}
+              >
+                <Feather name="help-circle" size={22} color={CORES_TEMA.secondary} />
+                <Text style={estilos.botaoTexto}>Ver Tour</Text>
+              </TouchableOpacity>
+            </TourStep>
           </View>
         </ScrollView>
 
         <NavBarEmpresarial placas={placas} setPlacas={setPlacas} />
       </View>
-    </TourProvider>
   );
 }
 
-const estilos = StyleSheet.create({
-  container: { flex: 1, padding: 16, marginTop: 40 },
 
-  loadingContainer: {
-    flex: 1,
-    justifyContent: "center",
-    alignItems: "center",
-  },
+// ====================================================================
+// COMPONENTE PAI: HOMEEMPRESARIAL (Envolve o conteúdo com o TourProvider)
+// ====================================================================
 
-  header: {
-    flexDirection: "row",
-    alignItems: "center",
-    backgroundColor: "#fff",
-    padding: 14,
-    borderRadius: 16,
-    marginBottom: 20,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 6,
-    elevation: 4,
-  },
+export default function HomeEmpresarial() {
+    const [tourSeen, setTourSeen] = useState(false);
+    
+    // Efeito para carregar o estado do tour
+    useEffect(() => {
+      const loadTourStatus = async () => {
+        const flag = await AsyncStorage.getItem(TOUR_STORAGE_KEY);
+        setTourSeen(flag === "true");
+      };
+      loadTourStatus();
+    }, []);
 
-  avatar: {
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    marginRight: 15,
-    borderWidth: 2,
-    borderColor: "#ffc125",
-  },
-
-  username: { fontSize: 20, fontWeight: "700", color: "#222" },
-  email: { fontSize: 14, color: "#666", marginTop: 2 },
-
-  titulo: { fontSize: 22, fontWeight: "700", marginBottom: 20, color: "#111" },
-
-  grid: {
-    flexDirection: "row",
-    flexWrap: "wrap",
-    justifyContent: "space-between",
-  },
-
-  gridItem: {
-    flexBasis: "48%",
-    marginBottom: 16,
-    minHeight: 120,
-    height: 120,
-  },
-
-  card: {
-    flex: 1,
-    backgroundColor: "#fff",
-    borderRadius: 18,
-    padding: 18,
-    marginBottom: 16,
-    shadowColor: "#000",
-    shadowOpacity: 0.06,
-    shadowRadius: 5,
-    elevation: 3,
-    alignItems: "center",
-    justifyContent: "center",
-    minHeight: 120,
-    height: 120,
-  },
-
-  cardLabel: {
-    fontSize: 15,
-    color: "#555",
-    marginTop: 8,
-    textAlign: "center",
-  },
-
-  cardValor: {
-    fontSize: 20,
-    fontWeight: "bold",
-    color: "#111",
-    marginTop: 6,
-    textAlign: "center",
-  },
-
-  subtitulo: {
-    marginTop: 25,
-    fontSize: 18,
-    fontWeight: "700",
-    marginBottom: 12,
-    color: "#222",
-  },
-
-  acoesContainer: { flexDirection: "row", flexWrap: "wrap", gap: 12 },
-
-  botao: {
-    flexDirection: "row",
-    alignItems: "center",
-    padding: 16,
-    borderRadius: 12,
-    shadowColor: "#000",
-    shadowOpacity: 0.08,
-    shadowRadius: 4,
-    elevation: 3,
-    backgroundColor: "#fff",
-    marginBottom: 12,
-    marginRight: 12,
-  },
-
-  botaoTexto: { fontSize: 16, color: "#000", fontWeight: "600", marginLeft: 8 },
-});
+    return (
+        <TourProvider
+            autoStart={!tourSeen} // Inicia se não foi visto
+            onStop={() => { 
+                AsyncStorage.setItem(TOUR_STORAGE_KEY, "true"); 
+                setTourSeen(true); 
+            }} // Marca como visto
+            theme={{ primary: CORES_TEMA.secondary, highlightColor: CORES_TEMA.primary }}
+        > 
+            {/* O conteúdo da tela com o useTour() é renderizado AQUI */}
+            <EmpresarialContent />
+        </TourProvider>
+    );
+}
