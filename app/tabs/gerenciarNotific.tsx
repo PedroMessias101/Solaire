@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Switch, Alert } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
 export default function NotificationSettingsScreen() {
   const [alerts, setAlerts] = useState(true);
@@ -76,7 +75,6 @@ export default function NotificationSettingsScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <AnimatedBottomNavBar />
     </View>
   );
 }

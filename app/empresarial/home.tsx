@@ -287,10 +287,10 @@ const EmpresarialContent = () => {
     await AsyncStorage.setItem(THEME_STORAGE_KEY, newTheme);
   };
 
-  const handleLogout = async () => {
+ const handleLogout = async () => {
     await AsyncStorage.removeItem("userToken");
     router.replace("/auth/login");
-  };
+  }; 
 
   const iniciarTourManualmente = async () => {
     await AsyncStorage.removeItem(TOUR_STORAGE_KEY);

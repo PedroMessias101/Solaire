@@ -10,12 +10,17 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  ScrollView,
+  Dimensions,
 } from "react-native";
-import { Ionicons } from "@expo/vector-icons";
+import { Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import { useRouter, usePathname } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useApi } from "../../hooks/useApi";
 import { useWebSocket } from "../../hooks/useWebSocket";
+import { useArduino } from "../../context/ArduinoContext";
+
+const { realtime } = useArduino();
 
 interface Props {
   placas: any[];
@@ -26,7 +31,6 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
   const router = useRouter();
   const pathname = usePathname();
 
-  // >>> INSTANCIANDO HOOKS <<<
   const api = useApi();
   const { message, connected } = useWebSocket();
 
@@ -38,7 +42,7 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
 
   const tabs = [
     { icon: "home", route: "/empresarial/home" },
-    { icon: "scan-outline", action: () => setModalVisible(true) },
+    { icon: "add-circle-outline", action: () => setModalVisible(true) },
     { icon: "person", route: "/empresarial/perfil" },
   ];
 
@@ -50,30 +54,7 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
   const isActive = (route: string | undefined) =>
     route ? pathname.includes(route) : false;
 
-  // ============================================================
-  // REST → pegar dados do ESP32 ao abrir a tela empresarial
-  // ============================================================
-  useEffect(() => {
-    api
-      .get("/esp32/data")
-      .then((res) => {
-        console.log("REST no Empresarial:", res.data);
-      })
-      .catch((err) => console.log("Erro REST:", err));
-  }, []);
-
-  // ============================================================
-  // WEBSOCKET → dados em tempo real
-  // ============================================================
-  useEffect(() => {
-    if (message) {
-      console.log("WS Empresarial:", message);
-    }
-  }, [message]);
-
-  // ============================================================
   // SALVAR PLACA NO BACKEND
-  // ============================================================
   const salvarPlacaNoBackend = async (codigo: string) => {
     try {
       console.log("Enviando placa ao backend:", codigo);
@@ -114,13 +95,11 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
     }
   };
 
-  // ============================================================
   // BUSCAR DADOS DO ARDUINO
-  // ============================================================
   const handleBuscarArduino = async () => {
     try {
       setCarregando(true);
-      setEtapaAtual("Conectando ao Arduino...");
+      setEtapaAtual("Conectando ao dispositivo...");
 
       const res = await fetch("http://192.168.4.1/dados");
 
@@ -131,36 +110,43 @@ export const NavBarEmpresarial: React.FC<Props> = ({ placas, setPlacas }) => {
 
       const dados = await res.json();
       console.log("Dados do Arduino:", dados);
-
+      
       Alert.alert(
-        "Dados do Arduino",
+        "✅ Dispositivo Conectado",
         `
 Serial: ${dados.serial ?? "--"}
 Tensão: ${dados.tensao ?? "--"} V
 Corrente: ${dados.corrente ?? "--"} A
 Potência: ${dados.potencia ?? "--"} W
 Temperatura: ${dados.temperatura ?? "--"} °C
-        `
+        `,
+        [{ text: "Continuar", style: "default" }]
       );
+      
+      const ok = await salvarPlacaNoBackend(dados.serial);
+
+      if (ok) {
+        Alert.alert("✅ Sucesso", "Dispositivo adicionado ao sistema!");
+        setModalVisible(false);
+      }
+
     } catch (error) {
       console.log("Erro ao buscar do Arduino:", error);
-      Alert.alert("Erro", "Falha ao buscar informações do Arduino.");
+      Alert.alert("❌ Erro", "Falha ao conectar ao dispositivo. Verifique a conexão.");
     } finally {
       setCarregando(false);
       setEtapaAtual("");
     }
   };
 
-  // ============================================================
   // BUSCAR DADOS DA API DE SIMULAÇÃO
-  // ============================================================
   const handleBuscarCodigo = async () => {
     try {
       setCarregando(true);
-      setEtapaAtual("Buscando na API de simulação...");
+      setEtapaAtual("Validando código...");
 
       if (!codigoPlaca.trim()) {
-        Alert.alert("Erro", "Digite um código válido!");
+        Alert.alert("Atenção", "Digite um código válido!");
         return;
       }
 
@@ -171,7 +157,7 @@ Temperatura: ${dados.temperatura ?? "--"} °C
       );
 
       if (!response.ok) {
-        Alert.alert("Erro", "Código não encontrado na API de simulação.");
+        Alert.alert("Código não encontrado", "Verifique o código e tente novamente.");
         return;
       }
 
@@ -179,35 +165,33 @@ Temperatura: ${dados.temperatura ?? "--"} °C
       console.log("Dados da simulação:", data);
 
       Alert.alert(
-        "Dados da API",
+        "📊 Dados da Placa",
         `
 Energia: ${data.energia_kWh} kWh
 Tensão: ${data.tensao} V
 Corrente: ${data.corrente} A
 Temperatura: ${data.temperatura} °C
 Status: ${data.status}
-      `
+        `,
+        [{ text: "Continuar", style: "default" }]
       );
 
       const ok = await salvarPlacaNoBackend(codigoPlaca);
 
       if (ok) {
-        Alert.alert("Sucesso", "Placa adicionada ao seu sistema!");
+        Alert.alert("✅ Sucesso", "Placa adicionada ao seu sistema!");
         setModalVisible(false);
         setCodigoPlaca("");
       }
     } catch (error) {
       console.log("Erro ao buscar simulação:", error);
-      Alert.alert("Erro", "Falha ao conectar à API de simulação.");
+      Alert.alert("❌ Erro", "Falha ao conectar ao servidor.");
     } finally {
       setCarregando(false);
       setEtapaAtual("");
     }
   };
 
-  // ============================================================
-  // RENDER
-  // ============================================================
   return (
     <View style={styles.container}>
       {tabs.map((tab, index) => {
@@ -215,22 +199,23 @@ Status: ${data.status}
         return (
           <TouchableOpacity
             key={index}
-            style={styles.tab}
+            style={[styles.tab, active && styles.tabActive]}
             onPress={() => handlePress(tab)}
           >
             <Ionicons
               name={tab.icon as any}
-              size={28}
-              color={active ? "#FFC125" : "#fff"}
+              size={26}
+              color={active ? "#FFD700" : "#FFFFFF"}
             />
+            {active && <View style={styles.tabIndicator} />}
           </TouchableOpacity>
         );
       })}
 
-      {/* MODAL */}
+      {/* MODAL PROFISSIONAL */}
       <Modal
         visible={modalVisible}
-        animationType="slide"
+        animationType="fade"
         transparent
         onRequestClose={() => !carregando && setModalVisible(false)}
       >
@@ -239,67 +224,112 @@ Status: ${data.status}
           behavior={Platform.OS === "ios" ? "padding" : undefined}
         >
           <View style={styles.modalContent}>
-            <Text style={styles.modalTitle}>Consultar Informações</Text>
-            <Text style={styles.modalSubtitle}>Escolha o método de leitura</Text>
-
+            {/* CABEÇALHO */}
+            <View style={styles.modalHeader}>
+              <View>
+                <Text style={styles.modalTitle}>Adicionar Placa</Text>
+                <Text style={styles.modalSubtitle}>Escolha o método de conexão</Text>
+              </View>
+              <TouchableOpacity 
+                style={styles.closeButton}
+                onPress={() => !carregando && setModalVisible(false)}
+                disabled={carregando}
+              >
+                <Ionicons name="close" size={24} color="#666" />
+              </TouchableOpacity>
+            </View>
+/}
             <View style={styles.metodoContainer}>
               <TouchableOpacity
                 style={[
-                  styles.metodoButton,
-                  modoBusca === "codigo" && styles.metodoAtivo,
+                  styles.metodoCard,
+                  modoBusca === "codigo" && styles.metodoCardAtivo,
                 ]}
                 onPress={() => setModoBusca("codigo")}
+                disabled={carregando}
               >
-                <Text
-                  style={[
-                    styles.metodoTexto,
-                    modoBusca === "codigo" && styles.metodoTextoAtivo,
-                  ]}
-                >
+                <View style={styles.metodoIconContainer}>
+                  <MaterialCommunityIcons 
+                    name="barcode-scan" 
+                    size={28} 
+                    color={modoBusca === "codigo" ? "#FFD700" : "#666"} 
+                  />
+                </View>
+                <Text style={[
+                  styles.metodoCardTitle,
+                  modoBusca === "codigo" && styles.metodoCardTitleAtivo
+                ]}>
                   Código
+                </Text>
+                <Text style={styles.metodoCardDesc}>
+                  Insira o código da placa
                 </Text>
               </TouchableOpacity>
 
               <TouchableOpacity
                 style={[
-                  styles.metodoButton,
-                  modoBusca === "arduino" && styles.metodoAtivo,
+                  styles.metodoCard,
+                  modoBusca === "arduino" && styles.metodoCardAtivo,
                 ]}
                 onPress={() => setModoBusca("arduino")}
+                disabled={carregando}
               >
-                <Text
-                  style={[
-                    styles.metodoTexto,
-                    modoBusca === "arduino" && styles.metodoTextoAtivo,
-                  ]}
-                >
-                  Arduino
+                <View style={styles.metodoIconContainer}>
+                  <MaterialCommunityIcons 
+                    name="chip" 
+                    size={28} 
+                    color={modoBusca === "arduino" ? "#FFD700" : "#666"} 
+                  />
+                </View>
+                <Text style={[
+                  styles.metodoCardTitle,
+                  modoBusca === "arduino" && styles.metodoCardTitleAtivo
+                ]}>
+                  Dispositivo
+                </Text>
+                <Text style={styles.metodoCardDesc}>
+                  Conectar via Arduino
                 </Text>
               </TouchableOpacity>
             </View>
 
-            {modoBusca === "codigo" && (
-              <>
-                <Text style={styles.modalSubtitle}>Digite o código</Text>
-                <TextInput
-                  placeholder="Ex: PLACA-01"
-                  value={codigoPlaca}
-                  onChangeText={setCodigoPlaca}
-                  style={[styles.input, carregando && styles.inputDisabled]}
-                  autoCapitalize="characters"
-                  editable={!carregando}
-                  placeholderTextColor="#999"
-                />
-              </>
-            )}
+            {/* FORMULÁRIO */}
+            <View style={styles.formContainer}>
+              {modoBusca === "codigo" ? (
+                <>
+                  <Text style={styles.formLabel}>Código da Placa</Text>
+                  <View style={styles.inputContainer}>
+                    <Ionicons name="key-outline" size={20} color="#999" style={styles.inputIcon} />
+                    <TextInput
+                      placeholder="Ex: PLACA-001"
+                      value={codigoPlaca}
+                      onChangeText={setCodigoPlaca}
+                      style={[styles.input, carregando && styles.inputDisabled]}
+                      autoCapitalize="characters"
+                      editable={!carregando}
+                      placeholderTextColor="#999"
+                    />
+                  </View>
+                </>
+              ) : (
+                <View style={styles.arduinoInfoCard}>
+                  <MaterialCommunityIcons name="information-outline" size={22} color="#4A90E2" />
+                  <Text style={styles.arduinoInfoText}>
+                    Certifique-se que o dispositivo está conectado à mesma rede Wi-Fi
+                  </Text>
+                </View>
+              )}
+            </View>
 
+            {/* LOADING */}
             {carregando && (
               <View style={styles.loadingContainer}>
-                <ActivityIndicator size="large" color="#FFC125" />
+                <ActivityIndicator size="large" color="#FFD700" />
                 <Text style={styles.loadingText}>{etapaAtual}</Text>
               </View>
             )}
 
+            {/* BOTÕES */}
             <View style={styles.buttonRow}>
               <TouchableOpacity
                 style={[styles.modalButton, styles.cancelButton]}
@@ -310,16 +340,16 @@ Status: ${data.status}
               </TouchableOpacity>
 
               <TouchableOpacity
-                style={[styles.modalButton, styles.confirmButton]}
-                onPress={
-                  modoBusca === "codigo"
-                    ? handleBuscarCodigo
-                    : handleBuscarArduino
-                }
-                disabled={carregando}
+                style={[
+                  styles.modalButton, 
+                  styles.confirmButton,
+                  modoBusca === "codigo" && !codigoPlaca.trim() && styles.confirmButtonDisabled
+                ]}
+                onPress={modoBusca === "codigo" ? handleBuscarCodigo : handleBuscarArduino}
+                disabled={carregando || (modoBusca === "codigo" && !codigoPlaca.trim())}
               >
                 <Text style={styles.confirmButtonText}>
-                  {modoBusca === "codigo" ? "Buscar" : "Ler Arduino"}
+                  {modoBusca === "codigo" ? "Validar Código" : "Conectar Dispositivo"}
                 </Text>
               </TouchableOpacity>
             </View>
@@ -330,152 +360,274 @@ Status: ${data.status}
   );
 };
 
-// ============================================================
-// ESTILOS
-// ============================================================
 const styles = StyleSheet.create({
   container: {
     position: "absolute",
     bottom: 20,
     left: 20,
     right: 20,
-    height: 75,
-    backgroundColor: "#111",
-    borderRadius: 35,
+    height: 80,
+    backgroundColor: "#000",
+    borderRadius: 40,
     flexDirection: "row",
     justifyContent: "space-around",
     alignItems: "center",
-    paddingHorizontal: 10,
+    paddingHorizontal: 20,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.3,
+    shadowRadius: 20,
+    elevation: 15,
+    borderWidth: 1,
+    borderColor: "rgba(255, 255, 255, 0.1)",
+    backdropFilter: "blur(10px)",
   },
-
+  
   tab: {
     alignItems: "center",
     justifyContent: "center",
     flex: 1,
+    paddingVertical: 10,
+  },
+  
+  tabActive: {
+    transform: [{ scale: 1.1 }],
+  },
+  
+  tabIndicator: {
+    position: "absolute",
+    bottom: -5,
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+    backgroundColor: "#FFD700",
   },
 
   modalOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.5)",
+    backgroundColor: "rgba(0, 0, 0, 0.8)",
     justifyContent: "center",
     alignItems: "center",
+    padding: 20,
   },
 
   modalContent: {
-    width: "85%",
-    backgroundColor: "#fff",
-    borderRadius: 16,
+    width: "100%",
+    maxWidth: 450,
+    backgroundColor: "#FFFFFF",
+    borderRadius: 24,
+    padding: 0,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 20 },
+    shadowOpacity: 0.25,
+    shadowRadius: 40,
+    elevation: 20,
+  },
+
+  modalHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
     padding: 24,
-    alignItems: "center",
+    paddingBottom: 20,
+    backgroundColor: "#F8FAFC",
+    borderBottomWidth: 1,
+    borderBottomColor: "#E5E7EB",
   },
 
   modalTitle: {
-    fontSize: 22,
+    fontSize: 28,
     fontWeight: "700",
-    color: "#111",
+    color: "#111827",
     marginBottom: 4,
+    letterSpacing: -0.5,
   },
 
   modalSubtitle: {
-    fontSize: 14,
-    color: "#666",
-    marginBottom: 10,
+    fontSize: 15,
+    color: "#6B7280",
+    fontWeight: "500",
+  },
+
+  closeButton: {
+    padding: 8,
+    borderRadius: 12,
+    backgroundColor: "#F3F4F6",
   },
 
   metodoContainer: {
     flexDirection: "row",
-    width: "100%",
-    gap: 12,
-    marginBottom: 16,
+    padding: 24,
+    paddingTop: 0,
+    paddingBottom: 20,
+    gap: 16,
   },
 
-  metodoButton: {
+  metodoCard: {
     flex: 1,
-    padding: 12,
-    borderWidth: 1,
-    borderColor: "#ddd",
-    borderRadius: 10,
+    padding: 20,
+    borderRadius: 16,
+    backgroundColor: "#F9FAFB",
+    borderWidth: 2,
+    borderColor: "#E5E7EB",
     alignItems: "center",
+    justifyContent: "center",
+    minHeight: 140,
   },
 
-  metodoAtivo: {
-    backgroundColor: "#FFC125",
-    borderColor: "#000",
+  metodoCardAtivo: {
+    backgroundColor: "#FFF8E1",
+    borderColor: "#FFD700",
+    transform: [{ scale: 1.02 }],
   },
 
-  metodoTexto: {
-    fontSize: 16,
-    color: "#333",
+  metodoIconContainer: {
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    backgroundColor: "white",
+    justifyContent: "center",
+    alignItems: "center",
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: "#F3F4F6",
   },
 
-  metodoTextoAtivo: {
-    color: "#000",
-    fontWeight: "700",
+  metodoCardTitle: {
+    fontSize: 18,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 4,
+    textAlign: "center",
+  },
+
+  metodoCardTitleAtivo: {
+    color: "#111827",
+  },
+
+  metodoCardDesc: {
+    fontSize: 13,
+    color: "#9CA3AF",
+    textAlign: "center",
+    lineHeight: 18,
+  },
+
+  formContainer: {
+    paddingHorizontal: 24,
+    paddingBottom: 24,
+  },
+
+  formLabel: {
+    fontSize: 15,
+    fontWeight: "600",
+    color: "#374151",
+    marginBottom: 12,
+  },
+
+  inputContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#F9FAFB",
+    borderRadius: 14,
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
+    overflow: "hidden",
+  },
+
+  inputIcon: {
+    marginLeft: 16,
   },
 
   input: {
-    borderWidth: 1,
-    borderColor: "#ddd",
-    width: "100%",
-    padding: 16,
-    borderRadius: 12,
-    backgroundColor: "#f8f8f8",
+    flex: 1,
+    padding: 18,
+    paddingLeft: 12,
     fontSize: 16,
-    color: "#111",
-    marginBottom: 10,
+    color: "#111827",
+    fontWeight: "500",
   },
 
   inputDisabled: {
-    backgroundColor: "#e5e5e5",
+    opacity: 0.6,
+  },
+
+  arduinoInfoCard: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "#EFF6FF",
+    padding: 16,
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: "#DBEAFE",
+    gap: 12,
+  },
+
+  arduinoInfoText: {
+    flex: 1,
+    fontSize: 14,
+    color: "#1E40AF",
+    lineHeight: 20,
   },
 
   loadingContainer: {
-    width: "100%",
-    padding: 16,
-    backgroundColor: "#f8f9fa",
-    borderRadius: 12,
+    marginHorizontal: 24,
+    marginBottom: 24,
+    padding: 24,
+    backgroundColor: "#F9FAFB",
+    borderRadius: 16,
+    borderWidth: 1,
+    borderColor: "#E5E7EB",
     alignItems: "center",
-    marginBottom: 16,
+    justifyContent: "center",
   },
 
   loadingText: {
-    fontSize: 14,
-    color: "#666",
-    marginTop: 8,
+    fontSize: 15,
+    color: "#6B7280",
+    marginTop: 16,
+    fontWeight: "500",
+    textAlign: "center",
   },
 
   buttonRow: {
     flexDirection: "row",
-    marginTop: 8,
-    width: "100%",
-    justifyContent: "space-between",
-    gap: 12,
+    padding: 24,
+    paddingTop: 0,
+    gap: 16,
   },
 
   modalButton: {
     flex: 1,
-    padding: 16,
-    borderRadius: 12,
+    paddingVertical: 18,
+    borderRadius: 14,
     alignItems: "center",
+    justifyContent: "center",
   },
 
   cancelButton: {
-    backgroundColor: "#f0f0f0",
+    backgroundColor: "#F3F4F6",
+    borderWidth: 1.5,
+    borderColor: "#E5E7EB",
   },
 
   confirmButton: {
-    backgroundColor: "#FFC125",
+    backgroundColor: "#111827",
+  },
+
+  confirmButtonDisabled: {
+    opacity: 0.5,
   },
 
   cancelButtonText: {
-    color: "#666",
-    fontWeight: "600",
     fontSize: 16,
+    fontWeight: "600",
+    color: "#374151",
   },
 
   confirmButtonText: {
-    color: "#000",
-    fontWeight: "600",
     fontSize: 16,
+    fontWeight: "600",
+    color: "#FFFFFF",
   },
 });

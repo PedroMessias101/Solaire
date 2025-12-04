@@ -2,7 +2,6 @@ import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Feather, MaterialIcons, Ionicons } from "@expo/vector-icons";
 import { useRouter } from "expo-router";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
 export default function ManageAccountScreen() {
   const router = useRouter();
@@ -41,7 +40,8 @@ export default function ManageAccountScreen() {
 
         {/* Preferências */}
         <Text style={styles.sectionTitle}>Preferências</Text>
-        <TouchableOpacity style={styles.item}>
+        <TouchableOpacity style={styles.item}
+          onPress={() => router.push("/tabs/configNotific")}>
           <View style={styles.iconBox}>
             <Ionicons name="notifications-outline" size={22} color="#ffc125" />
           </View>
@@ -65,7 +65,6 @@ export default function ManageAccountScreen() {
 
       </ScrollView>
 
-      <AnimatedBottomNavBar />
     </View>
   );
 }

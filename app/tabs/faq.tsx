@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 
 interface FAQItem {
@@ -76,8 +75,6 @@ export default function FAQScreen() {
           </TouchableOpacity>
         ))}
       </ScrollView>
-
-      <AnimatedBottomNavBar />
     </View>
   );
 }

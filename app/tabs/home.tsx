@@ -94,21 +94,21 @@ const getDynamicStyles = (currentScheme: 'light' | 'dark') => {
       borderColor: CORES_TEMA.primary,
     },
     settingsButton: { marginLeft: 12, justifyContent: "center", alignItems: "center" },
-    
-    themeToggle: { 
-        padding: 8, 
-        marginRight: 5, 
-        borderRadius: 10,
-        backgroundColor: cardBg,
-        borderWidth: 1,
-        borderColor: isDark ? CORES_TEMA.cardDark : '#ccc',
+
+    themeToggle: {
+      padding: 8,
+      marginRight: 5,
+      borderRadius: 10,
+      backgroundColor: cardBg,
+      borderWidth: 1,
+      borderColor: isDark ? CORES_TEMA.cardDark : '#ccc',
     },
-    
+
     cardPrincipal: { borderRadius: 20, padding: 24, marginBottom: 20 },
     cardTitulo: { fontSize: 16, color: "#fff", marginBottom: 6 },
     cardValor: { fontSize: 22, fontWeight: "bold", color: "#fff" },
     cardLegenda: { fontSize: 14, color: "#fff", marginTop: 4 },
-    
+
     grid: { flexDirection: "row", flexWrap: "wrap", justifyContent: "space-between" },
     card: {
       backgroundColor: cardBg,
@@ -124,7 +124,7 @@ const getDynamicStyles = (currentScheme: 'light' | 'dark') => {
     },
     cardVvalor: { fontSize: 22, fontWeight: "bold", color: textPrimary },
     cardLabel: { fontSize: 14, color: textSecondary, marginTop: 8, fontWeight: "500" },
-    
+
     errorBox: { backgroundColor: "#ffece6", padding: 12, borderRadius: 10, marginBottom: 12 },
     errorText: { color: "#b00020", marginBottom: 8 },
     retryBtn: { alignSelf: "flex-start", backgroundColor: "#000", paddingHorizontal: 12, paddingVertical: 8, borderRadius: 8 },
@@ -138,7 +138,7 @@ const getDynamicStyles = (currentScheme: 'light' | 'dark') => {
 
 export default function HomeScreen() {
   const router = useRouter();
-  const systemColorScheme = useColorScheme(); 
+  const systemColorScheme = useColorScheme();
 
   // --- Estados e Lógica de Tema ---
   const [user, setUser] = useState<any>(null);
@@ -150,6 +150,12 @@ export default function HomeScreen() {
   const [themeOverride, setThemeOverride] = useState<'light' | 'dark' | null>(null);
   const [loadingDicaIndex, setLoadingDicaIndex] = useState(0);
 
+
+
+  const handleLogout = async () => {
+    await AsyncStorage.removeItem("userToken");
+    router.replace("/auth/login");
+  };
 
   const VALOR_KWH = 0.95;
   const CO2_KWH = 0.084;
@@ -175,7 +181,7 @@ export default function HomeScreen() {
   }, [themeOverride, systemColorScheme]);
 
   const estilos = useMemo(() => getDynamicStyles(currentColorScheme), [currentColorScheme]);
-  
+
   // Cor dinâmica para os ícones do Header
   const headerIconColor = currentColorScheme === 'dark' ? CORES_TEMA.textPrimaryDark : CORES_TEMA.textPrimaryLight;
 
@@ -197,15 +203,15 @@ export default function HomeScreen() {
       }
       setToken(storedToken);
       setTokenChecked(true);
-      
+
       // 2. Tema
       const storedTheme = await AsyncStorage.getItem(THEME_STORAGE_KEY);
       if (storedTheme === 'light' || storedTheme === 'dark') {
-          setThemeOverride(storedTheme);
+        setThemeOverride(storedTheme);
       }
     };
     checkTokenAndLoadTheme();
-  }, []); 
+  }, []);
 
   // --- Buscar Dados ---
   useEffect(() => {
@@ -220,50 +226,83 @@ export default function HomeScreen() {
     setError(null);
 
     try {
+      // ========================================================================
+      // 1) Buscar usuário logado
+      // ========================================================================
       const resUser = await fetch(`${API_USUARIO_URL}/users/me`, {
         headers: { Authorization: `Bearer ${token}` },
       });
+
       if (resUser.status === 401) {
         Alert.alert("Sessão expirada", "Faça login novamente.");
         await AsyncStorage.clear();
         router.replace("/auth/login");
         return;
       }
+
       const userResponse = await resUser.json();
       if (userResponse.success) setUser(userResponse.data);
       else setError(userResponse.error || "Erro ao carregar usuário");
 
-      const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, { headers: { Authorization: `Bearer ${token}` } });
+      // ========================================================================
+      // 2) Buscar placas salvas no backend
+      // ========================================================================
+      const resPlacas = await fetch(`${API_USUARIO_URL}/panels`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
       const placasResponse = await resPlacas.json();
       if (!placasResponse.success) {
         setError(placasResponse.error || "Erro ao carregar placas");
         return;
       }
+
       const placasDoUsuario = placasResponse.data || [];
 
+      // ========================================================================
+      // 3) Para cada placa, buscar dados da simulação pela API externa
+      // ========================================================================
       const placasComDados = await Promise.all(
-        placasDoUsuario.map(async (placa: any) => {
-          if (placa.status !== "Ativa") return { ...placa, energia_kWh: 0, tensao: 0, temperatura: 0, corrente: 0 };
-          try {
-            const resSim = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
-            const dadosSim = await resSim.json();
+        placasDoUsuario.map(async (placa) => {
+          // Se não tiver serial, evitar erro
+          if (!placa.serial) {
             return {
               ...placa,
-              energia_kWh: dadosSim.energia_kWh || 0,
-              tensao: dadosSim.tensao || 0,
-              corrente: dadosSim.corrente || 0,
-              temperatura: dadosSim.temperatura || 0,
+              energia_kWh: 0,
+              tensao: 0,
+              corrente: 0,
+              temperatura: 0,
+            };
+          }
+
+          try {
+            const resSim = await fetch(`${API_SIMULACAO_URL}/${placa.serial}`);
+            const sim = await resSim.json();
+
+            return {
+              ...placa,
+              energia_kWh: sim.energia_kWh || 0,
+              tensao: sim.tensao || 0,
+              corrente: sim.corrente || 0,
+              temperatura: sim.temperatura || 0,
             };
           } catch (err) {
-            console.log("Erro ao buscar simulação da placa", placa.serial, err);
-            return { ...placa, energia_kWh: 0, tensao: 0, temperatura: 0, corrente: 0 };
+            console.log("❌ Erro ao buscar simulação da placa:", placa.serial, err);
+            return {
+              ...placa,
+              energia_kWh: 0,
+              tensao: 0,
+              corrente: 0,
+              temperatura: 0,
+            };
           }
         })
       );
       setPlacas(placasComDados);
-    } catch (err: any) {
-      console.error("Erro ao carregar dados:", err);
-      setError(err.message || "Erro inesperado");
+
+    } catch (err) {
+      console.error("Erro geral:", err);
+      setError("Erro inesperado ao carregar dados");
     } finally {
       setLoading(false);
     }
@@ -292,9 +331,9 @@ export default function HomeScreen() {
     return (
       <View style={estilos.loading}>
         <Animated.View style={{ transform: [{ rotate: spin }] }}>
-          <MaterialCommunityIcons 
-            name="white-balance-sunny" 
-            size={30} 
+          <MaterialCommunityIcons
+            name="white-balance-sunny"
+            size={30}
             color={CORES_TEMA.primary} // CORRIGIDO: Acessando a cor diretamente
           />
         </Animated.View>
@@ -303,18 +342,18 @@ export default function HomeScreen() {
       </View>
     );
   }
-  
+
   // --- Renderização: Erro ---
-   if (error) {
+  if (error) {
     return (
-        <View style={estilos.loading}>
-             <Feather name="alert-triangle" size={30} color="#D9534F" />
-             <Text style={estilos.loadingText}>Ocorreu um erro</Text>
-             <Text style={estilos.loadingDica}>{error}</Text>
-             <TouchableOpacity onPress={fetchUserAndPanels} style={estilos.retryBtn}>
-                 <Text style={estilos.retryText}>Tentar Novamente</Text>
-             </TouchableOpacity>
-        </View>
+      <View style={estilos.loading}>
+        <Feather name="alert-triangle" size={30} color="#D9534F" />
+        <Text style={estilos.loadingText}>Ocorreu um erro</Text>
+        <Text style={estilos.loadingDica}>{error}</Text>
+        <TouchableOpacity onPress={fetchUserAndPanels} style={estilos.retryBtn}>
+          <Text style={estilos.retryText}>Tentar Novamente</Text>
+        </TouchableOpacity>
+      </View>
     );
   }
 
@@ -329,9 +368,8 @@ export default function HomeScreen() {
             <Text style={estilos.username}>{user?.name || "Bem-vindo!"}</Text>
             {user?.email && <Text style={estilos.email}>{user.email}</Text>}
           </View>
-          
           <View style={{ flexDirection: "row", alignItems: "center" }}>
-            
+
             {/* BOTÃO DE TEMA SOL/LUA */}
             <TouchableOpacity onPress={toggleTheme} style={estilos.themeToggle}>
               {currentColorScheme === 'dark' ? (
@@ -340,17 +378,21 @@ export default function HomeScreen() {
                 <Ionicons name="sunny-sharp" size={24} color={CORES_TEMA.primary} />
               )}
             </TouchableOpacity>
-            
+
             {/* NOTIFICAÇÕES (Ajustar se não aceitar prop 'color') */}
-            <Notificacoes color={headerIconColor} /> 
-            
+            <Notificacoes color={headerIconColor} />
+
             <TouchableOpacity
               style={estilos.settingsButton}
-              onPress={() => router.push("./config")}
+              onPress={() => router.push("../tabs/config")}
             >
-              <Feather name="settings" size={25} color={headerIconColor} /> 
+              <Feather name="settings" size={25} color={headerIconColor} />
             </TouchableOpacity>
           </View>
+
+          <TouchableOpacity onPress={handleLogout} style={{ padding: 8 }}>
+            <Feather name="log-out" size={24} color={estilos.username.color} />
+          </TouchableOpacity>
         </View>
 
         {/* Card Principal: Gradient dinâmico */}

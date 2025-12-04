@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert, Linking } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 
 export default function SupportScreen() {
@@ -14,7 +13,7 @@ export default function SupportScreen() {
   };
 
   const handleChatPress = () => {
-    router.push("../tabs/chatSuporte"); // Exemplo de tela de chat
+    router.push("../tabs/chatSuporte"); 
   };
 
   return (
@@ -58,17 +57,6 @@ export default function SupportScreen() {
           </View>
         </TouchableOpacity>
 
-        {/* Chat de Suporte */}
-        <TouchableOpacity style={styles.item} onPress={handleChatPress}>
-          <View style={styles.caixaIcone}>
-            <Ionicons name="chatbubble-ellipses-outline" size={22} color="#ffc125" />
-          </View>
-          <View>
-            <Text style={styles.tituloItem}>Chat</Text>
-            <Text style={styles.subtituloItem}>Converse com nosso suporte em tempo real</Text>
-          </View>
-        </TouchableOpacity>
-
         {/* Guia/Documentação */}
         <TouchableOpacity style={styles.item} onPress={() => router.push("/tabs/guia")}>
           <View style={styles.caixaIcone}>
@@ -81,7 +69,6 @@ export default function SupportScreen() {
         </TouchableOpacity>
       </ScrollView>
 
-      <AnimatedBottomNavBar />
     </View>
   );
 }

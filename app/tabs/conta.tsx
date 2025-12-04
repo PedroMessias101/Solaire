@@ -11,7 +11,6 @@ import {
 } from "react-native";
 import { useRouter } from "expo-router";
 import AsyncStorage from "@react-native-async-storage/async-storage";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 
 export default function ContaScreen() {
   const router = useRouter();
@@ -141,13 +140,6 @@ export default function ContaScreen() {
           <Text style={estilos.textoBotaoSecundario}>Alterar Senha</Text>
         </TouchableOpacity>
       </ScrollView>
-
-      {/* Barra de navegação fixa */}
-      <AnimatedBottomNavBar
-        activeIndex={activeIndex}
-        onTabPress={setActiveIndex}
-        style={{ position: "absolute", bottom: 0, left: 0, right: 0 }}
-      />
     </View>
   );
 }

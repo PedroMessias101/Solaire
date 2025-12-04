@@ -1,7 +1,6 @@
 import React from "react";
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from "react-native";
 import { Ionicons, MaterialIcons } from "@expo/vector-icons";
-import { AnimatedBottomNavBar } from "../components/AnimatedBottomNavBar";
 import { useRouter } from "expo-router";
 
 export default function TelaConfig() {
@@ -51,8 +50,6 @@ export default function TelaConfig() {
           </View>
         </TouchableOpacity>
       </ScrollView>
-
-      <AnimatedBottomNavBar />
     </View>
   );
 }
